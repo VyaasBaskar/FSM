@@ -172,6 +172,7 @@ a.secondary {
   border-collapse: collapse;
   text-align: center;
   color: #ffc600;
+  font-size: 3.0em;
 }
 
 .table {
@@ -191,4 +192,17 @@ a.secondary {
   padding: 15px;
   text-align: center;
   border-bottom: 1px solid var(--gray-alpha-200);
+}
+
+.fsmtitle {
+  font-weight: semibold;
+  font-size: 1.5em;
+  margin-bottom: 24px;
+}
+
+.smallheader {
+  font-weight: 600;
+  font-size: 1.6em;
+  margin-bottom: 4px;
+  text-align: center;
 }

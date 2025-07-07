@@ -1,6 +1,6 @@
 import styles from "../../page.module.css";
 import { getEventTeams, TeamDataType } from "../../lib/event";
-import Image from "next/image";
+import LogoButton from "../../components/LogoButton";
 
 export default async function EventPage({ params }: { params: Promise<{ event: string }> }) {
   const { event: eventCode } = await params;
@@ -30,18 +30,7 @@ export default async function EventPage({ params }: { params: Promise<{ event: s
           </tbody>
         </table>
       </main>
-      <Image
-        src="/logo846.png"
-        alt="Logo"
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          width: 68,
-          height: 80,
-          zIndex: 1000,
-        }}
-      />
+      <LogoButton />
     </div>
   );
 }
