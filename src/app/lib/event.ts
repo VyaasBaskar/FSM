@@ -1,8 +1,23 @@
 /* eslint-disable */
-const MAX_ITERS = 500;
+const MAX_ITERS = 100;
 const DECAY_FAC = 0.992;
 const FSM_UP_FAC = 0.4;
 const FSM_DOWN_FAC = 0.3;
+const ELIM_MULT_FAC = 0.65;
+
+function modRoot(x: number) {
+  if (x < 0) {
+    return -Math.pow(-x, 1.0 / 5);
+  }
+  return Math.pow(x, 1.0 / 5);
+}
+
+function elimModRoot(x: number) {
+  if (x < 0) {
+    return -Math.pow(-x, 1.0 / 3);
+  }
+  return Math.pow(x, 1.0 / 3);
+}
 
 async function getEventQualMatches(eventCode: string) {
   const res = await fetch(
@@ -23,6 +38,30 @@ async function getEventQualMatches(eventCode: string) {
 
   return matches.filter(
     (match: { comp_level: string }) => match.comp_level === "qm"
+  );
+}
+
+async function getEventElimMatches(eventCode: string) {
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch elimination matches for event: ${eventCode}`
+    );
+  }
+
+  const matches = await res.json();
+
+  return matches.filter(
+    (match: { comp_level: string }) => match.comp_level !== "qm"
   );
 }
 
@@ -73,8 +112,8 @@ function calculateFSM(matches: any[]) {
           blueFSMpred += FSMs[team];
         }
 
-        const redDelta = (redScore - redFSMpred) / 3.0;
-        const blueDelta = (blueScore - blueFSMpred) / 3.0;
+        const redDelta = modRoot((redScore - redFSMpred) / 3.0);
+        const blueDelta = modRoot((blueScore - blueFSMpred) / 3.0);
 
         for (const team of redTeams) {
           if (redDelta > 0) {
@@ -97,6 +136,30 @@ function calculateFSM(matches: any[]) {
   return FSMs;
 }
 
+function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
+  for (const match of matches) {
+    const redTeams = match.alliances.red.team_keys;
+    const blueTeams = match.alliances.blue.team_keys;
+
+    const redScore = match.alliances.red.score;
+    const blueScore = match.alliances.blue.score;
+
+    const redDelta = elimModRoot((redScore - blueScore) / 3.0);
+    const blueDelta = elimModRoot((blueScore - redScore) / 3.0);
+
+    for (const team of redTeams) {
+      if (redDelta > 0) {
+        fsms[team] += redDelta * ELIM_MULT_FAC;
+      }
+    }
+    for (const team of blueTeams) {
+      if (blueDelta > 0) {
+        fsms[team] += blueDelta * ELIM_MULT_FAC;
+      }
+    }
+  }
+}
+
 export type TeamDataType = {
   key: string;
   rank: number;
@@ -108,8 +171,10 @@ export async function getEventTeams(eventCode: string) {
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }
+  const elimMatches = await getEventElimMatches(eventCode);
   const rankings = (await getEventRankings(eventCode)).rankings;
   const fsms = calculateFSM(matches);
+  elimAdjustFSM(elimMatches, fsms);
 
   const TEAMDATA: { [key: string]: TeamDataType } = {};
 

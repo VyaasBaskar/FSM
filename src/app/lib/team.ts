@@ -1,9 +1,9 @@
 /* eslint-disable */
 import { getEventTeams, TeamDataType } from "../lib/event";
 
-async function getTeamEvents(teamKey: string) {
+async function getTeamEvents(teamKey: string, year: number = 2025) {
   const res = await fetch(
-    `https://www.thebluealliance.com/api/v3/team/${teamKey}/events/2025`,
+    `https://www.thebluealliance.com/api/v3/team/${teamKey}/events/${year}`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
@@ -32,8 +32,8 @@ export type EventDataType = {
   teamrank: number;
 };
 
-export async function getTeamStats(teamKey: string) {
-  const events = await getTeamEvents(teamKey);
+export async function getTeamStats(teamKey: string, year: number = 2025) {
+  const events = await getTeamEvents(teamKey, year);
   if (events.length === 0) {
     throw new Error(`No events found for team: ${teamKey}`);
   }

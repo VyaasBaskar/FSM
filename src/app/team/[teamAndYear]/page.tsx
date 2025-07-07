@@ -2,9 +2,11 @@ import styles from "../../page.module.css";
 import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
 import LogoButton from "../../components/LogoButton";
 
-export default async function TeamPage({ params }: { params: Promise<{ team: string }> }) {
-  const { team: teamKey } = await params;
-  const teamStats = await getTeamStats(teamKey);
+export default async function TeamPage({ params }: { params: Promise<{ teamAndYear: string }> }) {
+  const { teamAndYear } = await params;
+  const [teamKey, year] = teamAndYear.split("-");
+  const yearprov = year ?? "2025"
+  const teamStats = await getTeamStats(teamKey, Number(yearprov));
   const teamInfo = await getTeamInfo(teamKey);
 
   return (
