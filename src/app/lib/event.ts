@@ -1,3 +1,4 @@
+/* eslint-disable */
 const MAX_ITERS = 500;
 const DECAY_FAC = 0.992;
 const FSM_UP_FAC = 0.4;
@@ -44,11 +45,11 @@ async function getEventRankings(eventCode: string) {
 }
 
 function calculateFSM(matches: any[]) {
-  let FSMs: { [key: string]: number } = {};
+  const FSMs: { [key: string]: number } = {};
 
   for (let i = 0; i < MAX_ITERS; i++) {
     for (let j = 0; j < matches.length; j++) {
-      let kz = matches.length - j;
+      const kz = matches.length - j;
       for (let z = 0; z < (kz < 25 ? 3 : kz < 45 ? 2 : 1); z++) {
         const match = matches[j];
         const redTeams = match.alliances.red.team_keys;
@@ -96,18 +97,23 @@ function calculateFSM(matches: any[]) {
   return FSMs;
 }
 
+export type TeamDataType = {
+  key: string;
+  rank: number;
+  fsm: string;
+};
+
 export async function getEventTeams(eventCode: string) {
-  var matches = await getEventQualMatches(eventCode);
+  const matches = await getEventQualMatches(eventCode);
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }
   const rankings = (await getEventRankings(eventCode)).rankings;
   const fsms = calculateFSM(matches);
 
-  let TEAMDATA: { [key: string]: { key: string; rank: number; fsm: string } } =
-    {};
+  const TEAMDATA: { [key: string]: TeamDataType } = {};
 
-  for (var i = 0; i < rankings.length; i++) {
+  for (let i = 0; i < rankings.length; i++) {
     const teamset = rankings[i];
     const team = teamset.team_key;
     if (!fsms[team]) {

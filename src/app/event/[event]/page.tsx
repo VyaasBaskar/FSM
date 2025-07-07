@@ -1,5 +1,6 @@
 import styles from "../../page.module.css";
-import { getEventTeams } from "../../lib/event";
+import { getEventTeams, TeamDataType } from "../../lib/event";
+import Image from "next/image";
 
 export default async function EventPage({ params }: { params: Promise<{ event: string }> }) {
   const { event: eventCode } = await params;
@@ -19,7 +20,7 @@ export default async function EventPage({ params }: { params: Promise<{ event: s
             </tr>
           </thead>
           <tbody>
-            {teams.map((team: any) => (
+            {teams.map((team: TeamDataType) => (
               <tr key={team.key}>
                 <td className={styles.td}>{team.key}</td>
                 <td className={styles.td}>{team.rank}</td>
@@ -29,7 +30,7 @@ export default async function EventPage({ params }: { params: Promise<{ event: s
           </tbody>
         </table>
       </main>
-      <img
+      <Image
         src="/logo846.png"
         alt="Logo"
         style={{
