@@ -44,12 +44,12 @@ async function getEventRankings(eventCode: string) {
 }
 
 function calculateFSM(matches: any[]) {
-  var FSMs: { [key: string]: number } = {};
+  let FSMs: { [key: string]: number } = {};
 
-  for (var i = 0; i < MAX_ITERS; i++) {
-    for (var j = 0; j < matches.length; j++) {
-      var kz = matches.length - j;
-      for (var z = 0; z < (kz < 25 ? 3 : kz < 45 ? 2 : 1); z++) {
+  for (let i = 0; i < MAX_ITERS; i++) {
+    for (let j = 0; j < matches.length; j++) {
+      let kz = matches.length - j;
+      for (let z = 0; z < (kz < 25 ? 3 : kz < 45 ? 2 : 1); z++) {
         const match = matches[j];
         const redTeams = match.alliances.red.team_keys;
         const blueTeams = match.alliances.blue.team_keys;
@@ -57,8 +57,8 @@ function calculateFSM(matches: any[]) {
         const redScore = match.alliances.red.score;
         const blueScore = match.alliances.blue.score;
 
-        var redFSMpred = 0.0;
-        var blueFSMpred = 0.0;
+        let redFSMpred = 0.0;
+        let blueFSMpred = 0.0;
         for (const team of redTeams) {
           if (!FSMs[team]) {
             FSMs[team] = redScore / 3.0;
@@ -72,8 +72,8 @@ function calculateFSM(matches: any[]) {
           blueFSMpred += FSMs[team];
         }
 
-        var redDelta = (redScore - redFSMpred) / 3.0;
-        var blueDelta = (blueScore - blueFSMpred) / 3.0;
+        const redDelta = (redScore - redFSMpred) / 3.0;
+        const blueDelta = (blueScore - blueFSMpred) / 3.0;
 
         for (const team of redTeams) {
           if (redDelta > 0) {
@@ -101,11 +101,10 @@ export async function getEventTeams(eventCode: string) {
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }
-  var rankings = await getEventRankings(eventCode);
-  rankings = rankings.rankings;
-  var fsms = calculateFSM(matches);
+  const rankings = (await getEventRankings(eventCode)).rankings;
+  const fsms = calculateFSM(matches);
 
-  var TEAMDATA: { [key: string]: { key: string; rank: number; fsm: string } } =
+  let TEAMDATA: { [key: string]: { key: string; rank: number; fsm: string } } =
     {};
 
   for (var i = 0; i < rankings.length; i++) {
