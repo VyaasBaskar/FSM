@@ -1,4 +1,6 @@
 /* eslint-disable */
+import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
+
 const MAX_ITERS = 100;
 const DECAY_FAC = 0.992;
 const FSM_UP_FAC = 0.4;
@@ -7,16 +9,16 @@ const ELIM_MULT_FAC = 0.65;
 
 function modRoot(x: number) {
   if (x < 0) {
-    return -Math.pow(-x, 1.0 / 5);
+    return -Math.pow(-x, 1.0 / 3);
   }
-  return Math.pow(x, 1.0 / 5);
+  return Math.pow(x, 1.0 / 3);
 }
 
 function elimModRoot(x: number) {
   if (x < 0) {
-    return -Math.pow(-x, 1.0 / 3);
+    return -Math.pow(-x, 1.0 / 2);
   }
-  return Math.pow(x, 1.0 / 3);
+  return Math.pow(x, 1.0 / 2);
 }
 
 async function getEventQualMatches(eventCode: string) {
@@ -167,6 +169,26 @@ export type TeamDataType = {
 };
 
 export async function getEventTeams(eventCode: string) {
+  const TEAMDATA: { [key: string]: TeamDataType } = {};
+  const orig_data = await getEventDataIfOneDayAfterEnd(eventCode);
+
+  if (orig_data) {
+    console.log("Using cached data for event:", eventCode);
+    for (const teamKey in orig_data) {
+      const team = orig_data[teamKey];
+      TEAMDATA[teamKey] = {
+        key: team.key,
+        rank: team.rank,
+        fsm: team.fsm,
+      };
+    }
+    const sortedData = Object.values(TEAMDATA).sort((a, b) => {
+      return a.rank - b.rank || b.fsm.localeCompare(a.fsm);
+    });
+    return sortedData;
+  }
+  console.log("Calculating FSM for event:", eventCode);
+
   const matches = await getEventQualMatches(eventCode);
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
@@ -175,8 +197,6 @@ export async function getEventTeams(eventCode: string) {
   const rankings = (await getEventRankings(eventCode)).rankings;
   const fsms = calculateFSM(matches);
   elimAdjustFSM(elimMatches, fsms);
-
-  const TEAMDATA: { [key: string]: TeamDataType } = {};
 
   for (let i = 0; i < rankings.length; i++) {
     const teamset = rankings[i];
@@ -191,7 +211,9 @@ export async function getEventTeams(eventCode: string) {
     };
   }
 
-  return Object.values(TEAMDATA).sort((a, b) => {
+  const sortedData = Object.values(TEAMDATA).sort((a, b) => {
     return a.rank - b.rank || b.fsm.localeCompare(a.fsm);
   });
+  await addEventToDB(eventCode, TEAMDATA);
+  return sortedData;
 }

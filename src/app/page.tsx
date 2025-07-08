@@ -22,13 +22,28 @@ export default function Home() {
     }
   };
 
+  const handleGoGlobal = () => {
+    router.push("/global");
+  };
+
   return (
     <div className={styles.page} style={{ position: "relative", minHeight: "100vh" }}>
       <main className={styles.main}>
-        <h1 className={styles.title}>FunkyStats</h1>
-        <br></br>
+        <h1 className={styles.megatitle}>FunkyStats</h1>
+        <p>Note: Pages have long loading times. If it isn't loading, it will; don't close the tab.</p>
+        <div style={{width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12}}>
+        <div>
+        <button
+          onClick={handleGoGlobal}
+          className={styles.button}
+          style={{ padding: "12px 24px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+        >
+          Explore Global Rankings
+        </button>
+        </div>
+        </div>
         <h1 className={styles.smallheader}> Event Finder </h1>
-        <form onSubmit={handleGoEvent} style={{ marginBottom: 32, display: "flex", gap: 8 }}>
+        <form onSubmit={handleGoEvent} style={{ marginBottom: 32, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
           <input
             type="text"
             placeholder="Enter event code (e.g. 2025cc)"
@@ -46,7 +61,7 @@ export default function Home() {
           </button>
         </form>
         <h1 className={styles.smallheader}> Team Finder </h1>
-        <form onSubmit={handleGoTeam} style={{ marginBottom: 32, display: "flex", gap: 8 }}>
+        <form onSubmit={handleGoTeam} style={{ marginBottom: 32, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
           <input
             type="text"
             placeholder="Enter team code (e.g. frc846)"

@@ -11,7 +11,7 @@
   align-items: center;
   justify-items: center;
   min-height: 100svh;
-  padding: 80px;
+  padding: 10px;
   gap: 64px;
   font-family: var(--font-geist-sans);
 }
@@ -173,6 +173,14 @@ a.secondary {
   text-align: center;
   color: #ffc600;
   font-size: 3.0em;
+}
+
+.megatitle {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  color: #ffc600;
+  font-size: 4.0em;
 }
 
 .table {
