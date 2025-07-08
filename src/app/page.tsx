@@ -30,7 +30,7 @@ export default function Home() {
     <div className={styles.page} style={{ position: "relative", minHeight: "100vh" }}>
       <main className={styles.main}>
         <h1 className={styles.megatitle}>FunkyStats</h1>
-        <p>Note: Pages have long loading times. If it isn't loading, it will; don't close the tab.</p>
+        <p>Note: Pages have long loading times. If it is not loading, it will; do not close the tab.</p>
         <div style={{width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12}}>
         <div>
         <button
