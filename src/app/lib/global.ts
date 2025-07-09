@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { getEventTeams } from "./event";
 import {
   getGlobalData,

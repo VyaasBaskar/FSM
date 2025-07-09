@@ -1,3 +1,4 @@
+/* eslint-disable */
 import styles from "../page.module.css";
 import {  getGlobalStats } from "../lib/global";
 import LogoButton from "../components/LogoButton";

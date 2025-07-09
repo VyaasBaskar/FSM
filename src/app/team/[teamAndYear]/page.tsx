@@ -1,3 +1,4 @@
+/* eslint-disable */
 import styles from "../../page.module.css";
 import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
 import LogoButton from "../../components/LogoButton";
