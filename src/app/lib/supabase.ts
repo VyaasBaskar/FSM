@@ -155,7 +155,7 @@ export async function needToUpdateGlobal(
   const diffTime = today.getTime() - Number(existingGlobal.set_time);
   const diffHours = diffTime / (1000 * 60 * 60);
 
-  return diffHours > 4.0;
+  return false; //diffHours > 4.0;
 }
 
 export async function setGlobal(
