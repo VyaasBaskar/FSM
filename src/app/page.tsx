@@ -7,6 +7,7 @@ import styles from "./page.module.css";
 export default function Home() {
   const [eventCode, setEventCode] = useState("");
   const [teamCode, setTeamCode] = useState("");
+  const [year, setYear] = useState("2025");
   const router = useRouter();
 
   const handleGoEvent = (e: React.FormEvent) => {
@@ -18,7 +19,7 @@ export default function Home() {
   const handleGoTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if (teamCode.trim()) {
-      router.push(`/team/${teamCode.trim()}`);
+      router.push(`/team/frc${teamCode.trim()}-${year}`);
     }
   };
 
@@ -64,12 +65,30 @@ export default function Home() {
         <form onSubmit={handleGoTeam} style={{ marginBottom: 32, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
           <input
             type="text"
-            placeholder="Enter team code (e.g. frc846)"
+            placeholder="Enter team (e.g. 846)"
             value={teamCode}
             onChange={(e) => setTeamCode(e.target.value)}
             className={styles.input}
             style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
           />
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className={styles.input}
+            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+          >
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+          </select>
           <button
             type="submit"
             className={styles.button}

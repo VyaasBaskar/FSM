@@ -1,24 +1,25 @@
 /* eslint-disable */
 import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
 
-const MAX_ITERS = 100;
+const MAX_ITERS = 50;
 const DECAY_FAC = 0.992;
 const FSM_UP_FAC = 0.4;
-const FSM_DOWN_FAC = 0.3;
-const ELIM_MULT_FAC = 0.65;
+const FSM_DOWN_FAC = 0.4;
+const ELIM_MULT_FAC = 0.5;
+const ELIM_REDUC_FAC = 0.25;
 
 function modRoot(x: number) {
-  if (x < 0) {
-    return -Math.pow(-x, 1.0 / 3);
-  }
-  return Math.pow(x, 1.0 / 3);
-}
-
-function elimModRoot(x: number) {
   if (x < 0) {
     return -Math.pow(-x, 1.0 / 2);
   }
   return Math.pow(x, 1.0 / 2);
+}
+
+function elimModRoot(x: number) {
+  if (x < 0) {
+    return -Math.pow(-x, 1.0 / 3);
+  }
+  return Math.pow(x, 1.0 / 3);
 }
 
 async function getEventQualMatches(eventCode: string) {
@@ -152,11 +153,15 @@ function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
     for (const team of redTeams) {
       if (redDelta > 0) {
         fsms[team] += redDelta * ELIM_MULT_FAC;
+      } else {
+        fsms[team] += redDelta * ELIM_REDUC_FAC;
       }
     }
     for (const team of blueTeams) {
       if (blueDelta > 0) {
         fsms[team] += blueDelta * ELIM_MULT_FAC;
+      } else {
+        fsms[team] += blueDelta * ELIM_REDUC_FAC;
       }
     }
   }
@@ -170,6 +175,7 @@ export type TeamDataType = {
 
 export async function getEventTeams(eventCode: string) {
   const TEAMDATA: { [key: string]: TeamDataType } = {};
+
   const orig_data = await getEventDataIfOneDayAfterEnd(eventCode);
 
   if (orig_data) {
@@ -191,6 +197,7 @@ export async function getEventTeams(eventCode: string) {
 
   const matches = await getEventQualMatches(eventCode);
   if (matches.length === 0) {
+    await addEventToDB(eventCode, TEAMDATA);
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }
   const elimMatches = await getEventElimMatches(eventCode);

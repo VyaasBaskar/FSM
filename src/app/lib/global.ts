@@ -1,12 +1,14 @@
-import { getTeamStats } from "./team";
-import { getGlobalData, setGlobal, needToUpdateGlobal } from "./supabase";
+import { getEventTeams } from "./event";
+import {
+  getGlobalData,
+  setGlobal,
+  needToUpdateGlobal,
+  fetchAllCachedEvents,
+} from "./supabase";
 
-async function getTeams(page: number, year: number = 2025) {
-  if (year !== 2025) {
-    page -= (2025 - year) * 100;
-  }
+async function getEvents(year: number = 2025) {
   const res = await fetch(
-    `https://www.thebluealliance.com/api/v3/teams/${year}/${page}/keys`,
+    `https://www.thebluealliance.com/api/v3/events/${year}/keys`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
@@ -15,69 +17,115 @@ async function getTeams(page: number, year: number = 2025) {
   );
 
   if (!res.ok) {
-    throw new Error("Failed to fetch 2025 teams");
+    throw new Error("Failed to fetch 2025 events");
   }
 
-  const teams = await res.json();
-  return teams;
+  const events = await res.json();
+  return events;
 }
 
-async function getPartialStats(
-  page: number,
-  priority: boolean,
-  year: number = 2025
-) {
-  let upage = page;
-  if (year !== 2025) {
-    upage += (2025 - year) * 100;
-  }
-  if (await needToUpdateGlobal(upage, priority)) {
-    const teams = await getTeams(upage, year);
-    const stats: { [key: string]: number } = {};
+async function getFilteredEventKeys(year: number = 2025): Promise<string[]> {
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/events/${year}/simple`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+    }
+  );
 
-    for (const team of teams) {
-      console.log(`Fetching stats for team: ${team}`);
-      try {
-        const teamStats = await getTeamStats(team, year);
-        stats[team] = teamStats.bestFSM;
-      } catch (error) {
-        console.error(`Error fetching stats for team ${team}:`, error);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch events for year ${year}`);
+  }
+
+  const allEvents = await res.json();
+
+  const today = new Date();
+  const allowedTypes = new Set([0, 1, 2, 3, 4, 99]);
+
+  const filtered = allEvents.filter((event: any) => {
+    const eventStart = new Date(event.start_date);
+    return eventStart < today && allowedTypes.has(event.event_type);
+  });
+
+  return filtered.map((event: any) => event.key);
+}
+
+async function getGeneralStats(year: number = 2025) {
+  const events = await getFilteredEventKeys(year);
+
+  const stats: { [key: string]: number[] } = {};
+
+  const cachedEvents = await fetchAllCachedEvents(year.toString());
+  for (const event of cachedEvents) {
+    const eventEndDate = new Date(event.event_end);
+    const today = new Date();
+    const diffTime = today.getTime() - eventEndDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    if (diffDays > 1.0) {
+      for (const team of Object.keys(event.data)) {
+        if (!stats[team]) {
+          stats[team] = [];
+        }
+        stats[team].push(Number(event.data[team].fsm));
+      }
+      const index = events.indexOf(event.code);
+      if (index > -1) {
+        events.splice(index, 1);
       }
     }
-
-    console.log(stats);
-
-    await setGlobal(upage, stats);
-
-    return { stats: stats, updated: true };
-  } else {
-    const stats: { [key: string]: number } = await getGlobalData(upage);
-    return { stats: stats, updated: false };
   }
+
+  console.log(events.length, "events left to process");
+
+  let i = 0;
+
+  for (const event of events) {
+    i++;
+    try {
+      const event_stats = await getEventTeams(event);
+      for (const team of event_stats) {
+        const teamFSM = Number(team.fsm);
+        if (!stats[team.key]) {
+          stats[team.key] = [];
+        }
+        stats[team.key].push(teamFSM);
+      }
+    } catch (error) {
+      // console.error(`Error fetching stats for event ${event}:`, error);
+    }
+    if (i % 10 === 0) {
+      console.log(`Processed ${i} of ${events.length} events...`);
+    }
+  }
+
+  const statsFinal: { [key: string]: string } = {};
+  for (const team of Object.keys(stats)) {
+    const teamFSMs = stats[team].sort((a, b) => b - a);
+    if (teamFSMs.length === 1) {
+      statsFinal[team] = teamFSMs[0].toFixed(2);
+    } else {
+      statsFinal[team] = ((teamFSMs[0] + teamFSMs[1]) / 2).toFixed(2);
+    }
+  }
+
+  return { stats: statsFinal, updated: true };
 }
 
 export async function getGlobalStats(year: number = 2025) {
-  const all_stats: { [key: string]: number } = {};
-  let priority = true;
-  for (let i = 0; i < 22; i++) {
-    const pstats = await getPartialStats(i, priority, year);
-    if (pstats.updated) {
-      priority = false;
-    }
-    const stats = pstats.stats;
-    console.log(
-      `Fetched stats for page ${i}: ${
-        Object.keys(stats).length
-      } teams, updated: ${pstats.updated}`
-    );
-    for (const team in stats) {
-      if (stats.hasOwnProperty(team)) {
-        all_stats[team] = stats[team];
-      }
+  const all_stats: { [key: string]: string } = {};
+
+  const pstats = await getGeneralStats(year);
+
+  const stats = pstats.stats;
+  for (const team in stats) {
+    if (stats.hasOwnProperty(team)) {
+      all_stats[team] = stats[team];
     }
   }
+
   const sortedGlobalStats = Object.entries(all_stats)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => Number(b) - Number(a))
     .map(([teamKey, bestFSM]) => ({
       teamKey,
       bestFSM,

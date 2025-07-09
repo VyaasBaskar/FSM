@@ -53,6 +53,26 @@ export async function getEventDataIfOneDayAfterEnd(eventCode: string) {
   return null;
 }
 
+export async function fetchAllCachedEvents(year: string) {
+  const { data: matchingEvents, error: fetchError } = await supabase
+    .from("EventFSMv1")
+    .select("code, data, event_end")
+    .like("code", `${year}%`);
+
+  if (fetchError) {
+    if (fetchError.code === "PGRST116") {
+      return [];
+    }
+    throw fetchError;
+  }
+
+  if (!matchingEvents) {
+    return [];
+  }
+
+  return matchingEvents;
+}
+
 type TeamDataType = {
   key: string;
   rank: number;
