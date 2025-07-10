@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function OffseasonCheck({ year, checked }: { year: string; checked: boolean }) {
