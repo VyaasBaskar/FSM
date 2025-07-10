@@ -8,6 +8,23 @@ export default async function EventPage({ params }: { params: Promise<{ event: s
 
   return (
     <div className={styles.page} style={{ position: "relative", minHeight: "100vh" }}>
+      <a
+      href="/"
+      style={{
+        position: "absolute",
+        top: 24,
+        left: 24,
+        textDecoration: "none",
+        color: "inherit",
+        fontSize: "4rem",
+        display: "flex",
+        alignItems: "center",
+        zIndex: 10,
+      }}
+      aria-label="Back to Home"
+      >
+      &#8592;
+      </a>
       <main className={styles.main}>
         <h1 className={styles.title}>FunkyStats: Event FSM</h1>
         <h2 className={styles.table}>{eventCode}</h2>

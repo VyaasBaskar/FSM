@@ -25,7 +25,10 @@ async function getEvents(year: number = 2025) {
   return events;
 }
 
-async function getFilteredEventKeys(year: number = 2025): Promise<string[]> {
+async function getFilteredEventKeys(
+  year: number = 2025,
+  includeOffseason: boolean = true
+): Promise<string[]> {
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/events/${year}/simple`,
     {
@@ -42,7 +45,10 @@ async function getFilteredEventKeys(year: number = 2025): Promise<string[]> {
   const allEvents = await res.json();
 
   const today = new Date();
-  const allowedTypes = new Set([0, 1, 2, 3, 4, 99]);
+  const allowedTypes = new Set([0, 1, 2, 3, 4]);
+  if (includeOffseason) {
+    allowedTypes.add(99);
+  }
 
   const filtered = allEvents.filter((event: any) => {
     const eventStart = new Date(event.start_date);
@@ -52,8 +58,11 @@ async function getFilteredEventKeys(year: number = 2025): Promise<string[]> {
   return filtered.map((event: any) => event.key);
 }
 
-async function getGeneralStats(year: number = 2025) {
-  const events = await getFilteredEventKeys(year);
+async function getGeneralStats(
+  year: number = 2025,
+  includeOffseason: boolean = true
+) {
+  const events = await getFilteredEventKeys(year, includeOffseason);
 
   const stats: { [key: string]: number[] } = {};
 
@@ -64,15 +73,15 @@ async function getGeneralStats(year: number = 2025) {
     const diffTime = today.getTime() - eventEndDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
     if (diffDays > 1.0) {
-      for (const team of Object.keys(event.data)) {
-        if (!stats[team]) {
-          stats[team] = [];
-        }
-        stats[team].push(Number(event.data[team].fsm));
-      }
       const index = events.indexOf(event.code);
       if (index > -1) {
         events.splice(index, 1);
+        for (const team of Object.keys(event.data)) {
+          if (!stats[team]) {
+            stats[team] = [];
+          }
+          stats[team].push(Number(event.data[team].fsm));
+        }
       }
     }
   }
@@ -113,10 +122,13 @@ async function getGeneralStats(year: number = 2025) {
   return { stats: statsFinal, updated: true };
 }
 
-export async function getGlobalStats(year: number = 2025) {
+export async function getGlobalStats(
+  year: number = 2025,
+  includeOffseason: boolean = true
+) {
   const all_stats: { [key: string]: string } = {};
 
-  const pstats = await getGeneralStats(year);
+  const pstats = await getGeneralStats(year, includeOffseason);
 
   const stats = pstats.stats;
   for (const team in stats) {

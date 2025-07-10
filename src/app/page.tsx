@@ -23,8 +23,10 @@ export default function Home() {
     }
   };
 
-  const handleGoGlobal = () => {
-    router.push("/global");
+  const handleGoGlobal = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log(`Navigating to global rankings for year: ${year}`);
+    router.push(`/global/${year}`);
   };
 
   return (
@@ -34,24 +36,44 @@ export default function Home() {
         <p>Note: Pages have long loading times. If it is not loading, it will; do not close the tab.</p>
         <div style={{width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12}}>
         <div>
-        <button
-          onClick={handleGoGlobal}
-          className={styles.button}
-          style={{ padding: "12px 24px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
-        >
+        <form onSubmit={handleGoGlobal} style={{ marginBottom: 12, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
+          <button
+            type="submit"
+            className={styles.button}
+            style={{ padding: "12px 24px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+          >
           Explore Global Rankings
-        </button>
+          </button>
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className={styles.input}
+            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+          >
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+          </select>
+        </form>
         </div>
         </div>
         <h1 className={styles.smallheader}> Event Finder </h1>
-        <form onSubmit={handleGoEvent} style={{ marginBottom: 32, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
+        <form onSubmit={handleGoEvent} style={{ marginBottom: 12, display: "flex", gap: 8, textAlign: "center", justifyContent: "center" }}>
           <input
             type="text"
-            placeholder="Enter event code (e.g. 2025cc)"
+            placeholder="Enter event code (e.g. 2025caav)"
             value={eventCode}
             onChange={(e) => setEventCode(e.target.value)}
             className={styles.input}
-            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", width: "290px" }}
           />
           <button
             type="submit"

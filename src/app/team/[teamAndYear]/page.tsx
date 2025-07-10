@@ -65,7 +65,7 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
       &#8592;
       </a>
       <main className={styles.main}>
-      <h1 className={styles.title}>Funkystats Team FSM: {yearprov}</h1>
+      <h1 className={styles.title}>FunkyStats Team FSM: {yearprov}</h1>
       <div style={{ width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12 }}>
       <p className={styles.smallheader}>{teamKey}, {teamInfo.nickname}</p>
       <p className={styles.smallheader}>{teamInfo.state_prov}, {teamInfo.city}, {teamInfo.country}</p>
