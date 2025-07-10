@@ -214,3 +214,16 @@ a.secondary {
   margin-bottom: 4px;
   text-align: center;
 }
+
+.sortableHeader {
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.sortableHeader:hover {
+  background-color: var(--gray-alpha-100);
+}
+
+.sortableHeader:active {
+  background-color: var(--gray-alpha-200);
+}
