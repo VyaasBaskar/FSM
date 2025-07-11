@@ -2,11 +2,14 @@
 import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
 
 const MAX_ITERS = 50;
-const DECAY_FAC = 0.992;
+const DECAY_FAC = 1.005;
 const FSM_UP_FAC = 0.4;
 const FSM_DOWN_FAC = 0.4;
 const ELIM_MULT_FAC = 0.5;
 const ELIM_REDUC_FAC = 0.25;
+
+const attributeMult = 0.2;
+const attributeReduc = 0.03;
 
 function modRoot(x: number) {
   if (x < 0) {
@@ -86,8 +89,144 @@ async function getEventRankings(eventCode: string) {
   return res.json();
 }
 
+function getScore(match: any, alliance: string, attribute: string) {
+  if (attribute === "score") {
+    if (alliance === "red") {
+      return match.alliances.red.score;
+    } else if (alliance === "blue") {
+      return match.alliances.blue.score;
+    }
+  }
+  if (attribute === "algae") {
+    if (alliance === "red") {
+      return (
+        match.score_breakdown.red.netAlgaeCount +
+        match.score_breakdown.red.wallAlgaeCount
+      );
+    } else if (alliance === "blue") {
+      return (
+        match.score_breakdown.blue.netAlgaeCount +
+        match.score_breakdown.blue.wallAlgaeCount
+      );
+    }
+  }
+  if (attribute == "coral") {
+    if (alliance === "red") {
+      let coralCount = 0;
+      for (const coral in match.score_breakdown.red.teleopReef.botRow) {
+        if (match.score_breakdown.red.teleopReef.botRow[coral]) {
+          coralCount += match.score_breakdown.red.teleopReef.botRow[coral];
+        }
+      }
+      for (const coral in match.score_breakdown.red.teleopReef.midRow) {
+        if (match.score_breakdown.red.teleopReef.midRow[coral]) {
+          coralCount += match.score_breakdown.red.teleopReef.midRow[coral];
+        }
+      }
+      for (const coral in match.score_breakdown.red.teleopReef.topRow) {
+        if (match.score_breakdown.red.teleopReef.topRow[coral]) {
+          coralCount += match.score_breakdown.red.teleopReef.topRow[coral];
+        }
+      }
+      coralCount += match.score_breakdown.red.teleopReef.trough;
+
+      return coralCount;
+    } else if (alliance === "blue") {
+      let coralCount = 0;
+      for (const coral in match.score_breakdown.blue.teleopReef.botRow) {
+        if (match.score_breakdown.blue.teleopReef.botRow[coral]) {
+          coralCount += match.score_breakdown.blue.teleopReef.botRow[coral];
+        }
+      }
+      for (const coral in match.score_breakdown.blue.teleopReef.midRow) {
+        if (match.score_breakdown.blue.teleopReef.midRow[coral]) {
+          coralCount += match.score_breakdown.blue.teleopReef.midRow[coral];
+        }
+      }
+      for (const coral in match.score_breakdown.blue.teleopReef.topRow) {
+        if (match.score_breakdown.blue.teleopReef.topRow[coral]) {
+          coralCount += match.score_breakdown.blue.teleopReef.topRow[coral];
+        }
+      }
+      coralCount += match.score_breakdown.blue.teleopReef.trough;
+
+      return coralCount;
+    }
+  }
+  if (attribute == "auto") {
+    if (alliance === "red") {
+      return match.score_breakdown.red.autoCoralCount;
+    } else if (alliance === "blue") {
+      return match.score_breakdown.blue.autoCoralCount;
+    }
+  }
+  return 0;
+}
+
+function updateDict(
+  dict: { [key: string]: number },
+  teams: string[],
+  value: number,
+  iters: number,
+  isAttribute: boolean = false,
+  elims: boolean = false
+) {
+  let dictpred = 0.0;
+  for (const team of teams) {
+    if (!dict[team]) {
+      dict[team] = value / teams.length;
+    }
+    dictpred += dict[team];
+  }
+
+  let delta = modRoot(value - dictpred) / teams.length;
+  if (elims) {
+    delta = elimModRoot((value - dictpred) / teams.length);
+  }
+  if (isAttribute) {
+    delta = (value - dictpred) / teams.length;
+  }
+
+  if (elims) {
+    for (const team of teams) {
+      if (delta > 0) {
+        dict[team] +=
+          delta *
+          (isAttribute ? attributeMult : 1) *
+          ELIM_MULT_FAC *
+          DECAY_FAC ** iters;
+      } else {
+        dict[team] +=
+          delta *
+          (isAttribute ? attributeReduc : 1) *
+          ELIM_REDUC_FAC *
+          DECAY_FAC ** iters;
+      }
+    }
+  } else {
+    for (const team of teams) {
+      if (delta > 0) {
+        dict[team] +=
+          delta *
+          (isAttribute ? attributeMult : 1) *
+          FSM_UP_FAC *
+          DECAY_FAC ** iters;
+      } else {
+        dict[team] +=
+          delta *
+          (isAttribute ? attributeReduc : 1) *
+          FSM_DOWN_FAC *
+          DECAY_FAC ** iters;
+      }
+    }
+  }
+}
+
 function calculateFSM(matches: any[]) {
   const FSMs: { [key: string]: number } = {};
+  const algaeDict: { [key: string]: number } = {};
+  const coralDict: { [key: string]: number } = {};
+  const autoDict: { [key: string]: number } = {};
 
   for (let i = 0; i < MAX_ITERS; i++) {
     for (let j = 0; j < matches.length; j++) {
@@ -97,46 +236,31 @@ function calculateFSM(matches: any[]) {
         const redTeams = match.alliances.red.team_keys;
         const blueTeams = match.alliances.blue.team_keys;
 
-        const redScore = match.alliances.red.score;
-        const blueScore = match.alliances.blue.score;
+        const redScore = getScore(match, "red", "score");
+        const blueScore = getScore(match, "blue", "score");
 
-        let redFSMpred = 0.0;
-        let blueFSMpred = 0.0;
-        for (const team of redTeams) {
-          if (!FSMs[team]) {
-            FSMs[team] = redScore / 3.0;
-          }
-          redFSMpred += FSMs[team];
-        }
-        for (const team of blueTeams) {
-          if (!FSMs[team]) {
-            FSMs[team] = blueScore / 3.0;
-          }
-          blueFSMpred += FSMs[team];
-        }
+        const redAlgae = getScore(match, "red", "algae");
+        const blueAlgae = getScore(match, "blue", "algae");
 
-        const redDelta = modRoot((redScore - redFSMpred) / 3.0);
-        const blueDelta = modRoot((blueScore - blueFSMpred) / 3.0);
+        const redCoral = getScore(match, "red", "coral");
+        const blueCoral = getScore(match, "blue", "coral");
 
-        for (const team of redTeams) {
-          if (redDelta > 0) {
-            FSMs[team] += redDelta * FSM_UP_FAC * DECAY_FAC ** i;
-          } else {
-            FSMs[team] += redDelta * FSM_DOWN_FAC * DECAY_FAC ** i;
-          }
-        }
+        const redAuto = getScore(match, "red", "auto");
+        const blueAuto = getScore(match, "blue", "auto");
 
-        for (const team of blueTeams) {
-          if (blueDelta > 0) {
-            FSMs[team] += blueDelta * FSM_UP_FAC * DECAY_FAC ** i;
-          } else {
-            FSMs[team] += blueDelta * FSM_DOWN_FAC * DECAY_FAC ** i;
-          }
-        }
+        updateDict(FSMs, redTeams, redScore, i);
+        updateDict(FSMs, blueTeams, blueScore, i);
+
+        updateDict(algaeDict, redTeams, redAlgae, i, true);
+        updateDict(algaeDict, blueTeams, blueAlgae, i, true);
+        updateDict(coralDict, redTeams, redCoral, i, true);
+        updateDict(coralDict, blueTeams, blueCoral, i, true);
+        updateDict(autoDict, redTeams, redAuto, i, true);
+        updateDict(autoDict, blueTeams, blueAuto, i, true);
       }
     }
   }
-  return FSMs;
+  return { FSMs, algaeDict, coralDict, autoDict };
 }
 
 function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
@@ -171,14 +295,20 @@ export type TeamDataType = {
   key: string;
   rank: number;
   fsm: string;
+  algae: string;
+  coral: string;
+  auto: string;
 };
 
-export async function getEventTeams(eventCode: string) {
+export async function getEventTeams(
+  eventCode: string,
+  forceRecalc: boolean = false
+): Promise<TeamDataType[]> {
   const TEAMDATA: { [key: string]: TeamDataType } = {};
 
   const orig_data = await getEventDataIfOneDayAfterEnd(eventCode);
 
-  if (orig_data) {
+  if (orig_data && !forceRecalc) {
     console.log("Using cached data for event:", eventCode);
     for (const teamKey in orig_data) {
       const team = orig_data[teamKey];
@@ -186,6 +316,9 @@ export async function getEventTeams(eventCode: string) {
         key: team.key,
         rank: team.rank,
         fsm: team.fsm,
+        algae: "0",
+        coral: "0",
+        auto: "0",
       };
     }
     const sortedData = Object.values(TEAMDATA).sort((a, b) => {
@@ -202,7 +335,11 @@ export async function getEventTeams(eventCode: string) {
   }
   const elimMatches = await getEventElimMatches(eventCode);
   const rankings = (await getEventRankings(eventCode)).rankings;
-  const fsms = calculateFSM(matches);
+  const fsmdata = calculateFSM(matches);
+  const fsms = fsmdata.FSMs;
+  const algaeDict = fsmdata.algaeDict;
+  const coralDict = fsmdata.coralDict;
+  const autoDict = fsmdata.autoDict;
   elimAdjustFSM(elimMatches, fsms);
 
   for (let i = 0; i < rankings.length; i++) {
@@ -215,6 +352,9 @@ export async function getEventTeams(eventCode: string) {
       key: team,
       rank: teamset.rank,
       fsm: fsms[team].toFixed(2),
+      algae: algaeDict[team].toFixed(2),
+      coral: coralDict[team].toFixed(2),
+      auto: autoDict[team].toFixed(2),
     };
   }
 

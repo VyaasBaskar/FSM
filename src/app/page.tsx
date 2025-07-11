@@ -12,9 +12,15 @@ export default function Home() {
 
   const handleGoEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (eventCode.trim()) {
-      router.push(`/event/${eventCode.trim()}`);
+
+    if (eventCode.trim() && eventCode.trim().length > 5) {
+      if (eventCode.trim().charAt(0) === "2" && eventCode.trim().charAt(1) === "0" && eventCode.trim().charAt(2) === "2" && eventCode.trim().charAt(3) === "5") {
+        router.push(`/event25/${eventCode.trim().slice(4)}`);
+      } else {
+        router.push(`/event/${eventCode.trim()}`);
+      }
     }
+
   };
   const handleGoTeam = (e: React.FormEvent) => {
     e.preventDefault();

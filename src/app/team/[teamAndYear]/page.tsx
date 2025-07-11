@@ -72,7 +72,8 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
       <div className={styles.table}>
       <div className={styles.fsmtitle}>FSM: {fsm}, Global Rank: {teamIndex}, Top {pct}%</div>
       <div className={styles.fsmtitle}>Normalized FSM: {normalizedFSM}</div>
-      <table>
+      <div>
+      <table className={styles.table}>
         <thead>
         <tr>
           <th className={styles.th}>Event Code</th>
@@ -90,6 +91,7 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
         ))}
         </tbody>
       </table>
+      </div>
       </div>
       </div>
       </main>
