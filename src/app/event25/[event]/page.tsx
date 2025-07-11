@@ -1,6 +1,7 @@
 import styles from "../../page.module.css";
-import { getEventTeams, TeamDataType } from "../../lib/event";
+import { getEventTeams } from "../../lib/event";
 import LogoButton from "../../components/LogoButton";
+import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
 
 export default async function EventPage({ params }: { params: Promise<{ event: string }> }) {
@@ -29,34 +30,7 @@ export default async function EventPage({ params }: { params: Promise<{ event: s
       <main className={styles.main}>
         <h1 className={styles.title}>FunkyStats: Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>
-        <div style={{justifyContent: "center"}}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.th}>Team</th>
-              <th className={styles.th}>Rank</th>
-              <th className={styles.th}>FSM</th>
-              <th className={styles.th}>Auto</th>
-              <th className={styles.th}>Coral</th>
-              <th className={styles.th}>Algae</th>
-              <th className={styles.th}>CYP</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.map((team: TeamDataType) => (
-              <tr key={team.key}>
-                <td className={styles.td}>{team.key}</td>
-                <td className={styles.td}>{team.rank}</td>
-                <td className={styles.td}>{team.fsm}</td>
-                <td className={styles.td}>{team.auto}</td>
-                <td className={styles.td}>{team.coral}</td>
-                <td className={styles.td}>{team.algae}</td>
-                <td className={styles.td}> {(Number(team.algae) * 1.4 + Number(team.auto) + Number(team.coral)).toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
+        <Event25TeamsTable teams={teams} />
       </main>
       <LogoButton />
     </div>
