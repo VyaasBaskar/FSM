@@ -47,6 +47,32 @@ async function getEventQualMatches(eventCode: string) {
   );
 }
 
+export async function getNumberPlayedMatches(eventCode: string) {
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch matches for event: ${eventCode}`);
+  }
+
+  const matches = await res.json();
+
+  let count = 0;
+  for (const match of matches) {
+    if (match.score_breakdown) {
+      count++;
+    }
+  }
+  return count;
+}
+
 async function getEventElimMatches(eventCode: string) {
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
@@ -233,6 +259,8 @@ function calculateFSM(matches: any[]) {
       const kz = matches.length - j;
       for (let z = 0; z < (kz < 25 ? 3 : kz < 45 ? 2 : 1); z++) {
         const match = matches[j];
+        if (!match.score_breakdown) break;
+
         const redTeams = match.alliances.red.team_keys;
         const blueTeams = match.alliances.blue.team_keys;
 
@@ -265,6 +293,7 @@ function calculateFSM(matches: any[]) {
 
 function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
   for (const match of matches) {
+    if (!match.score_breakdown) break;
     const redTeams = match.alliances.red.team_keys;
     const blueTeams = match.alliances.blue.team_keys;
 
@@ -363,4 +392,40 @@ export async function getEventTeams(
   });
   await addEventToDB(eventCode, TEAMDATA);
   return sortedData;
+}
+
+export async function getMatchPredictions(
+  eventCode: string,
+  FSMs: { [key: string]: number }
+) {
+  const matches = await getEventQualMatches(eventCode);
+  if (matches.length === 0) {
+    throw new Error(`No qualification matches found for event: ${eventCode}`);
+  }
+
+  const predictions: {
+    [key: string]: { preds: string[]; red: string[]; blue: string[] };
+  } = {};
+  for (const match of matches) {
+    if (match.score_breakdown) continue;
+    const redTeams = match.alliances.red.team_keys;
+    const blueTeams = match.alliances.blue.team_keys;
+
+    let redScore = 0;
+    let blueScore = 0;
+
+    for (const team of redTeams) {
+      redScore += FSMs[team] || 0;
+    }
+    for (const team of blueTeams) {
+      blueScore += FSMs[team] || 0;
+    }
+
+    predictions[match.key] = {
+      preds: [redScore.toFixed(0), blueScore.toFixed(0)],
+      red: redTeams,
+      blue: blueTeams,
+    };
+  }
+  return predictions;
 }
