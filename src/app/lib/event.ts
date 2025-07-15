@@ -25,7 +25,10 @@ function elimModRoot(x: number) {
   return Math.pow(x, 1.0 / 3);
 }
 
-async function getEventQualMatches(eventCode: string) {
+async function getEventQualMatches(
+  eventCode: string,
+  anyFine: boolean = false
+) {
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
@@ -43,7 +46,7 @@ async function getEventQualMatches(eventCode: string) {
   const matches = await res.json();
 
   return matches.filter(
-    (match: { comp_level: string }) => match.comp_level === "qm"
+    (match: { comp_level: string }) => match.comp_level === "qm" || anyFine
   );
 }
 
@@ -398,16 +401,21 @@ export async function getMatchPredictions(
   eventCode: string,
   FSMs: { [key: string]: number }
 ) {
-  const matches = await getEventQualMatches(eventCode);
+  const matches = await getEventQualMatches(eventCode, true);
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }
 
   const predictions: {
-    [key: string]: { preds: string[]; red: string[]; blue: string[] };
+    [key: string]: {
+      preds: string[];
+      red: string[];
+      blue: string[];
+      result: number[];
+    };
   } = {};
   for (const match of matches) {
-    if (match.score_breakdown) continue;
+    // if (match.score_breakdown) continue;
     const redTeams = match.alliances.red.team_keys;
     const blueTeams = match.alliances.blue.team_keys;
 
@@ -425,6 +433,7 @@ export async function getMatchPredictions(
       preds: [redScore.toFixed(0), blueScore.toFixed(0)],
       red: redTeams,
       blue: blueTeams,
+      result: [match.alliances.red.score, match.alliances.blue.score],
     };
   }
   return predictions;
