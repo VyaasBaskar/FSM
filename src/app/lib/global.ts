@@ -1,3 +1,5 @@
+"use server";
+
 /* eslint-disable */
 import { getEventTeams } from "./event";
 import {
@@ -7,9 +9,9 @@ import {
   fetchAllCachedEvents,
 } from "./supabase";
 
-async function getEvents(year: number = 2025) {
+export async function getEvents(year: number = 2025) {
   const res = await fetch(
-    `https://www.thebluealliance.com/api/v3/events/${year}/keys`,
+    `https://www.thebluealliance.com/api/v3/events/${year}/simple`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
@@ -22,7 +24,45 @@ async function getEvents(year: number = 2025) {
   }
 
   const events = await res.json();
-  return events;
+  const events_map: { key: string; value: string }[] = [];
+  events.forEach((event: any) => {
+    if (event.key && event.name) {
+      events_map.push({ key: event.key, value: event.key + ": " + event.name });
+    }
+  });
+  return events_map;
+}
+
+export async function getTeams(year: number = 2025) {
+  const teams_map: { key: string; value: string }[] = [];
+  for (let i = 0; i < 22; i++) {
+    const res = await fetch(
+      `https://www.thebluealliance.com/api/v3/teams/${year}/${i}/simple`,
+      {
+        headers: {
+          "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch teams");
+    }
+
+    const teams = await res.json();
+
+    teams.forEach((team: any) => {
+      if (team.key && team.nickname) {
+        team.key = team.key.replace("frc", "");
+        teams_map.push({
+          key: team.key,
+          value: team.key + ": " + team.nickname,
+        });
+      }
+    });
+  }
+
+  return teams_map;
 }
 
 async function getFilteredEventKeys(
