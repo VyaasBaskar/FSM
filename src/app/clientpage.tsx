@@ -42,10 +42,10 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
   };
 
   return (
-    <div className={styles.page} style={{ position: "relative", minHeight: "100vh" }}>
+    <div className={styles.page} style={{ position: "relative", minHeight: "100vh", justifyContent: "center", alignItems: "center", textAlign: "center", display: "flex", flexDirection: "column" }}>
       <main className={styles.main}>
         <h1 className={styles.megatitle}>FunkyStats</h1>
-        <p>Note: Pages have long loading times. If it is not loading, it will; do not close the tab.</p>
+        <p style={{paddingInline:"15%"}}>FunkyStats is an FRC data analytics tool that utilizes FSM, the Funky Scoring Metric, to make highly accurate predictions of teams' in-match performance.</p>
 
         <div style={{ width: "100%", textAlign: "center", marginBottom: 12, marginTop: 12 }}>
           <form onSubmit={handleGoGlobal} style={{ marginBottom: 12, display: "flex", gap: 8, justifyContent: "center" }}>
@@ -129,7 +129,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             {teams
               .filter(team =>
             team.value.toLowerCase().includes(teamCode.toLowerCase())
-                )
+                ).sort((a, b) => Number(a.key) - Number(b.key))
                 .slice(0, 5)
                 .map(team => (
             <option key={team.key} value={team.value} />

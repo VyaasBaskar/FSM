@@ -74,6 +74,50 @@ export async function fetchAllCachedEvents(year: string) {
   return matchingEvents;
 }
 
+export async function fetchAll25Teams() {
+  const { count, error: countError } = await supabase
+    .from("Teams2025")
+    .select("*", { count: "exact", head: true });
+
+  if (!count || count === 0) {
+    return [];
+  }
+
+  let allTeams: any[] = [];
+  const chunkSize = 1000;
+  for (let start = 0; start < count; start += chunkSize) {
+    const { data: teamsChunk, error: fetchError } = await supabase
+      .from("Teams2025")
+      .select("key, value")
+      .range(start, Math.min(start + chunkSize - 1, count - 1));
+
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
+        return [];
+      }
+      throw fetchError;
+    }
+
+    if (teamsChunk && teamsChunk.length > 0) {
+      allTeams = allTeams.concat(teamsChunk);
+    }
+  }
+
+  if (allTeams.length === 0) {
+    return [];
+  }
+
+  return allTeams;
+}
+
+export async function setAll25Teams(teams: { key: string; value: string }[]) {
+  const { error } = await supabase.from("Teams2025").upsert(teams);
+
+  if (error) {
+    throw error;
+  }
+}
+
 type TeamDataType = {
   key: string;
   rank: number;

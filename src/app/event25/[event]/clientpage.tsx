@@ -9,10 +9,10 @@ import LogoButton from "@/app/components/LogoButton";
 
 type MatchPredictions = {
   [key: string]: {
-    preds: string[]; // predicted scores: [red, blue]
+    preds: string[]; 
     red: string[];
     blue: string[];
-    result: number[]; // actual result: [red, blue]
+    result: number[]; 
   };
 };
 

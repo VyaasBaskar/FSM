@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FunkyStats",
-  description: "frc846's scoring estimation system",
+  description: "A high accuracy scoring estimation system",
 };
 
 export default function RootLayout({
