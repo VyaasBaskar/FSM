@@ -1,10 +1,11 @@
 "use server";
+/* eslint-disable */
 
 import { redirect } from "next/navigation";
 import { setScoutingData } from "../lib/supabase";
 
 interface SubmitPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));

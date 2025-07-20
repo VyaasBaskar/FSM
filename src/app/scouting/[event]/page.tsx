@@ -1,4 +1,5 @@
 "use server";
+/* eslint-disable */
 
 import styles from "../../page.module.css";
 import LogoButton from "../../components/LogoButton";

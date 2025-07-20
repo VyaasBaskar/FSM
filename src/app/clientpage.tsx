@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
 interface ClientHomeProps {
-  events: {key: string; value: string}[];
-  teams: {key: string; value: string}[];
+  events: { key: string; value: string }[];
+  teams: { key: string; value: string }[];
 }
 
 export default function ClientHome({ events, teams }: ClientHomeProps) {
@@ -68,17 +68,55 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
   };
 
   return (
-    <div className={styles.page} style={{ position: "relative", minHeight: "100vh", justifyContent: "center", alignItems: "center", textAlign: "center", display: "flex", flexDirection: "column" }}>
+    <div
+      className={styles.page}
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <main className={styles.main}>
         <h1 className={styles.megatitle}>FunkyStats</h1>
-        <p style={{paddingInline:"15%"}}>FunkyStats is an FRC data analytics tool that utilizes FSM, the Funky Scoring Metric, to make highly accurate predictions of teams' in-match performance.</p>
+        <p style={{ paddingInline: "15%" }}>
+          FunkyStats is an FRC data analytics tool that utilizes FSM, the Funky
+          Scoring Metric, to make highly accurate predictions of teams&#39;
+          in-match performance.
+        </p>
 
-        <div style={{ width: "100%", textAlign: "center", marginBottom: 12, marginTop: 12 }}>
-          <form onSubmit={handleGoGlobal} style={{ marginBottom: 12, display: "flex", gap: 8, justifyContent: "center" }}>
+        <div
+          style={{
+            width: "100%",
+            textAlign: "center",
+            marginBottom: 12,
+            marginTop: 12,
+          }}
+        >
+          <form
+            onSubmit={handleGoGlobal}
+            style={{
+              marginBottom: 12,
+              display: "flex",
+              gap: 8,
+              justifyContent: "center",
+            }}
+          >
             <button
               type="submit"
               className={styles.button}
-              style={{ padding: "12px 24px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+              style={{
+                padding: "12px 24px",
+                fontSize: 16,
+                borderRadius: 4,
+                background: "#0070f3",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
               Explore Global Rankings
             </button>
@@ -86,24 +124,53 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               value={year}
               onChange={(e) => setYear(e.target.value)}
               className={styles.input}
-              style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+              style={{
+                padding: 8,
+                fontSize: 16,
+                borderRadius: 4,
+                border: "1px solid #ccc",
+              }}
             >
-              {["2025","2024","2023","2022","2019","2018","2017","2016","2015","2014","2013"].map((y) => (
-                <option key={y} value={y}>{y}</option>
+              {[
+                "2025",
+                "2024",
+                "2023",
+                "2022",
+                "2019",
+                "2018",
+                "2017",
+                "2016",
+                "2015",
+                "2014",
+                "2013",
+              ].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
               ))}
             </select>
           </form>
         </div>
 
         <h1 className={styles.smallheader}>Event Finder</h1>
-        <form onSubmit={handleGoEvent} style={{ marginBottom: 12, display: "flex", gap: 8, justifyContent: "center" }}>
+        <form
+          onSubmit={handleGoEvent}
+          style={{
+            marginBottom: 12,
+            display: "flex",
+            gap: 8,
+            justifyContent: "center",
+          }}
+        >
           <input
             list="event-options"
             placeholder="Search or enter event code"
             value={eventCode}
             onChange={(e) => {
               const selectedValue = e.target.value;
-              const matchedEvent = events.find(event => event.value === selectedValue);
+              const matchedEvent = events.find(
+                (event) => event.value === selectedValue
+              );
               if (matchedEvent) {
                 setEventCode(matchedEvent.key);
               } else {
@@ -111,29 +178,51 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               }
             }}
             className={styles.input}
-            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", width: 290 }}
+            style={{
+              padding: 8,
+              fontSize: 16,
+              borderRadius: 4,
+              border: "1px solid #ccc",
+              width: 290,
+            }}
           />
           <datalist id="event-options">
             {events
-              .filter(event =>
+              .filter((event) =>
                 event.value.toLowerCase().includes(eventCode.toLowerCase())
               )
               .slice(0, 5)
-              .map(event => (
+              .map((event) => (
                 <option key={event.key} value={event.value} />
               ))}
           </datalist>
           <button
             type="submit"
             className={styles.button}
-            style={{ padding: "8px 16px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 16,
+              borderRadius: 4,
+              background: "#0070f3",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Go
           </button>
         </form>
 
         <h1 className={styles.smallheader}>Team Finder</h1>
-        <form onSubmit={handleGoTeam} style={{ marginBottom: 32, display: "flex", gap: 8, justifyContent: "center" }}>
+        <form
+          onSubmit={handleGoTeam}
+          style={{
+            marginBottom: 32,
+            display: "flex",
+            gap: 8,
+            justifyContent: "center",
+          }}
+        >
           <input
             list="team-options"
             type="text"
@@ -141,7 +230,9 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             value={teamCode}
             onChange={(e) => {
               const selectedValue = e.target.value;
-              const matchedTeam = teams.find(team => team.value === selectedValue);
+              const matchedTeam = teams.find(
+                (team) => team.value === selectedValue
+              );
               if (matchedTeam) {
                 setTeamCode(matchedTeam.key);
               } else {
@@ -149,15 +240,21 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               }
             }}
             className={styles.input}
-            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+            style={{
+              padding: 8,
+              fontSize: 16,
+              borderRadius: 4,
+              border: "1px solid #ccc",
+            }}
           />
           <datalist id="team-options">
             {teams
-              .filter(team =>
+              .filter((team) =>
                 team.value.toLowerCase().includes(teamCode.toLowerCase())
-              ).sort((a, b) => Number(a.key) - Number(b.key))
+              )
+              .sort((a, b) => Number(a.key) - Number(b.key))
               .slice(0, 5)
-              .map(team => (
+              .map((team) => (
                 <option key={team.key} value={team.value} />
               ))}
           </datalist>
@@ -165,29 +262,66 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             value={year}
             onChange={(e) => setYear(e.target.value)}
             className={styles.input}
-            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc" }}
+            style={{
+              padding: 8,
+              fontSize: 16,
+              borderRadius: 4,
+              border: "1px solid #ccc",
+            }}
           >
-            {["2025","2024","2023","2022","2019","2018","2017","2016","2015","2014","2013"].map((y) => (
-              <option key={y} value={y}>{y}</option>
+            {[
+              "2025",
+              "2024",
+              "2023",
+              "2022",
+              "2019",
+              "2018",
+              "2017",
+              "2016",
+              "2015",
+              "2014",
+              "2013",
+            ].map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
           <button
             type="submit"
             className={styles.button}
-            style={{ padding: "8px 16px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 16,
+              borderRadius: 4,
+              background: "#0070f3",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Go
           </button>
         </form>
         <h1 className={styles.smallheader}>Scouting (846 use only)</h1>
-        <form onSubmit={handleGoScouting} style={{ marginBottom: 12, display: "flex", gap: 8, justifyContent: "center" }}>
+        <form
+          onSubmit={handleGoScouting}
+          style={{
+            marginBottom: 12,
+            display: "flex",
+            gap: 8,
+            justifyContent: "center",
+          }}
+        >
           <input
             list="event-options"
             placeholder="Search or enter event code"
             value={eventCode}
             onChange={(e) => {
               const selectedValue = e.target.value;
-              const matchedEvent = events.find(event => event.value === selectedValue);
+              const matchedEvent = events.find(
+                (event) => event.value === selectedValue
+              );
               if (matchedEvent) {
                 setEventCode(matchedEvent.key);
               } else {
@@ -195,22 +329,36 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               }
             }}
             className={styles.input}
-            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", width: 290 }}
+            style={{
+              padding: 8,
+              fontSize: 16,
+              borderRadius: 4,
+              border: "1px solid #ccc",
+              width: 290,
+            }}
           />
           <datalist id="event-options">
             {events
-              .filter(event =>
+              .filter((event) =>
                 event.value.toLowerCase().includes(eventCode.toLowerCase())
               )
               .slice(0, 5)
-              .map(event => (
+              .map((event) => (
                 <option key={event.key} value={event.value} />
               ))}
           </datalist>
           <button
             type="submit"
             className={styles.button}
-            style={{ padding: "8px 16px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 16,
+              borderRadius: 4,
+              background: "#0070f3",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Go
           </button>
@@ -227,7 +375,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               zIndex: 2000,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
             }}
             onClick={() => {
               setShowScoutingPopup(false);
@@ -242,24 +390,39 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 borderRadius: 8,
                 boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
                 minWidth: 320,
-                position: "relative"
+                position: "relative",
               }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
-              <h2 style={{marginBottom: 16}}>Enter Scouting Password</h2>
+              <h2 style={{ marginBottom: 16 }}>Enter Scouting Password</h2>
               <form onSubmit={handleScoutingSubmit}>
                 <input
                   type="password"
                   value={scoutingPassword}
-                  onChange={e => setScoutingPassword(e.target.value)}
+                  onChange={(e) => setScoutingPassword(e.target.value)}
                   placeholder="Password"
-                  style={{width: "100%", padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", marginBottom: 12}}
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    fontSize: 16,
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                    marginBottom: 12,
+                  }}
                   autoFocus
                 />
                 {scoutingError && (
-                  <div style={{color: "red", marginBottom: 8}}>{scoutingError}</div>
+                  <div style={{ color: "red", marginBottom: 8 }}>
+                    {scoutingError}
+                  </div>
                 )}
-                <div style={{display: "flex", gap: 8, justifyContent: "flex-end"}}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => {
@@ -267,13 +430,27 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                       setScoutingPassword("");
                       setScoutingError("");
                     }}
-                    style={{padding: "8px 16px", borderRadius: 4, border: "none", background: "#ccc", color: "#333", cursor: "pointer"}}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 4,
+                      border: "none",
+                      background: "#ccc",
+                      color: "#333",
+                      cursor: "pointer",
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    style={{padding: "8px 16px", borderRadius: 4, border: "none", background: "#0070f3", color: "#fff", cursor: "pointer"}}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 4,
+                      border: "none",
+                      background: "#0070f3",
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
                   >
                     Submit
                   </button>
@@ -287,7 +464,14 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
       <img
         src="/logo846.png"
         alt="Logo"
-        style={{ position: "fixed", right: 16, bottom: 16, width: 68, height: 80, zIndex: 1000 }}
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: 16,
+          width: 68,
+          height: 80,
+          zIndex: 1000,
+        }}
       />
     </div>
   );
