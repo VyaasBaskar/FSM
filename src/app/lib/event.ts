@@ -25,7 +25,7 @@ function elimModRoot(x: number) {
   return Math.pow(x, 1.0 / 3);
 }
 
-async function getEventQualMatches(
+export async function getEventQualMatches(
   eventCode: string,
   anyFine: boolean = false
 ) {

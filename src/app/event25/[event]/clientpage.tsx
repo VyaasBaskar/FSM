@@ -9,10 +9,10 @@ import LogoButton from "@/app/components/LogoButton";
 
 type MatchPredictions = {
   [key: string]: {
-    preds: string[]; 
+    preds: string[];
     red: string[];
     blue: string[];
-    result: number[]; 
+    result: number[];
   };
 };
 
@@ -32,7 +32,6 @@ export default function ClientPage({
   const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
-    // Helper to extract match number and type
     const getTypeOrder = (key: string) => {
       if (key.includes("_f")) return 2;
       if (key.includes("_sf")) return 1;
@@ -45,7 +44,6 @@ export default function ClientPage({
       return typeA - typeB;
     }
 
-    // Extract match number for sorting within type
     const numA = parseInt(a.slice(4).match(/\d+/)?.[0] ?? "0", 10);
     const numB = parseInt(b.slice(4).match(/\d+/)?.[0] ?? "0", 10);
 
@@ -56,7 +54,11 @@ export default function ClientPage({
   });
 
   const resultsWithGroundTruth = entries.filter(
-    ([, match]) => match.result && match.result.length === 2 && match.result[0] !== -1 && match.result[1] !== -1
+    ([, match]) =>
+      match.result &&
+      match.result.length === 2 &&
+      match.result[0] !== -1 &&
+      match.result[1] !== -1
   );
 
   const correctPredictions = resultsWithGroundTruth.filter(([, match]) => {
@@ -65,11 +67,7 @@ export default function ClientPage({
 
     const [actualRed, actualBlue] = match.result;
     const actualWinner =
-      actualRed > actualBlue
-        ? "red"
-        : actualBlue > actualRed
-        ? "blue"
-        : "tie";
+      actualRed > actualBlue ? "red" : actualBlue > actualRed ? "blue" : "tie";
 
     return predWinner === actualWinner;
   });
@@ -80,7 +78,10 @@ export default function ClientPage({
       : 0;
 
   return (
-    <div className={styles.page} style={{ position: "relative", minHeight: "100vh" }}>
+    <div
+      className={styles.page}
+      style={{ position: "relative", minHeight: "100vh" }}
+    >
       <Link
         href="/"
         style={{
@@ -103,8 +104,14 @@ export default function ClientPage({
         <h1 className={styles.title}>FunkyStats: Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>
 
-        {/* Tab Buttons */}
-        <div style={{ display: "flex", gap: "1rem", width: "100%", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            width: "100%",
+            justifyContent: "center",
+          }}
+        >
           <button
             onClick={() => setActiveTab("stats")}
             style={{
@@ -127,7 +134,11 @@ export default function ClientPage({
               fontWeight: "bold",
               borderRadius: 6,
               background: activeTab === "preds" ? "#333" : "#222",
-              color: havePreds ? (activeTab === "preds" ? "#fff" : "#ccc") : "#888",
+              color: havePreds
+                ? activeTab === "preds"
+                  ? "#fff"
+                  : "#ccc"
+                : "#888",
               border: "1px solid #555",
               cursor: havePreds ? "pointer" : "not-allowed",
             }}
@@ -167,17 +178,19 @@ export default function ClientPage({
             <h2 style={{ color: "#fafafa" }}>Match Predictions</h2>
             <p style={{ color: "#ccc", fontSize: "1rem", marginTop: "0.2rem" }}>
               Prediction Accuracy: {correctPredictions.length} /{" "}
-              {resultsWithGroundTruth.length} (
-              {accuracy.toFixed(1)}%)
+              {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
             </p>
             <br />
             <ul style={{ listStyle: "none", padding: 0, width: "100%" }}>
               {entries.map(([matchKey, match]) => {
                 const [predRed, predBlue] = match.preds;
-                const predWinner = Number(predRed) > Number(predBlue) ? "red" : "blue";
+                const predWinner =
+                  Number(predRed) > Number(predBlue) ? "red" : "blue";
 
                 const hasResult = match.result && match.result.length === 2;
-                const [actualRed, actualBlue] = hasResult ? match.result : [null, null];
+                const [actualRed, actualBlue] = hasResult
+                  ? match.result
+                  : [null, null];
                 const actualWinner =
                   hasResult && actualRed !== null && actualBlue !== null
                     ? actualRed > actualBlue
@@ -199,15 +212,20 @@ export default function ClientPage({
                       background: "#222",
                     }}
                   >
-                    <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>{matchKey}</div>
+                    <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
+                      {matchKey}
+                    </div>
                     <div style={{ marginBottom: "0.5rem" }}>
-                      <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>Red</span>{" "}
+                      <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>
+                        Red
+                      </span>{" "}
                       {match.red.join(", ")} {" vs. "}
-                      <span style={{ color: "#4d8cff", fontWeight: "bold" }}>Blue</span>{" "}
+                      <span style={{ color: "#4d8cff", fontWeight: "bold" }}>
+                        Blue
+                      </span>{" "}
                       {match.blue.join(", ")}
                     </div>
 
-                    {/* Score Row with Pred vs Real */}
                     <div
                       style={{
                         marginBottom: "0.5rem",
@@ -221,20 +239,26 @@ export default function ClientPage({
                       }}
                     >
                       <div>
-                        <strong style={{ fontSize: "0.9rem", marginRight: 4 }}>Pred:</strong>
+                        <strong style={{ fontSize: "0.9rem", marginRight: 4 }}>
+                          Pred:
+                        </strong>
                         <span style={{ color: "#ff4d4d" }}>{predRed}</span> --{" "}
                         <span style={{ color: "#4d8cff" }}>{predBlue}</span>
                       </div>
                       {hasResult && (
                         <div>
-                          <strong style={{ fontSize: "0.9rem", marginRight: 4 }}>Real:</strong>
-                          <span style={{ color: "#ff4d4d" }}>{actualRed}</span> --{" "}
+                          <strong
+                            style={{ fontSize: "0.9rem", marginRight: 4 }}
+                          >
+                            Real:
+                          </strong>
+                          <span style={{ color: "#ff4d4d" }}>{actualRed}</span>{" "}
+                          --{" "}
                           <span style={{ color: "#4d8cff" }}>{actualBlue}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Predicted Winner */}
                     <div style={{ marginBottom: hasResult ? "0.5rem" : "0" }}>
                       Predicted winner:{" "}
                       <span
@@ -250,7 +274,6 @@ export default function ClientPage({
                       </span>
                     </div>
 
-                    {/* Actual Winner */}
                     {hasResult && (
                       <div>
                         Winner:{" "}

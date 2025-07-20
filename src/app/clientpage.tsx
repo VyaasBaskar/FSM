@@ -41,6 +41,32 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
     router.push(`/global/${year}`);
   };
 
+  const [showScoutingPopup, setShowScoutingPopup] = useState(false);
+  const [scoutingPassword, setScoutingPassword] = useState("");
+  const [scoutingError, setScoutingError] = useState("");
+
+  const handleGoScouting = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowScoutingPopup(true);
+    setScoutingError("");
+  };
+
+  const handleScoutingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (scoutingPassword === "banana") {
+      setShowScoutingPopup(false);
+      setScoutingPassword("");
+      setScoutingError("");
+      const trimmed = eventCode.trim();
+      if (trimmed && trimmed.length > 5) {
+        router.push(`/scouting/${trimmed}`);
+      }
+    } else {
+      setScoutingError("Incorrect password.");
+    }
+  };
+
   return (
     <div className={styles.page} style={{ position: "relative", minHeight: "100vh", justifyContent: "center", alignItems: "center", textAlign: "center", display: "flex", flexDirection: "column" }}>
       <main className={styles.main}>
@@ -75,7 +101,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             list="event-options"
             placeholder="Search or enter event code"
             value={eventCode}
-           onChange={(e) => {
+            onChange={(e) => {
               const selectedValue = e.target.value;
               const matchedEvent = events.find(event => event.value === selectedValue);
               if (matchedEvent) {
@@ -87,8 +113,8 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             className={styles.input}
             style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", width: 290 }}
           />
-            <datalist id="event-options">
-              {events
+          <datalist id="event-options">
+            {events
               .filter(event =>
                 event.value.toLowerCase().includes(eventCode.toLowerCase())
               )
@@ -96,7 +122,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               .map(event => (
                 <option key={event.key} value={event.value} />
               ))}
-            </datalist>
+          </datalist>
           <button
             type="submit"
             className={styles.button}
@@ -117,9 +143,9 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               const selectedValue = e.target.value;
               const matchedTeam = teams.find(team => team.value === selectedValue);
               if (matchedTeam) {
-          setTeamCode(matchedTeam.key);
+                setTeamCode(matchedTeam.key);
               } else {
-          setTeamCode(selectedValue);
+                setTeamCode(selectedValue);
               }
             }}
             className={styles.input}
@@ -128,12 +154,12 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
           <datalist id="team-options">
             {teams
               .filter(team =>
-            team.value.toLowerCase().includes(teamCode.toLowerCase())
-                ).sort((a, b) => Number(a.key) - Number(b.key))
-                .slice(0, 5)
-                .map(team => (
-            <option key={team.key} value={team.value} />
-                ))}
+                team.value.toLowerCase().includes(teamCode.toLowerCase())
+              ).sort((a, b) => Number(a.key) - Number(b.key))
+              .slice(0, 5)
+              .map(team => (
+                <option key={team.key} value={team.value} />
+              ))}
           </datalist>
           <select
             value={year}
@@ -153,6 +179,109 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             Go
           </button>
         </form>
+        <h1 className={styles.smallheader}>Scouting (846 use only)</h1>
+        <form onSubmit={handleGoScouting} style={{ marginBottom: 12, display: "flex", gap: 8, justifyContent: "center" }}>
+          <input
+            list="event-options"
+            placeholder="Search or enter event code"
+            value={eventCode}
+            onChange={(e) => {
+              const selectedValue = e.target.value;
+              const matchedEvent = events.find(event => event.value === selectedValue);
+              if (matchedEvent) {
+                setEventCode(matchedEvent.key);
+              } else {
+                setEventCode(selectedValue);
+              }
+            }}
+            className={styles.input}
+            style={{ padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", width: 290 }}
+          />
+          <datalist id="event-options">
+            {events
+              .filter(event =>
+                event.value.toLowerCase().includes(eventCode.toLowerCase())
+              )
+              .slice(0, 5)
+              .map(event => (
+                <option key={event.key} value={event.value} />
+              ))}
+          </datalist>
+          <button
+            type="submit"
+            className={styles.button}
+            style={{ padding: "8px 16px", fontSize: 16, borderRadius: 4, background: "#0070f3", color: "#fff", border: "none", cursor: "pointer" }}
+          >
+            Go
+          </button>
+        </form>
+        {showScoutingPopup && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.4)",
+              zIndex: 2000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+            onClick={() => {
+              setShowScoutingPopup(false);
+              setScoutingPassword("");
+              setScoutingError("");
+            }}
+          >
+            <div
+              style={{
+                background: "orange",
+                padding: 32,
+                borderRadius: 8,
+                boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
+                minWidth: 320,
+                position: "relative"
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h2 style={{marginBottom: 16}}>Enter Scouting Password</h2>
+              <form onSubmit={handleScoutingSubmit}>
+                <input
+                  type="password"
+                  value={scoutingPassword}
+                  onChange={e => setScoutingPassword(e.target.value)}
+                  placeholder="Password"
+                  style={{width: "100%", padding: 8, fontSize: 16, borderRadius: 4, border: "1px solid #ccc", marginBottom: 12}}
+                  autoFocus
+                />
+                {scoutingError && (
+                  <div style={{color: "red", marginBottom: 8}}>{scoutingError}</div>
+                )}
+                <div style={{display: "flex", gap: 8, justifyContent: "flex-end"}}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowScoutingPopup(false);
+                      setScoutingPassword("");
+                      setScoutingError("");
+                    }}
+                    style={{padding: "8px 16px", borderRadius: 4, border: "none", background: "#ccc", color: "#333", cursor: "pointer"}}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{padding: "8px 16px", borderRadius: 4, border: "none", background: "#0070f3", color: "#fff", cursor: "pointer"}}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <img

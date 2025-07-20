@@ -23,6 +23,50 @@ async function eventExists(eventCode: string): Promise<boolean> {
   return !!data;
 }
 
+export async function setScoutingData(
+  key: string,
+  data: string
+): Promise<void> {
+  const { data: existing, error: fetchError } = await supabase
+    .from("Scouting25")
+    .select("team_match")
+    .eq("team_match", key)
+    .single();
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    throw fetchError;
+  }
+
+  let error;
+  if (existing) {
+    ({ error } = await supabase
+      .from("Scouting25")
+      .update({ data: data })
+      .eq("team_match", key));
+  } else {
+    ({ error } = await supabase
+      .from("Scouting25")
+      .insert({ team_match: key, data: data }));
+  }
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function getScoutingData(eventCode: string) {
+  const { data, error } = await supabase
+    .from("Scouting25")
+    .select("team_match, data")
+    .like("team_match", `${eventCode}-%`);
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function getEventDataIfOneDayAfterEnd(eventCode: string) {
   const { data: existingEvent, error: fetchError } = await supabase
     .from("EventFSMv1")

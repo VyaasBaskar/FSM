@@ -24,7 +24,7 @@ export default function SortableTable<T>({
   getItemKey,
 }: SortableTableProps<T>) {
   const [sortField, setSortField] = useState(defaultSort);
-  const [isAscending, setIsAscending] = useState(true);
+  const [isAscending, setIsAscending] = useState(defaultSort === "rank");
 
   const sortedData = useMemo(() => {
     const sortColumn = columns.find((col) => col.key === sortField);
