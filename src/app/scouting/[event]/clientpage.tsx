@@ -18,7 +18,7 @@ type TeamDataScouting = {
   [team: string]: {
     climbed: boolean;
     autoIsSide: boolean;
-    autoIsGood: boolean;
+    autoScore: number;
     coralScore: number;
     algaeScore: number;
   };
@@ -32,7 +32,7 @@ function setDefaultTeamData(
     teamData[teamNumber] = {
       climbed: false,
       autoIsSide: false,
-      autoIsGood: false,
+      autoScore: 0,
       coralScore: 0,
       algaeScore: 0,
     };
@@ -83,7 +83,13 @@ function TeamRepresentation(
         onClick={() => {
           const newTd = { ...td };
           setDefaultTeamData(newTd, teamNumber);
-          newTd[teamNumber].autoIsGood = !newTd[teamNumber].autoIsGood;
+          let current = newTd[teamNumber].autoScore || 1;
+          if (current === 0) current = 1;
+          let next = current >= 4 ? 1 : current + 1;
+          if (next === 1) {
+            next = 0;
+          }
+          newTd[teamNumber].autoScore = next;
           setTd(newTd);
         }}
         style={{
@@ -92,12 +98,34 @@ function TeamRepresentation(
           borderRadius: 4,
           border: "none",
           color: "#fff",
-          backgroundColor: td[teamNumber]?.autoIsGood ? "green" : "red",
+          backgroundColor: (() => {
+            switch (td[teamNumber]?.autoScore) {
+              case 4:
+                return "#1976d2";
+              case 3:
+                return "#388e3c";
+              case 2:
+                return "#f78401ff";
+              default:
+                return "#d32f2f";
+            }
+          })(),
           cursor: "pointer",
           margin: "8px",
         }}
       >
-        {td[teamNumber]?.autoIsGood ? "Auto is Good" : "Auto is Bad"}
+        {(() => {
+          switch (td[teamNumber]?.autoScore) {
+            case 4:
+              return "Elite";
+            case 3:
+              return "Good";
+            case 2:
+              return "Mid";
+            default:
+              return "Bad";
+          }
+        })()}
       </button>
       <br></br>
       <br></br>

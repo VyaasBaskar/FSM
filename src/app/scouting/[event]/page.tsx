@@ -37,14 +37,18 @@ export default async function ScoutingPage({
       sideAutoGoodRate[j] = [0, 0];
     }
     sideAutoGoodRate[j][0] +=
-      scoutingData[j].autoIsGood && scoutingData[j].autoIsSide ? 1 : 0;
+      scoutingData[j].autoIsSide && scoutingData[j].autoScore
+        ? scoutingData[j].autoScore
+        : 0;
     sideAutoGoodRate[j][1] += scoutingData[j].autoIsSide ? 1 : 0;
 
     if (!centerAutoGoodRate[j]) {
       centerAutoGoodRate[j] = [0, 0];
     }
     centerAutoGoodRate[j][0] +=
-      scoutingData[j].autoIsGood && !scoutingData[j].autoIsSide ? 1 : 0;
+      !scoutingData[j].autoIsSide && scoutingData[j].autoScore
+        ? scoutingData[j].autoScore
+        : 0;
     centerAutoGoodRate[j][1] += scoutingData[j].autoIsSide ? 0 : 1;
 
     if (!coralScores[j]) {
@@ -74,7 +78,7 @@ export default async function ScoutingPage({
       realCenterAutoGoodRate[team] = 0;
     } else {
       realCenterAutoGoodRate[team] =
-        centerAutoGoodRate[team][0] / centerAutoGoodRate[team][1];
+        (0.25 * centerAutoGoodRate[team][0]) / centerAutoGoodRate[team][1];
     }
   }
   const realSideAutoGoodRate: { [key: string]: number } = {};
@@ -83,7 +87,7 @@ export default async function ScoutingPage({
       realSideAutoGoodRate[team] = 0;
     } else {
       realSideAutoGoodRate[team] =
-        sideAutoGoodRate[team][0] / sideAutoGoodRate[team][1];
+        (0.25 * sideAutoGoodRate[team][0]) / sideAutoGoodRate[team][1];
     }
   }
   const realCoralScore: { [key: string]: number } = {};
