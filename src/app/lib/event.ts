@@ -189,6 +189,13 @@ function getScore(match: any, alliance: string, attribute: string) {
       return match.score_breakdown.blue.autoCoralCount;
     }
   }
+  if (attribute == "penalty") {
+    if (alliance === "red") {
+      return match.score_breakdown.blue.foulCount;
+    } else if (alliance === "blue") {
+      return match.score_breakdown.red.foulCount;
+    }
+  }
   return 0;
 }
 
@@ -257,6 +264,7 @@ function calculateFSM(matches: any[]) {
   const coralDict: { [key: string]: number } = {};
   const autoDict: { [key: string]: number } = {};
   const climbDict: { [key: string]: number } = {};
+  const foulDict: { [key: string]: number } = {};
 
   for (let i = 0; i < MAX_ITERS; i++) {
     for (let j = 0; j < matches.length; j++) {
@@ -283,6 +291,9 @@ function calculateFSM(matches: any[]) {
         const redClimb = match.score_breakdown.red.endGameBargePoints;
         const blueClimb = match.score_breakdown.blue.endGameBargePoints;
 
+        const redFoul = getScore(match, "red", "penalty");
+        const blueFoul = getScore(match, "blue", "penalty");
+
         updateDict(FSMs, redTeams, redScore, i);
         updateDict(FSMs, blueTeams, blueScore, i);
 
@@ -294,10 +305,12 @@ function calculateFSM(matches: any[]) {
         updateDict(autoDict, blueTeams, blueAuto, i, true);
         updateDict(climbDict, redTeams, redClimb, i, true);
         updateDict(climbDict, blueTeams, blueClimb, i, true);
+        updateDict(foulDict, redTeams, redFoul, i, true);
+        updateDict(foulDict, blueTeams, blueFoul, i, true);
       }
     }
   }
-  return { FSMs, algaeDict, coralDict, autoDict, climbDict };
+  return { FSMs, algaeDict, coralDict, autoDict, climbDict, foulDict };
 }
 
 function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
@@ -337,6 +350,7 @@ export type TeamDataType = {
   coral: string;
   auto: string;
   climb: string;
+  foul: string;
 };
 
 export async function getEventTeams(
@@ -359,6 +373,7 @@ export async function getEventTeams(
         coral: "0",
         auto: "0",
         climb: "0",
+        foul: "0",
       };
     }
     const sortedData = Object.values(TEAMDATA).sort((a, b) => {
@@ -381,6 +396,7 @@ export async function getEventTeams(
   const coralDict = fsmdata.coralDict;
   const autoDict = fsmdata.autoDict;
   const climbDict = fsmdata.climbDict;
+  const foulDict = fsmdata.foulDict;
   elimAdjustFSM(elimMatches, fsms);
 
   for (let i = 0; i < rankings.length; i++) {
@@ -388,6 +404,9 @@ export async function getEventTeams(
     const team = teamset.team_key;
     if (!fsms[team]) {
       fsms[team] = 0.0;
+    }
+    if (!foulDict[team]) {
+      foulDict[team] = 0.0;
     }
     TEAMDATA[team] = {
       key: team,
@@ -397,6 +416,7 @@ export async function getEventTeams(
       coral: coralDict[team].toFixed(2),
       auto: autoDict[team].toFixed(2),
       climb: climbDict[team].toFixed(2),
+      foul: foulDict[team].toFixed(2),
     };
   }
 

@@ -47,6 +47,12 @@ export default function Event25TeamsTable({
       getValue: (team: TeamDataType) => parseFloat(team.climb),
     },
     {
+      key: "foul",
+      label: "Fouls",
+      sortable: true,
+      getValue: (team: TeamDataType) => parseFloat(team.foul),
+    },
+    {
       key: "cyp",
       label: "CYP",
       sortable: true,

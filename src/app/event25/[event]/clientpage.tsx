@@ -153,12 +153,12 @@ export default function ClientPage({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              color: "#f1f1f1",
+              color: "var(--foreground)",
               borderRadius: 12,
               width: "100%",
             }}
           >
-            <h2 style={{ color: "#fafafa" }}>Team Stats</h2>
+            <h2 style={{ color: "var(--foreground)" }}>Team Stats</h2>
             <br />
             <Event25TeamsTable teams={teams} />
           </div>
@@ -170,13 +170,13 @@ export default function ClientPage({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              color: "#f1f1f1",
+              color: "var(--foreground)",
               borderRadius: 12,
               width: "100%",
             }}
           >
-            <h2 style={{ color: "#fafafa" }}>Match Predictions</h2>
-            <p style={{ color: "#ccc", fontSize: "1rem", marginTop: "0.2rem" }}>
+            <h2 style={{ color: "var(--foreground)" }}>Match Predictions</h2>
+            <p style={{ color: "var(--foreground)", fontSize: "1rem", marginTop: "0.2rem" }}>
               Prediction Accuracy: {correctPredictions.length} /{" "}
               {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
             </p>
@@ -206,10 +206,10 @@ export default function ClientPage({
                     style={{
                       marginBottom: "2rem",
                       textAlign: "center",
-                      border: "1px solid #333",
+                      border: "1px solid var(--border-color)",
                       borderRadius: 8,
                       padding: "1rem",
-                      background: "#222",
+                      background: "var(--background-pred)",
                     }}
                   >
                     <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
@@ -264,8 +264,8 @@ export default function ClientPage({
                       <span
                         style={{
                           fontWeight: "bold",
-                          color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
-                          background: "#181818",
+                        color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
+                        background: "var(--background)",
                           padding: "0.2em 0.6em",
                           borderRadius: 4,
                         }}
@@ -286,7 +286,7 @@ export default function ClientPage({
                                 : actualWinner === "blue"
                                 ? "#4d8cff"
                                 : "#aaa",
-                            background: "#181818",
+                            background: "var(--background)",
                             padding: "0.2em 0.6em",
                             borderRadius: 4,
                           }}

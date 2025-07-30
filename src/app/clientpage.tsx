@@ -102,7 +102,6 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 padding: 8,
                 fontSize: 16,
                 borderRadius: 4,
-                border: "1px solid #ccc",
               }}
             >
               {[
