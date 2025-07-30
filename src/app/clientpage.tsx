@@ -276,7 +276,6 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             Go
           </button>
         </form>
-        <h1 className={styles.smallheader}>Scouting (846 use only)</h1>
       </main>
 
       <img

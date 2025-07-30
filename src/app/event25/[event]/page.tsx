@@ -8,7 +8,6 @@ import {
 } from "../../lib/event";
 import { getGlobalStats } from "@/app/lib/global";
 import ClientPage from "./clientpage";
-import SaveTextButton from "./stb";
 
 import * as ort from "onnxruntime-node";
 import path from "path";
