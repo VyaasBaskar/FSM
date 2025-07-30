@@ -7,6 +7,13 @@ import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
 import LogoButton from "@/app/components/LogoButton";
 
+import path from "path";
+import * as ort from "onnxruntime-web";
+
+const modelPath = path.join(process.cwd(), "public", "matchpred.onnx");
+
+const session = await ort.InferenceSession.create(modelPath);
+
 type MatchPredictions = {
   [key: string]: {
     preds: string[];
@@ -21,14 +28,121 @@ interface ClientPageProps {
   eventCode: string;
   teams: any[];
   matchPredictions: MatchPredictions;
+  matches: any[];
+  playedMatches: number;
 }
 
-export default function ClientPage({
+export default async function ClientPage({
   havePreds,
   eventCode,
   teams,
   matchPredictions,
+  matches,
+  playedMatches,
 }: ClientPageProps) {
+  async function runOnnxModel(inputData: Float32Array) {
+    const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
+
+    const feeds: Record<string, ort.Tensor> = {};
+    feeds[session.inputNames[0]] = inputTensor;
+
+    const results = await session.run(feeds);
+    const output = results[session.outputNames[0]].data;
+
+    return Number(output[0]);
+  }
+
+  if (playedMatches > 15) {
+    for (const match of matches) {
+      let compLevel = 0;
+      if (match.comp_level === "qm") {
+        compLevel = 1;
+      } else if (match.comp_level === "ef") {
+        compLevel = 2;
+      } else if (match.comp_level === "f") {
+        compLevel = 3;
+      }
+      const blueTeamA = teams.find(
+        (team) => team.key === match.alliances.blue.team_keys[0]
+      );
+      const blueTeamB = teams.find(
+        (team) => team.key === match.alliances.blue.team_keys[1]
+      );
+      const blueTeamC = teams.find(
+        (team) => team.key === match.alliances.blue.team_keys[2]
+      );
+      const redTeamA = teams.find(
+        (team) => team.key === match.alliances.red.team_keys[0]
+      );
+      const redTeamB = teams.find(
+        (team) => team.key === match.alliances.red.team_keys[1]
+      );
+      const redTeamC = teams.find(
+        (team) => team.key === match.alliances.red.team_keys[2]
+      );
+
+      if (
+        redTeamA &&
+        redTeamB &&
+        redTeamC &&
+        blueTeamA &&
+        blueTeamB &&
+        blueTeamC
+      ) {
+        const redInputData = new Float32Array([
+          Number(redTeamA.fsm),
+          Number(redTeamA.algae),
+          Number(redTeamA.coral),
+          Number(redTeamA.auto),
+          Number(redTeamA.climb),
+          Number(redTeamB.fsm),
+          Number(redTeamB.algae),
+          Number(redTeamB.coral),
+          Number(redTeamB.auto),
+          Number(redTeamB.climb),
+          Number(redTeamC.fsm),
+          Number(redTeamC.algae),
+          Number(redTeamC.coral),
+          Number(redTeamC.auto),
+          Number(redTeamC.climb),
+          compLevel,
+          Number(match.match_number),
+        ]);
+        const redOutput = await runOnnxModel(redInputData);
+
+        const blueInputData = new Float32Array([
+          Number(blueTeamA.fsm),
+          Number(blueTeamA.algae),
+          Number(blueTeamA.coral),
+          Number(blueTeamA.auto),
+          Number(blueTeamA.climb),
+          Number(blueTeamB.fsm),
+          Number(blueTeamB.algae),
+          Number(blueTeamB.coral),
+          Number(blueTeamB.auto),
+          Number(blueTeamB.climb),
+          Number(blueTeamC.fsm),
+          Number(blueTeamC.algae),
+          Number(blueTeamC.coral),
+          Number(blueTeamC.auto),
+          Number(blueTeamC.climb),
+          compLevel,
+          Number(match.match_number),
+        ]);
+        const blueOutput = await runOnnxModel(blueInputData);
+
+        let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
+        let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
+
+        avgRedOutput = (avgRedOutput + redOutput) / 2;
+        avgBlueOutput = (avgBlueOutput + blueOutput) / 2;
+
+        matchPredictions[match.key].preds[0] = avgRedOutput.toFixed(0);
+        matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);
+      }
+    }
+  }
+
   const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
@@ -176,7 +290,13 @@ export default function ClientPage({
             }}
           >
             <h2 style={{ color: "var(--foreground)" }}>Match Predictions</h2>
-            <p style={{ color: "var(--foreground)", fontSize: "1rem", marginTop: "0.2rem" }}>
+            <p
+              style={{
+                color: "var(--foreground)",
+                fontSize: "1rem",
+                marginTop: "0.2rem",
+              }}
+            >
               Prediction Accuracy: {correctPredictions.length} /{" "}
               {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
             </p>
@@ -264,8 +384,8 @@ export default function ClientPage({
                       <span
                         style={{
                           fontWeight: "bold",
-                        color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
-                        background: "var(--background)",
+                          color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
+                          background: "var(--background)",
                           padding: "0.2em 0.6em",
                           borderRadius: 4,
                         }}

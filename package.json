@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.50.3",
     "next": "15.3.5",
     "onnxruntime-node": "^1.22.0-rev",
+    "onnxruntime-web": "^1.22.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -10,8 +10,10 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    const system = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initial = (saved === "light" || saved === "dark") ? saved : system;
+    const system = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+    const initial = saved === "light" || saved === "dark" ? saved : system;
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
@@ -36,29 +38,28 @@ export default function ThemeToggle() {
         "position:fixed",
         `width:${d * 2}px`,
         `height:${d * 2}px`,
-        `background:${theme === "light" ? "#fff" : "#0a0a0a"}`,
+        `background:${theme === "light" ? "#fad400ff" : "#002afaff"}`,
         "border-radius:50%",
         `left:${cx - d}px`,
         `top:${cy - d}px`,
         "z-index:-1",
         "pointer-events:none",
         "transform:scale(1)",
-        "transform-origin:center"
+        "transform-origin:center",
       ].join(";");
       document.body.appendChild(overlay);
       setTheme(newTheme);
       localStorage.setItem("theme", newTheme);
       document.documentElement.setAttribute("data-theme", newTheme);
-      overlay.animate([
-        { transform: "scale(1)" },
-        { transform: "scale(0)" }
-      ], {
-        duration: 500,
-        easing: "cubic-bezier(0.25,0.46,0.45,0.94)"
-      }).addEventListener("finish", () => {
-        document.body.removeChild(overlay);
-        setIsAnimating(false);
-      });
+      overlay
+        .animate([{ transform: "scale(1)" }, { transform: "scale(0)" }], {
+          duration: 500,
+          easing: "cubic-bezier(0.25,0.46,0.45,0.94)",
+        })
+        .addEventListener("finish", () => {
+          document.body.removeChild(overlay);
+          setIsAnimating(false);
+        });
     }
   };
 
@@ -72,7 +73,7 @@ export default function ThemeToggle() {
         top: 24,
         right: 24,
         zIndex: 1000,
-        background: "var(--foreground)",
+        background: `${theme === "light" ? "#002afaff" : "#fad400ff"}`,
         color: "var(--background)",
         border: "none",
         borderRadius: "50%",
@@ -85,12 +86,18 @@ export default function ThemeToggle() {
         justifyContent: "center",
         transition: "all 0.2s ease",
         opacity: isAnimating ? 0.7 : 1,
-        transform: isAnimating ? "scale(0.95)" : "scale(1)"
+        transform: isAnimating ? "scale(0.95)" : "scale(1)",
       }}
     >
-      {theme === "light"
-        ? <span role="img" aria-label="moon" style={{ fontSize: 32 }}>⏾</span>
-        : <span role="img" aria-label="sun" style={{ fontSize: 24 }}>☀︎</span>}
+      {theme === "light" ? (
+        <span role="img" aria-label="moon" style={{ fontSize: 32 }}>
+          ⏾
+        </span>
+      ) : (
+        <span role="img" aria-label="sun" style={{ fontSize: 24 }}>
+          ☀︎
+        </span>
+      )}
     </button>
   );
 }
