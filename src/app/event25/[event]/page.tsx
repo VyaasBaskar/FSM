@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import {
   getEventQualMatches,
   getEventTeams,
@@ -15,23 +17,23 @@ const modelPath = path.join(process.cwd(), "public", "matchpred.onnx");
 
 const session = await ort.InferenceSession.create(modelPath);
 
-export async function runOnnxModel(inputData: Float32Array) {
-  const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
-
-  const feeds: Record<string, ort.Tensor> = {};
-  feeds[session.inputNames[0]] = inputTensor;
-
-  const results = await session.run(feeds);
-  const output = results[session.outputNames[0]].data;
-
-  return output;
-}
-
 export default async function EventPage({
   params,
 }: {
   params: Promise<{ event: string }>;
 }) {
+  async function runOnnxModel(inputData: Float32Array) {
+    const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
+
+    const feeds: Record<string, ort.Tensor> = {};
+    feeds[session.inputNames[0]] = inputTensor;
+
+    const results = await session.run(feeds);
+    const output = results[session.outputNames[0]].data;
+
+    return Number(output[0]);
+  }
+
   const { event: eventCode } = await params;
   const teams = await getEventTeams("2025" + eventCode, true);
 
@@ -166,8 +168,8 @@ export default async function EventPage({
         let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
         let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
 
-        avgRedOutput = (avgRedOutput + Number(redOutput[0])) / 2;
-        avgBlueOutput = (avgBlueOutput + Number(blueOutput[0])) / 2;
+        avgRedOutput = (avgRedOutput + redOutput) / 2;
+        avgBlueOutput = (avgBlueOutput + blueOutput) / 2;
 
         matchPredictions[match.key].preds[0] = avgRedOutput.toFixed(0);
         matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);

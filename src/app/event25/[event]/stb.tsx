@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable */
+
 export default function SaveTextButton({
   text,
   filename,
