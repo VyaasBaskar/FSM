@@ -256,6 +256,7 @@ function calculateFSM(matches: any[]) {
   const algaeDict: { [key: string]: number } = {};
   const coralDict: { [key: string]: number } = {};
   const autoDict: { [key: string]: number } = {};
+  const climbDict: { [key: string]: number } = {};
 
   for (let i = 0; i < MAX_ITERS; i++) {
     for (let j = 0; j < matches.length; j++) {
@@ -279,6 +280,9 @@ function calculateFSM(matches: any[]) {
         const redAuto = getScore(match, "red", "auto");
         const blueAuto = getScore(match, "blue", "auto");
 
+        const redClimb = match.score_breakdown.red.endGameBargePoints;
+        const blueClimb = match.score_breakdown.blue.endGameBargePoints;
+
         updateDict(FSMs, redTeams, redScore, i);
         updateDict(FSMs, blueTeams, blueScore, i);
 
@@ -288,10 +292,12 @@ function calculateFSM(matches: any[]) {
         updateDict(coralDict, blueTeams, blueCoral, i, true);
         updateDict(autoDict, redTeams, redAuto, i, true);
         updateDict(autoDict, blueTeams, blueAuto, i, true);
+        updateDict(climbDict, redTeams, redClimb, i, true);
+        updateDict(climbDict, blueTeams, blueClimb, i, true);
       }
     }
   }
-  return { FSMs, algaeDict, coralDict, autoDict };
+  return { FSMs, algaeDict, coralDict, autoDict, climbDict };
 }
 
 function elimAdjustFSM(matches: any[], fsms: { [key: string]: number }) {
@@ -330,6 +336,7 @@ export type TeamDataType = {
   algae: string;
   coral: string;
   auto: string;
+  climb: string;
 };
 
 export async function getEventTeams(
@@ -351,6 +358,7 @@ export async function getEventTeams(
         algae: "0",
         coral: "0",
         auto: "0",
+        climb: "0",
       };
     }
     const sortedData = Object.values(TEAMDATA).sort((a, b) => {
@@ -372,6 +380,7 @@ export async function getEventTeams(
   const algaeDict = fsmdata.algaeDict;
   const coralDict = fsmdata.coralDict;
   const autoDict = fsmdata.autoDict;
+  const climbDict = fsmdata.climbDict;
   elimAdjustFSM(elimMatches, fsms);
 
   for (let i = 0; i < rankings.length; i++) {
@@ -387,6 +396,7 @@ export async function getEventTeams(
       algae: algaeDict[team].toFixed(2),
       coral: coralDict[team].toFixed(2),
       auto: autoDict[team].toFixed(2),
+      climb: climbDict[team].toFixed(2),
     };
   }
 
