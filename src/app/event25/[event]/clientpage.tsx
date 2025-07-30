@@ -1,18 +1,12 @@
 "use client";
 /* eslint-disable */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "../../page.module.css";
 import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
 import LogoButton from "@/app/components/LogoButton";
-
-import path from "path";
 import * as ort from "onnxruntime-web";
-
-const modelPath = path.join(process.cwd(), "public", "matchpred.onnx");
-
-const session = await ort.InferenceSession.create(modelPath);
 
 type MatchPredictions = {
   [key: string]: {
@@ -32,7 +26,7 @@ interface ClientPageProps {
   playedMatches: number;
 }
 
-export default async function ClientPage({
+export default function ClientPage({
   havePreds,
   eventCode,
   teams,
@@ -40,96 +34,70 @@ export default async function ClientPage({
   matches,
   playedMatches,
 }: ClientPageProps) {
+  const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
+  const [sessionReady, setSessionReady] = useState(false);
+  const sessionRef = useRef<ort.InferenceSession | null>(null);
+
+  useEffect(() => {
+    async function loadModel() {
+      try {
+        const session = await ort.InferenceSession.create("/matchpred.onnx");
+        sessionRef.current = session;
+        setSessionReady(true);
+      } catch (err) {
+        console.error("Failed to load ONNX model:", err);
+      }
+    }
+    loadModel();
+  }, []);
+
   async function runOnnxModel(inputData: Float32Array) {
+    if (!sessionRef.current) throw new Error("ONNX session not loaded.");
+
     const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
+    const feeds: Record<string, ort.Tensor> = {
+      [sessionRef.current.inputNames[0]]: inputTensor,
+    };
 
-    const feeds: Record<string, ort.Tensor> = {};
-    feeds[session.inputNames[0]] = inputTensor;
-
-    const results = await session.run(feeds);
-    const output = results[session.outputNames[0]].data;
-
+    const results = await sessionRef.current.run(feeds);
+    const output = results[sessionRef.current.outputNames[0]].data;
     return Number(output[0]);
   }
 
-  if (playedMatches > 15) {
-    for (const match of matches) {
-      let compLevel = 0;
-      if (match.comp_level === "qm") {
-        compLevel = 1;
-      } else if (match.comp_level === "ef") {
-        compLevel = 2;
-      } else if (match.comp_level === "f") {
-        compLevel = 3;
-      }
-      const blueTeamA = teams.find(
-        (team) => team.key === match.alliances.blue.team_keys[0]
-      );
-      const blueTeamB = teams.find(
-        (team) => team.key === match.alliances.blue.team_keys[1]
-      );
-      const blueTeamC = teams.find(
-        (team) => team.key === match.alliances.blue.team_keys[2]
-      );
-      const redTeamA = teams.find(
-        (team) => team.key === match.alliances.red.team_keys[0]
-      );
-      const redTeamB = teams.find(
-        (team) => team.key === match.alliances.red.team_keys[1]
-      );
-      const redTeamC = teams.find(
-        (team) => team.key === match.alliances.red.team_keys[2]
-      );
+  useEffect(() => {
+    async function runPredictions() {
+      if (!sessionReady || playedMatches <= 15) return;
 
-      if (
-        redTeamA &&
-        redTeamB &&
-        redTeamC &&
-        blueTeamA &&
-        blueTeamB &&
-        blueTeamC
-      ) {
-        const redInputData = new Float32Array([
-          Number(redTeamA.fsm),
-          Number(redTeamA.algae),
-          Number(redTeamA.coral),
-          Number(redTeamA.auto),
-          Number(redTeamA.climb),
-          Number(redTeamB.fsm),
-          Number(redTeamB.algae),
-          Number(redTeamB.coral),
-          Number(redTeamB.auto),
-          Number(redTeamB.climb),
-          Number(redTeamC.fsm),
-          Number(redTeamC.algae),
-          Number(redTeamC.coral),
-          Number(redTeamC.auto),
-          Number(redTeamC.climb),
-          compLevel,
-          Number(match.match_number),
-        ]);
-        const redOutput = await runOnnxModel(redInputData);
+      for (const match of matches) {
+        let compLevel = 0;
+        if (match.comp_level === "qm") compLevel = 1;
+        else if (match.comp_level === "ef") compLevel = 2;
+        else if (match.comp_level === "f") compLevel = 3;
 
-        const blueInputData = new Float32Array([
-          Number(blueTeamA.fsm),
-          Number(blueTeamA.algae),
-          Number(blueTeamA.coral),
-          Number(blueTeamA.auto),
-          Number(blueTeamA.climb),
-          Number(blueTeamB.fsm),
-          Number(blueTeamB.algae),
-          Number(blueTeamB.coral),
-          Number(blueTeamB.auto),
-          Number(blueTeamB.climb),
-          Number(blueTeamC.fsm),
-          Number(blueTeamC.algae),
-          Number(blueTeamC.coral),
-          Number(blueTeamC.auto),
-          Number(blueTeamC.climb),
-          compLevel,
-          Number(match.match_number),
-        ]);
-        const blueOutput = await runOnnxModel(blueInputData);
+        const blue = match.alliances.blue.team_keys.map((key: string) =>
+          teams.find((t) => t.key === key)
+        );
+        const red = match.alliances.red.team_keys.map((key: string) =>
+          teams.find((t) => t.key === key)
+        );
+
+        if ([...blue, ...red].some((t) => !t)) continue;
+
+        const makeInput = (alliance: any[]) =>
+          new Float32Array([
+            ...alliance.flatMap((t) => [
+              Number(t.fsm),
+              Number(t.algae),
+              Number(t.coral),
+              Number(t.auto),
+              Number(t.climb),
+            ]),
+            compLevel,
+            Number(match.match_number),
+          ]);
+
+        const redOutput = await runOnnxModel(makeInput(red));
+        const blueOutput = await runOnnxModel(makeInput(blue));
 
         let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
         let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
@@ -141,9 +109,9 @@ export default async function ClientPage({
         matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);
       }
     }
-  }
 
-  const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
+    runPredictions();
+  }, [sessionReady, playedMatches, matches, matchPredictions, teams]);
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
     const getTypeOrder = (key: string) => {
@@ -154,17 +122,12 @@ export default async function ClientPage({
     const typeA = getTypeOrder(a);
     const typeB = getTypeOrder(b);
 
-    if (typeA !== typeB) {
-      return typeA - typeB;
-    }
+    if (typeA !== typeB) return typeA - typeB;
 
     const numA = parseInt(a.slice(4).match(/\d+/)?.[0] ?? "0", 10);
     const numB = parseInt(b.slice(4).match(/\d+/)?.[0] ?? "0", 10);
 
-    if (numA === numB) {
-      return a.localeCompare(b);
-    }
-    return numA - numB;
+    return numA === numB ? a.localeCompare(b) : numA - numB;
   });
 
   const resultsWithGroundTruth = entries.filter(
