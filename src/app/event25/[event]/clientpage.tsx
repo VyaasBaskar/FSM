@@ -38,6 +38,12 @@ export default function ClientPage({
   const [sessionReady, setSessionReady] = useState(false);
   const sessionRef = useRef<ort.InferenceSession | null>(null);
 
+  const [filterText, setFilterText] = useState("");
+  const [filterTeam, setFilterTeam] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "quals" | "elims">(
+    "all"
+  );
+
   useEffect(() => {
     async function loadModel() {
       try {
@@ -154,10 +160,30 @@ export default function ClientPage({
       ? (100 * correctPredictions.length) / resultsWithGroundTruth.length
       : 0;
 
+  const filteredEntries = entries.filter(([key, match]) => {
+    const matchNameMatch = key.toLowerCase().includes(filterText.toLowerCase());
+    const teamMatch =
+      filterTeam === "" ||
+      [...match.red, ...match.blue].some((team) =>
+        team.toLowerCase().includes(filterTeam.toLowerCase())
+      );
+    const typeMatch =
+      filterType === "all" ||
+      (filterType === "quals" && key.includes("_qm")) ||
+      (filterType === "elims" && !key.includes("_qm"));
+
+    return matchNameMatch && teamMatch && typeMatch;
+  });
+
   return (
     <div
       className={styles.page}
-      style={{ position: "relative", minHeight: "100vh" }}
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        width: "100vw",
+        maxWidth: "100%",
+      }}
     >
       <Link
         href="/"
@@ -237,7 +263,11 @@ export default function ClientPage({
           >
             <h2 style={{ color: "var(--foreground)" }}>Team Stats</h2>
             <br />
-            <Event25TeamsTable teams={teams} />
+            <div
+              style={{ maxWidth: "100%", overflowX: "scroll", width: "100%" }}
+            >
+              <Event25TeamsTable teams={teams} />
+            </div>
           </div>
         )}
 
@@ -263,9 +293,58 @@ export default function ClientPage({
               Prediction Accuracy: {correctPredictions.length} /{" "}
               {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
             </p>
+
             <br />
-            <ul style={{ listStyle: "none", padding: 0, width: "100%" }}>
-              {entries.map(([matchKey, match]) => {
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                justifyContent: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Filter by match name"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                style={{
+                  padding: "0.5rem",
+                  borderRadius: 6,
+                  border: "1px solid #555",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Filter by team"
+                value={filterTeam}
+                onChange={(e) => setFilterTeam(e.target.value)}
+                style={{
+                  padding: "0.5rem",
+                  borderRadius: 6,
+                  border: "1px solid #555",
+                }}
+              />
+              <select
+                value={filterType}
+                onChange={(e) =>
+                  setFilterType(e.target.value as "all" | "quals" | "elims")
+                }
+                style={{
+                  padding: "0.5rem",
+                  borderRadius: 6,
+                  border: "1px solid #555",
+                }}
+              >
+                <option value="all">All</option>
+                <option value="quals">Quals</option>
+                <option value="elims">Elims</option>
+              </select>
+            </div>
+
+            <ul style={{ listStyle: "none", padding: 10 }}>
+              {filteredEntries.map(([matchKey, match]) => {
                 const [predRed, predBlue] = match.preds;
                 const predWinner =
                   Number(predRed) > Number(predBlue) ? "red" : "blue";
@@ -316,7 +395,6 @@ export default function ClientPage({
                         justifyContent: "space-between",
                         alignItems: "center",
                         gap: "1rem",
-                        width: "100%",
                         maxWidth: 320,
                         marginInline: "auto",
                       }}

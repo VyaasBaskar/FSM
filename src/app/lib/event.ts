@@ -25,6 +25,24 @@ function elimModRoot(x: number) {
   return Math.pow(x, 1.0 / 3);
 }
 
+export async function getAttendingTeams(eventCode: string) {
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/event/${eventCode}/teams`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch attending teams for event: ${eventCode}`);
+  }
+
+  return res.json();
+}
+
 export async function getEventQualMatches(
   eventCode: string,
   anyFine: boolean = false

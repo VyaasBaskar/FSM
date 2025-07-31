@@ -64,6 +64,9 @@
   flex-direction: column;
   gap: 16px;
   grid-row-start: 2;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .main ol {

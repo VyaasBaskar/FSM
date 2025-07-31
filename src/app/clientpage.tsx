@@ -52,6 +52,8 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
+        overflowX: "visible",
+        width: "100%",
       }}
     >
       <main className={styles.main}>
