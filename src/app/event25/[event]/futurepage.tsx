@@ -31,7 +31,7 @@ interface ClientPageProps {
 export default function ClientPage({ code, fsms }: ClientPageProps) {
   const filteredFsms = [];
 
-  let sortedFsms = Object.entries(fsms).sort((a, b) => b[1] - a[1]);
+  const sortedFsms = Object.entries(fsms).sort((a, b) => b[1] - a[1]);
 
   let fsmRank = 1;
   for (const [teamKey, fsmValue] of sortedFsms) {
