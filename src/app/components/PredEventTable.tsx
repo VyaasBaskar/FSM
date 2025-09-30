@@ -1,6 +1,7 @@
 "use client";
 
 import SortableTable from "./SortableTable";
+import TeamLink from "./TeamLink";
 
 type TTType = {
   key: string;
@@ -10,7 +11,12 @@ type TTType = {
 
 export default function PredEventTable({ teams }: { teams: TTType[] }) {
   const columns = [
-    { key: "key", label: "Team", sortable: false },
+    {
+      key: "key",
+      label: "Team",
+      sortable: false,
+      render: (team: TTType) => <TeamLink teamKey={team.key} />,
+    },
     {
       key: "rank",
       label: "FSM Rank",

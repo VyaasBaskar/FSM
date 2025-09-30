@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import styles from "../../page.module.css";
 import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
+import TeamLink from "@/app/components/TeamLink";
 import LogoButton from "@/app/components/LogoButton";
 import * as ort from "onnxruntime-web";
 
@@ -381,11 +382,22 @@ export default function ClientPage({
                       <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>
                         Red
                       </span>{" "}
-                      {match.red.join(", ")} {" vs. "}
+                      {match.red.map((t, i) => (
+                        <span key={t}>
+                          {i > 0 ? ", " : ""}
+                          <TeamLink teamKey={t} year={2025} />
+                        </span>
+                      ))}{" "}
+                      {" vs. "}
                       <span style={{ color: "#4d8cff", fontWeight: "bold" }}>
                         Blue
                       </span>{" "}
-                      {match.blue.join(", ")}
+                      {match.blue.map((t, i) => (
+                        <span key={t}>
+                          {i > 0 ? ", " : ""}
+                          <TeamLink teamKey={t} year={2025} />
+                        </span>
+                      ))}
                     </div>
 
                     <div

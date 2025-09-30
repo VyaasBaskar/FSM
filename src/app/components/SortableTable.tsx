@@ -15,6 +15,8 @@ type SortableTableProps<T> = {
   }>;
   defaultSort: string;
   getItemKey: (item: T) => string;
+  showSortIndex?: boolean;
+  sortIndexHideFor?: string;
 };
 
 export default function SortableTable<T>({
@@ -22,6 +24,8 @@ export default function SortableTable<T>({
   columns,
   defaultSort,
   getItemKey,
+  showSortIndex = false,
+  sortIndexHideFor = "rank",
 }: SortableTableProps<T>) {
   const [sortField, setSortField] = useState(defaultSort);
   const [isAscending, setIsAscending] = useState(defaultSort === "rank");
@@ -63,14 +67,20 @@ export default function SortableTable<T>({
       <table className={styles.table}>
         <thead>
           <tr>
+            {showSortIndex && sortField !== sortIndexHideFor && (
+              <th className={styles.th}>Sorted Rank</th>
+            )}
             {columns.map((column) => (
               <SortableHeader key={column.key} column={column} />
             ))}
           </tr>
         </thead>
         <tbody>
-          {sortedData.map((item) => (
+          {sortedData.map((item, idx) => (
             <tr key={getItemKey(item)}>
+              {showSortIndex && sortField !== sortIndexHideFor && (
+                <td className={styles.td}>{idx + 1}</td>
+              )}
               {columns.map((column) => (
                 <td key={column.key} className={styles.td}>
                   {column.render
