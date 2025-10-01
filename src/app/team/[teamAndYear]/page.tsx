@@ -3,6 +3,7 @@ import styles from "../../page.module.css";
 import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
 import LogoButton from "../../components/LogoButton";
 import { getGlobalStats } from "@/app/lib/global";
+import Link from "next/link";
 
 export default async function TeamPage({ params }: { params: Promise<{ teamAndYear: string }> }) {
   const { teamAndYear } = await params;
@@ -84,7 +85,14 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
         <tbody>
         {teamStats.teamData.map((event: EventDataType) => (
           <tr key={event.event}>
-          <td className={styles.td}>{event.event}</td>
+          <td className={styles.td}>
+            <Link
+              href={Number(yearprov) === 2025 ? `/event25/${event.event.slice(4)}` : `/event/${event.event}`}
+              style={{ textDecoration: "underline", textDecorationThickness: '1px', textUnderlineOffset: '4px' }}
+            >
+              {event.event}
+            </Link>
+          </td>
           <td className={styles.td}>{event.teamrank}</td>
           <td className={styles.td}>{event.teamfsm}</td>
           </tr>
