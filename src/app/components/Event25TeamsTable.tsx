@@ -2,6 +2,7 @@
 
 import { TeamDataType } from "../lib/event";
 import SortableTable from "./SortableTable";
+import TeamLink from "./TeamLink";
 
 export default function Event25TeamsTable({
   teams,
@@ -9,7 +10,12 @@ export default function Event25TeamsTable({
   teams: TeamDataType[];
 }) {
   const columns = [
-    { key: "key", label: "Team", sortable: false },
+    {
+      key: "key",
+      label: "Team",
+      sortable: false,
+      render: (team: TeamDataType) => <TeamLink teamKey={team.key} year={2025} />,
+    },
     {
       key: "rank",
       label: "Rank",
@@ -73,6 +79,8 @@ export default function Event25TeamsTable({
       columns={columns}
       defaultSort="rank"
       getItemKey={(team) => team.key}
+      showSortIndex
+      sortIndexHideFor="rank"
     />
   );
 }

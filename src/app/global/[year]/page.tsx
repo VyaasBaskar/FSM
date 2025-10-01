@@ -3,6 +3,7 @@ import styles from "../../page.module.css";
 import { getGlobalStats } from "../../lib/global";
 import LogoButton from "../../components/LogoButton";
 import OffseasonCheck from "./offseason";
+import TeamLink from "@/app/components/TeamLink";
 
 export default async function GlobalPage({ params }: { params: Promise<{ year: string }> }) {
   let { year } = await params;
@@ -59,7 +60,9 @@ export default async function GlobalPage({ params }: { params: Promise<{ year: s
             {Object.entries(globalStats).map(([teamKey, bestFSM]) => (
               <tr key={teamKey}>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{Number(teamKey) + 1}</td>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{bestFSM.teamKey}</td>
+                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
+                  <TeamLink teamKey={bestFSM.teamKey} year={year} />
+                </td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{bestFSM.bestFSM}</td>
               </tr>
             ))}
