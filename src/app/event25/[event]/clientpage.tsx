@@ -6,7 +6,6 @@ import styles from "../../page.module.css";
 import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
 import TeamLink from "@/app/components/TeamLink";
-import LogoButton from "@/app/components/LogoButton";
 import * as ort from "onnxruntime-web";
 
 type MatchPredictions = {
@@ -205,7 +204,7 @@ export default function ClientPage({
       </Link>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>FunkyStats: Event FSM</h1>
+        <h1 className={styles.title}>Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>
 
         <div
@@ -479,7 +478,6 @@ export default function ClientPage({
           </div>
         )}
       </main>
-      <LogoButton />
     </div>
   );
 }

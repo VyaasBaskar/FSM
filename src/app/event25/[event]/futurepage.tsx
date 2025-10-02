@@ -1,6 +1,5 @@
 "use client";
 import PredEventTable from "../../components/PredEventTable";
-import LogoButton from "@/app/components/LogoButton";
 import styles from "../../page.module.css";
 import Link from "next/link";
 
@@ -80,7 +79,7 @@ export default function ClientPage({ code, fsms }: ClientPageProps) {
       </Link>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>FunkyStats: Event FSM</h1>
+        <h1 className={styles.title}>Event FSM</h1>
         <h2 className={styles.table}>2025{code}</h2>
         <h3
           style={{ fontWeight: "normal", margin: "1rem", textAlign: "center" }}
@@ -90,7 +89,6 @@ export default function ClientPage({ code, fsms }: ClientPageProps) {
         </h3>
         <PredEventTable teams={filteredFsms} />
       </main>
-      <LogoButton />
     </div>
   );
 }

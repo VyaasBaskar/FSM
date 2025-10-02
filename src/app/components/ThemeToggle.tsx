@@ -42,7 +42,7 @@ export default function ThemeToggle() {
         "border-radius:50%",
         `left:${cx - d}px`,
         `top:${cy - d}px`,
-        "z-index:-1",
+        "z-index:2000",
         "pointer-events:none",
         "transform:scale(1)",
         "transform-origin:center",
@@ -69,9 +69,6 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       disabled={isAnimating}
       style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
         zIndex: 1000,
         background: `${theme === "light" ? "#002afaff" : "#fad400ff"}`,
         color: "var(--background)",
@@ -81,6 +78,8 @@ export default function ThemeToggle() {
         height: 48,
         cursor: isAnimating ? "not-allowed" : "pointer",
         fontSize: 20,
+        marginLeft: "2rem",
+        marginTop: -2,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

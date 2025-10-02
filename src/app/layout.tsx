@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ThemeToggle from "./components/ThemeToggle";
 import NProgressProvider from "./NProgressProvider";
+import Navbar from "./components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +31,7 @@ export default function RootLayout({
           id="preload-bar"
           className="fixed top-0 left-0 w-full h-1 bg-blue-500 z-[9999] animate-pulse"
         />
-        <ThemeToggle />
+        <Navbar />
         <NProgressProvider />
         {children}
       </body>
