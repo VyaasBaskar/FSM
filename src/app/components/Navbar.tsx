@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect } from "react";
 import "@/app/globals.css";
-import ThemeToggle from "./ThemeToggle";
+import MenuOption from "./MenuOption";
 
 const navLinkStyle: React.CSSProperties = {
   display: "inline-flex",
@@ -12,7 +12,7 @@ const navLinkStyle: React.CSSProperties = {
   justifyContent: "center",
   padding: "0.75rem 1.25rem",
   borderRadius: "0.375rem",
-  fontSize: "1.1rem",
+  fontSize: "0.9rem",
   fontWeight: 500,
   background: "#0070f3",
   color: "white",
@@ -26,6 +26,27 @@ const navLinkStyle: React.CSSProperties = {
 export default function Navbar() {
   const links = [{ href: "/global/2025", label: "Explore Teams" }];
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    const system = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+    const initial = saved === "light" || saved === "dark" ? saved : system;
+    document.documentElement.setAttribute("data-theme", initial);
+  }, []);
+
+  React.useEffect(() => {
+    function handleResize() {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      setIsMobile(aspectRatio < 1);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <nav
       style={{
@@ -33,15 +54,16 @@ export default function Navbar() {
         color: "white",
         boxShadow: "0 2px 4px var(--navbar-highlight)",
         width: "100%",
-        zIndex: 50,
-        padding: "1.0rem 0",
+        zIndex: 10,
+        padding: "0.5rem 0",
+        paddingTop: "3.5rem",
       }}
     >
       <div
         style={{
-          maxWidth: "80rem",
+          maxWidth: "90rem",
           margin: "0 auto",
-          paddingLeft: "1rem",
+          paddingLeft: "0.75rem",
           paddingRight: "0.25rem",
         }}
       >
@@ -54,13 +76,19 @@ export default function Navbar() {
             marginTop: "0.25rem",
           }}
         >
-          <Link href="/">
-            <div style={{ display: "flex", alignItems: "center" }}>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
               <Image
                 src="/logo846.png"
                 alt="Logo"
-                width={62}
-                height={70}
+                width={42}
+                height={47}
                 style={{
                   zIndex: 1000,
                   marginLeft: "1rem",
@@ -71,7 +99,7 @@ export default function Navbar() {
                   marginLeft: "1rem",
                   color: "var(--yellow-color)",
                   fontWeight: "bold",
-                  fontSize: "2.0rem",
+                  fontSize: "1.5rem",
                 }}
               >
                 FunkyStats
@@ -84,12 +112,13 @@ export default function Navbar() {
               gap: "1.5rem",
             }}
           >
-            {links.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <p style={navLinkStyle}>{link.label}</p>
-              </Link>
-            ))}
-            <ThemeToggle />
+            {!isMobile &&
+              links.map((link) => (
+                <Link key={link.href} href={link.href}>
+                  <p style={navLinkStyle}>{link.label}</p>
+                </Link>
+              ))}
+            <MenuOption isMobile={isMobile} />
           </div>
         </div>
       </div>

@@ -33,23 +33,6 @@ export default async function GlobalPage({
       className={styles.page}
       style={{ position: "relative", minHeight: "100vh" }}
     >
-      <a
-        href="/"
-        style={{
-          position: "absolute",
-          top: 24,
-          left: 24,
-          textDecoration: "none",
-          color: "inherit",
-          fontSize: "4rem",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 10,
-        }}
-        aria-label="Back to Home"
-      >
-        &#8592;
-      </a>
       <main className={styles.main}>
         <h1 className={styles.title}>{year} Global FSM Rankings</h1>
         <div style={{ margin: "1rem 0" }}>

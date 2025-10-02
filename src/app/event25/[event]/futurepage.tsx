@@ -1,7 +1,6 @@
 "use client";
 import PredEventTable from "../../components/PredEventTable";
 import styles from "../../page.module.css";
-import Link from "next/link";
 
 function normalCDF(z: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(z));
@@ -60,24 +59,6 @@ export default function ClientPage({ code, fsms }: ClientPageProps) {
       className={styles.page}
       style={{ position: "relative", minHeight: "100vh" }}
     >
-      <Link
-        href="/"
-        style={{
-          position: "absolute",
-          top: 24,
-          left: 24,
-          textDecoration: "none",
-          color: "inherit",
-          fontSize: "4rem",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 10,
-        }}
-        aria-label="Back to Home"
-      >
-        &#8592;
-      </Link>
-
       <main className={styles.main}>
         <h1 className={styles.title}>Event FSM</h1>
         <h2 className={styles.table}>2025{code}</h2>

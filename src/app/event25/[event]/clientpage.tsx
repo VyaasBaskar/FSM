@@ -185,24 +185,6 @@ export default function ClientPage({
         maxWidth: "100%",
       }}
     >
-      <Link
-        href="/"
-        style={{
-          position: "absolute",
-          top: 24,
-          left: 24,
-          textDecoration: "none",
-          color: "inherit",
-          fontSize: "4rem",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 10,
-        }}
-        aria-label="Back to Home"
-      >
-        &#8592;
-      </Link>
-
       <main className={styles.main}>
         <h1 className={styles.title}>Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>

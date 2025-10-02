@@ -17,6 +17,9 @@
   --navbar-background: #eeeeee;
   --navbar-highlight: #838383;
   --yellow-color: #dfa803;
+
+  --menu-color: #000;
+  --option-bg: #2b2b2b;
 }
 
 [data-theme="dark"] {
@@ -26,6 +29,9 @@
   --navbar-background: #141414;
   --navbar-highlight: #85858586;
   --yellow-color: #ffc600;
+  
+  --menu-color: #fff;
+  --option-bg: #2b2b2b;
 }
 
 html,
@@ -57,4 +63,15 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+.page2 {
+  display: grid;
+  grid-template-rows: 20px 1fr 20px;
+  color: var(--foreground);
+  align-items: center;
+  justify-items: center;
+  min-height: 100svh;
+  gap: 0px;
+  font-family: var(--font-geist-sans);
 }

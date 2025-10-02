@@ -59,25 +59,8 @@ export default async function TeamPage({
       className={styles.page}
       style={{ position: "relative", minHeight: "100vh", width: "100%" }}
     >
-      <a
-        href="/"
-        style={{
-          position: "absolute",
-          top: 24,
-          left: 24,
-          textDecoration: "none",
-          color: "inherit",
-          fontSize: "4rem",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 10,
-        }}
-        aria-label="Back to Home"
-      >
-        &#8592;
-      </a>
       <main className={styles.main}>
-        <h1 className={styles.title}>FunkyStats Team FSM: {yearprov}</h1>
+        <h1 className={styles.title}>{yearprov} Team FSM</h1>
         <div
           style={{
             width: "100%",

@@ -54,7 +54,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
         flexDirection: "column",
         overflowX: "visible",
         width: "100%",
-        marginTop: "-4rem",
+        marginTop: "0rem",
       }}
     >
       <main className={styles.main}>
@@ -159,7 +159,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               fontSize: 16,
               borderRadius: 4,
               border: "1px solid #ccc",
-              width: 290,
+              width: 270,
             }}
           />
           <datalist id="event-options">
@@ -221,6 +221,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               fontSize: 16,
               borderRadius: 4,
               border: "1px solid #ccc",
+              width: 195,
             }}
           />
           <datalist id="team-options">
@@ -280,19 +281,6 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
           </button>
         </form>
       </main>
-
-      <img
-        src="/logo846.png"
-        alt="Logo"
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          width: 68,
-          height: 80,
-          zIndex: 1000,
-        }}
-      />
     </div>
   );
 }

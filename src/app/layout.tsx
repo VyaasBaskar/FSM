@@ -31,9 +31,11 @@ export default function RootLayout({
           id="preload-bar"
           className="fixed top-0 left-0 w-full h-1 bg-blue-500 z-[9999] animate-pulse"
         />
-        <Navbar />
-        <NProgressProvider />
-        {children}
+        <div className="page2">
+          <Navbar />
+          <NProgressProvider />
+          {children}
+        </div>
       </body>
     </html>
   );

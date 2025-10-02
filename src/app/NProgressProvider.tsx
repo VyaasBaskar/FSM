@@ -1,4 +1,3 @@
-// src/app/NProgressProvider.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -11,10 +10,8 @@ export default function NProgressProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Start NProgress when pathname changes
     NProgress.start();
 
-    // Slight delay to make sure bar is visible
     const timer = setTimeout(() => {
       NProgress.done();
     }, 500);

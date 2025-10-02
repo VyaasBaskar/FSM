@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 /* eslint-disable */
 
 import { useState, useEffect, useRef } from "react";
@@ -16,6 +17,18 @@ export default function ThemeToggle() {
     const initial = saved === "light" || saved === "dark" ? saved : system;
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
+  }, []);
+
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    function handleResize() {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      setIsMobile(aspectRatio < 1);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleTheme = () => {
@@ -73,13 +86,14 @@ export default function ThemeToggle() {
         background: `${theme === "light" ? "#002afaff" : "#fad400ff"}`,
         color: "var(--background)",
         border: "none",
-        borderRadius: "50%",
-        width: 48,
-        height: 48,
+        borderRadius: "15px",
+        width: 100,
+        height: 36,
         cursor: isAnimating ? "not-allowed" : "pointer",
         fontSize: 20,
         marginLeft: "2rem",
-        marginTop: -2,
+        marginRight: "2rem",
+        marginTop: 4,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -89,13 +103,9 @@ export default function ThemeToggle() {
       }}
     >
       {theme === "light" ? (
-        <span role="img" aria-label="moon" style={{ fontSize: 32 }}>
-          ⏾
-        </span>
+        <p style={{ fontSize: 16 }}>⏾ Theme</p>
       ) : (
-        <span role="img" aria-label="sun" style={{ fontSize: 24 }}>
-          ☀︎
-        </span>
+        <p style={{ fontSize: 16 }}>☀︎ Theme</p>
       )}
     </button>
   );
