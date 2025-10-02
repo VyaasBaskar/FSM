@@ -15,7 +15,7 @@ export default function PredEventTable({ teams }: { teams: TTType[] }) {
       key: "key",
       label: "Team",
       sortable: false,
-      render: (team: TTType) => <TeamLink teamKey={team.key} />,
+      render: (team: TTType) => <TeamLink teamKey={team.key} year={2025} />,
     },
     {
       key: "rank",

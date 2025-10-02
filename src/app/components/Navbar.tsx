@@ -61,10 +61,10 @@ export default function Navbar() {
     >
       <div
         style={{
-          maxWidth: "90rem",
+          maxWidth: "83.5rem",
           margin: "0 auto",
           paddingLeft: "0.75rem",
-          paddingRight: "0.25rem",
+          paddingRight: "0.5rem",
         }}
       >
         <div

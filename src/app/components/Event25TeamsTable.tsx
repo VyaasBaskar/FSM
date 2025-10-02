@@ -14,7 +14,9 @@ export default function Event25TeamsTable({
       key: "key",
       label: "Team",
       sortable: false,
-      render: (team: TeamDataType) => <TeamLink teamKey={team.key} year={2025} />,
+      render: (team: TeamDataType) => (
+        <TeamLink teamKey={team.key} year={2025} />
+      ),
     },
     {
       key: "rank",
