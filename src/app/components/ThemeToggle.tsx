@@ -38,8 +38,9 @@ export default function ThemeToggle() {
     const btn = buttonRef.current;
     if (btn) {
       const rect = btn.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+      let cx, cy;
+      cx = window.innerWidth;
+      cy = 0;
       const d = Math.max(
         Math.hypot(cx, cy),
         Math.hypot(window.innerWidth - cx, cy),

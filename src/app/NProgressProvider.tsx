@@ -10,16 +10,15 @@ export default function NProgressProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
-    NProgress.start();
+    NProgress.configure({ 
+      showSpinner: true,
+      trickleSpeed: 200,
+      minimum: 0.08
+    });
+  }, []);
 
-    const timer = setTimeout(() => {
-      NProgress.done();
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      NProgress.done();
-    };
+  useEffect(() => {
+    NProgress.done();
   }, [pathname]);
 
   return null;

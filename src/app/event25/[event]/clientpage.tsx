@@ -363,22 +363,46 @@ export default function ClientPage({
                       <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>
                         Red
                       </span>{" "}
-                      {match.red.map((t, i) => (
-                        <span key={t}>
-                          {i > 0 ? ", " : ""}
-                          <TeamLink teamKey={t} year={2025} />
-                        </span>
-                      ))}{" "}
+                      {match.red.map((t, i) => {
+                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        return (
+                          <span key={t}>
+                            {i > 0 && ", "}
+                            <span
+                              style={{
+                                background: isHighlighted ? "#ffd700" : "transparent",
+                                color: isHighlighted ? "#000" : "inherit",
+                                padding: isHighlighted ? "0.2em 0.4em" : "0",
+                                borderRadius: isHighlighted ? "4px" : "0",
+                              }}
+                            >
+                              <TeamLink teamKey={t} year={2025} />
+                            </span>
+                          </span>
+                        );
+                      })}{" "}
                       {" vs. "}
                       <span style={{ color: "#4d8cff", fontWeight: "bold" }}>
                         Blue
                       </span>{" "}
-                      {match.blue.map((t, i) => (
-                        <span key={t}>
-                          {i > 0 ? ", " : ""}
-                          <TeamLink teamKey={t} year={2025} />
-                        </span>
-                      ))}
+                      {match.blue.map((t, i) => {
+                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        return (
+                          <span key={t}>
+                            {i > 0 && ", "}
+                            <span
+                              style={{
+                                background: isHighlighted ? "#ffd700" : "transparent",
+                                color: isHighlighted ? "#000" : "inherit",
+                                padding: isHighlighted ? "0.2em 0.4em" : "0",
+                                borderRadius: isHighlighted ? "4px" : "0",
+                              }}
+                            >
+                              <TeamLink teamKey={t} year={2025} />
+                            </span>
+                          </span>
+                        );
+                      })}
                     </div>
 
                     <div

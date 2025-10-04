@@ -115,6 +115,7 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                 fontSize: isMobile ? 18 : 16,
                 textDecoration: "underline",
                 cursor: "pointer",
+                color: "var(--option-text)",
               }}
               href={option.value}
             >
@@ -122,7 +123,7 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
             </Link>
           ))}
           <ThemeToggle />
-          <p style={{ fontStyle: "italic", fontSize: 12, marginTop: 4 }}>
+          <p style={{ fontStyle: "italic", fontSize: 12, marginTop: 4, color: "var(--option-text)" }}>
             Developed by team 846
           </p>
         </div>
