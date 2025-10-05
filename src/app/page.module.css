@@ -209,6 +209,7 @@ a.secondary {
   text-align: center;
   color: var(--yellow-color);
   font-size: 3.0em;
+  margin-top: 3rem;
 }
 
 
@@ -217,7 +218,7 @@ a.secondary {
   border-collapse: collapse;
   text-align: center;
   color: var(--yellow-color);
-  font-size: 4.0em;
+  font-size: 3.8em;
 }
 
 .table {

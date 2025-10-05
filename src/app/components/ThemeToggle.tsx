@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 /* eslint-disable */
 
 import { useState, useEffect, useRef } from "react";
@@ -18,6 +19,18 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    function handleResize() {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      setIsMobile(aspectRatio < 1);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const toggleTheme = () => {
     if (isAnimating) return;
     setIsAnimating(true);
@@ -25,8 +38,9 @@ export default function ThemeToggle() {
     const btn = buttonRef.current;
     if (btn) {
       const rect = btn.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
+      let cx, cy;
+      cx = window.innerWidth;
+      cy = 0;
       const d = Math.max(
         Math.hypot(cx, cy),
         Math.hypot(window.innerWidth - cx, cy),
@@ -42,7 +56,7 @@ export default function ThemeToggle() {
         "border-radius:50%",
         `left:${cx - d}px`,
         `top:${cy - d}px`,
-        "z-index:-1",
+        "z-index:2000",
         "pointer-events:none",
         "transform:scale(1)",
         "transform-origin:center",
@@ -69,18 +83,18 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       disabled={isAnimating}
       style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
         zIndex: 1000,
         background: `${theme === "light" ? "#002afaff" : "#fad400ff"}`,
         color: "var(--background)",
         border: "none",
-        borderRadius: "50%",
-        width: 48,
-        height: 48,
+        borderRadius: "15px",
+        width: 100,
+        height: 36,
         cursor: isAnimating ? "not-allowed" : "pointer",
         fontSize: 20,
+        marginLeft: "2rem",
+        marginRight: "2rem",
+        marginTop: 4,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -90,13 +104,9 @@ export default function ThemeToggle() {
       }}
     >
       {theme === "light" ? (
-        <span role="img" aria-label="moon" style={{ fontSize: 32 }}>
-          ⏾
-        </span>
+        <p style={{ fontSize: 16 }}>⏾ Theme</p>
       ) : (
-        <span role="img" aria-label="sun" style={{ fontSize: 24 }}>
-          ☀︎
-        </span>
+        <p style={{ fontSize: 16 }}>☀︎ Theme</p>
       )}
     </button>
   );

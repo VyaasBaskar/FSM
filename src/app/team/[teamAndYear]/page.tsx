@@ -1,11 +1,14 @@
 /* eslint-disable */
 import styles from "../../page.module.css";
 import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
-import LogoButton from "../../components/LogoButton";
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 
-export default async function TeamPage({ params }: { params: Promise<{ teamAndYear: string }> }) {
+export default async function TeamPage({
+  params,
+}: {
+  params: Promise<{ teamAndYear: string }>;
+}) {
   const { teamAndYear } = await params;
   const [teamKey, year] = teamAndYear.split("-");
 
@@ -164,7 +167,12 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
   }
 
   let yearprov = year ?? "2025";
-  if (Number(yearprov) < 2013 || Number(yearprov) === 2021 || Number(yearprov) === 2020 || Number(yearprov) > 2025) {
+  if (
+    Number(yearprov) < 2013 ||
+    Number(yearprov) === 2021 ||
+    Number(yearprov) === 2020 ||
+    Number(yearprov) > 2025
+  ) {
     yearprov = "2025";
   }
   const teamStats = await getTeamStats(teamKey, Number(yearprov));
@@ -197,68 +205,77 @@ export default async function TeamPage({ params }: { params: Promise<{ teamAndYe
 
   console.log(`Mean: ${mean}, Variance: ${variance}, StdDev: ${stddev}`);
 
-  const pct = (Number(teamIndex) / gstats.length * 100.0).toFixed(1);
+  const pct = ((Number(teamIndex) / gstats.length) * 100.0).toFixed(1);
 
-  const normalizedFSM = ((fsm - mean) / stddev * 100.0 + 1500.0).toFixed(0);
+  const normalizedFSM = (((fsm - mean) / stddev) * 100.0 + 1500.0).toFixed(0);
 
   return (
-    <div className={styles.page} style={{ position: "relative", minHeight: "100vh", width: "100%" }}>
-      <a
-      href="/"
-      style={{
-        position: "absolute",
-        top: 24,
-        left: 24,
-        textDecoration: "none",
-        color: "inherit",
-        fontSize: "4rem",
-        display: "flex",
-        alignItems: "center",
-        zIndex: 10,
-      }}
-      aria-label="Back to Home"
-      >
-      &#8592;
-      </a>
+    <div
+      className={styles.page}
+      style={{ position: "relative", minHeight: "100vh", width: "100%" }}
+    >
       <main className={styles.main}>
-      <h1 className={styles.title}>FunkyStats Team FSM: {yearprov}</h1>
-      <div style={{ width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12 }}>
-      <p className={styles.smallheader}>{teamKey}, {teamInfo.nickname}</p>
-      <p className={styles.smallheader}>{teamInfo.state_prov}, {teamInfo.city}, {teamInfo.country}</p>
-      <div className={styles.table}>
-      <div className={styles.fsmtitle}>FSM: {fsm}, Global Rank: {teamIndex}, Top {pct}%</div>
-      <div className={styles.fsmtitle}>Normalized FSM: {normalizedFSM}</div>
-      <div>
-      <table className={styles.table}>
-        <thead>
-        <tr>
-          <th className={styles.th}>Event Code</th>
-          <th className={styles.th}>Rank</th>
-          <th className={styles.th}>Team FSM</th>
-        </tr>
-        </thead>
-        <tbody>
-        {teamStats.teamData.map((event: EventDataType) => (
-          <tr key={event.event}>
-          <td className={styles.td}>
-            <Link
-              href={Number(yearprov) === 2025 ? `/event25/${event.event.slice(4)}` : `/event/${event.event}`}
-              style={{ textDecoration: "underline", textDecorationThickness: '1px', textUnderlineOffset: '4px' }}
-            >
-              {event.event}
-            </Link>
-          </td>
-          <td className={styles.td}>{event.teamrank}</td>
-          <td className={styles.td}>{event.teamfsm}</td>
-          </tr>
-        ))}
-        </tbody>
-      </table>
-      </div>
-      </div>
-      </div>
+        <h1 className={styles.title}>{yearprov} Team FSM</h1>
+        <div
+          style={{
+            width: "100%",
+            textAlign: "center",
+            justifyContent: "center",
+            marginBottom: 12,
+            marginTop: 12,
+          }}
+        >
+          <p className={styles.smallheader}>
+            {teamKey}, {teamInfo.nickname}
+          </p>
+          <p className={styles.smallheader}>
+            {teamInfo.state_prov}, {teamInfo.city}, {teamInfo.country}
+          </p>
+          <div className={styles.table}>
+            <div className={styles.fsmtitle}>
+              FSM: {fsm}, Global Rank: {teamIndex}, Top {pct}%
+            </div>
+            <div className={styles.fsmtitle}>
+              Normalized FSM: {normalizedFSM}
+            </div>
+            <div>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>Event Code</th>
+                    <th className={styles.th}>Rank</th>
+                    <th className={styles.th}>Team FSM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamStats.teamData.map((event: EventDataType) => (
+                    <tr key={event.event}>
+                      <td className={styles.td}>
+                        <Link
+                          href={
+                            Number(yearprov) === 2025
+                              ? `/event25/${event.event.slice(4)}`
+                              : `/event/${event.event}`
+                          }
+                          style={{
+                            textDecoration: "underline",
+                            textDecorationThickness: "1px",
+                            textUnderlineOffset: "4px",
+                          }}
+                        >
+                          {event.event}
+                        </Link>
+                      </td>
+                      <td className={styles.td}>{event.teamrank}</td>
+                      <td className={styles.td}>{event.teamfsm}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </main>
-      <LogoButton />
     </div>
   );
 }

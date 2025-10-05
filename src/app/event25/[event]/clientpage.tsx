@@ -6,7 +6,6 @@ import styles from "../../page.module.css";
 import Event25TeamsTable from "../../components/Event25TeamsTable";
 import Link from "next/link";
 import TeamLink from "@/app/components/TeamLink";
-import LogoButton from "@/app/components/LogoButton";
 import * as ort from "onnxruntime-web";
 
 type MatchPredictions = {
@@ -186,26 +185,8 @@ export default function ClientPage({
         maxWidth: "100%",
       }}
     >
-      <Link
-        href="/"
-        style={{
-          position: "absolute",
-          top: 24,
-          left: 24,
-          textDecoration: "none",
-          color: "inherit",
-          fontSize: "4rem",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 10,
-        }}
-        aria-label="Back to Home"
-      >
-        &#8592;
-      </Link>
-
       <main className={styles.main}>
-        <h1 className={styles.title}>FunkyStats: Event FSM</h1>
+        <h1 className={styles.title}>Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>
 
         <div
@@ -382,22 +363,46 @@ export default function ClientPage({
                       <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>
                         Red
                       </span>{" "}
-                      {match.red.map((t, i) => (
-                        <span key={t}>
-                          {i > 0 ? ", " : ""}
-                          <TeamLink teamKey={t} year={2025} />
-                        </span>
-                      ))}{" "}
+                      {match.red.map((t, i) => {
+                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        return (
+                          <span key={t}>
+                            {i > 0 && ", "}
+                            <span
+                              style={{
+                                background: isHighlighted ? "#ffd700" : "transparent",
+                                color: isHighlighted ? "#000" : "inherit",
+                                padding: isHighlighted ? "0.2em 0.4em" : "0",
+                                borderRadius: isHighlighted ? "4px" : "0",
+                              }}
+                            >
+                              <TeamLink teamKey={t} year={2025} />
+                            </span>
+                          </span>
+                        );
+                      })}{" "}
                       {" vs. "}
                       <span style={{ color: "#4d8cff", fontWeight: "bold" }}>
                         Blue
                       </span>{" "}
-                      {match.blue.map((t, i) => (
-                        <span key={t}>
-                          {i > 0 ? ", " : ""}
-                          <TeamLink teamKey={t} year={2025} />
-                        </span>
-                      ))}
+                      {match.blue.map((t, i) => {
+                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        return (
+                          <span key={t}>
+                            {i > 0 && ", "}
+                            <span
+                              style={{
+                                background: isHighlighted ? "#ffd700" : "transparent",
+                                color: isHighlighted ? "#000" : "inherit",
+                                padding: isHighlighted ? "0.2em 0.4em" : "0",
+                                borderRadius: isHighlighted ? "4px" : "0",
+                              }}
+                            >
+                              <TeamLink teamKey={t} year={2025} />
+                            </span>
+                          </span>
+                        );
+                      })}
                     </div>
 
                     <div
@@ -479,7 +484,6 @@ export default function ClientPage({
           </div>
         )}
       </main>
-      <LogoButton />
     </div>
   );
 }
