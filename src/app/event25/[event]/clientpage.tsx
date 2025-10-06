@@ -344,6 +344,23 @@ export default function ClientPage({
                       : "tie"
                     : null;
 
+                const searchedTeamOnRed =
+                  filterTeam &&
+                  match.red.some((t) =>
+                    t.toLowerCase().includes(filterTeam.toLowerCase())
+                  );
+                const searchedTeamOnBlue =
+                  filterTeam &&
+                  match.blue.some((t) =>
+                    t.toLowerCase().includes(filterTeam.toLowerCase())
+                  );
+                const highWinner =
+                  (searchedTeamOnRed && predWinner === "red") ||
+                  (searchedTeamOnBlue && predWinner === "blue");
+                const searchedTeamWonActual =
+                  (searchedTeamOnRed && actualWinner === "red") ||
+                  (searchedTeamOnBlue && actualWinner === "blue");
+
                 return (
                   <li
                     key={matchKey}
@@ -354,6 +371,7 @@ export default function ClientPage({
                       borderRadius: 8,
                       padding: "1rem",
                       background: "var(--background-pred)",
+                      position: "relative",
                     }}
                   >
                     <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
@@ -364,16 +382,21 @@ export default function ClientPage({
                         Red
                       </span>{" "}
                       {match.red.map((t, i) => {
-                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        const isHighlighted =
+                          filterTeam &&
+                          t.toLowerCase().includes(filterTeam.toLowerCase());
                         return (
                           <span key={t}>
                             {i > 0 && ", "}
                             <span
                               style={{
-                                background: isHighlighted ? "#ffd700" : "transparent",
+                                background: isHighlighted
+                                  ? "var(--predicted-win-highlight)"
+                                  : "transparent",
                                 color: isHighlighted ? "#000" : "inherit",
                                 padding: isHighlighted ? "0.2em 0.4em" : "0",
                                 borderRadius: isHighlighted ? "4px" : "0",
+                                fontWeight: isHighlighted ? "bold" : "normal",
                               }}
                             >
                               <TeamLink teamKey={t} year={2025} />
@@ -386,16 +409,21 @@ export default function ClientPage({
                         Blue
                       </span>{" "}
                       {match.blue.map((t, i) => {
-                        const isHighlighted = filterTeam && t.toLowerCase().includes(filterTeam.toLowerCase());
+                        const isHighlighted =
+                          filterTeam &&
+                          t.toLowerCase().includes(filterTeam.toLowerCase());
                         return (
                           <span key={t}>
                             {i > 0 && ", "}
                             <span
                               style={{
-                                background: isHighlighted ? "#ffd700" : "transparent",
+                                background: isHighlighted
+                                  ? "var(--predicted-win-highlight)"
+                                  : "transparent",
                                 color: isHighlighted ? "#000" : "inherit",
                                 padding: isHighlighted ? "0.2em 0.4em" : "0",
                                 borderRadius: isHighlighted ? "4px" : "0",
+                                fontWeight: isHighlighted ? "bold" : "normal",
                               }}
                             >
                               <TeamLink teamKey={t} year={2025} />
@@ -420,8 +448,33 @@ export default function ClientPage({
                         <strong style={{ fontSize: "0.9rem", marginRight: 4 }}>
                           Pred:
                         </strong>
-                        <span style={{ color: "#ff4d4d" }}>{predRed}</span> --{" "}
-                        <span style={{ color: "#4d8cff" }}>{predBlue}</span>
+                        <span
+                          style={{
+                            color: "#ff4d4d",
+                            background: searchedTeamOnRed
+                              ? "var(--predicted-win-highlight)"
+                              : "transparent",
+                            padding: searchedTeamOnRed ? "0.2em 0.4em" : "0",
+                            borderRadius: searchedTeamOnRed ? "4px" : "0",
+                            fontWeight: searchedTeamOnRed ? "bold" : "normal",
+                          }}
+                        >
+                          {predRed}
+                        </span>{" "}
+                        --{" "}
+                        <span
+                          style={{
+                            color: "#4d8cff",
+                            background: searchedTeamOnBlue
+                              ? "var(--predicted-win-highlight)"
+                              : "transparent",
+                            padding: searchedTeamOnBlue ? "0.2em 0.4em" : "0",
+                            borderRadius: searchedTeamOnBlue ? "4px" : "0",
+                            fontWeight: searchedTeamOnBlue ? "bold" : "normal",
+                          }}
+                        >
+                          {predBlue}
+                        </span>
                       </div>
                       {hasResult && (
                         <div>
@@ -430,9 +483,53 @@ export default function ClientPage({
                           >
                             Real:
                           </strong>
-                          <span style={{ color: "#ff4d4d" }}>{actualRed}</span>{" "}
+                          <span
+                            style={{
+                              color: "#ff4d4d",
+                              background:
+                                searchedTeamOnRed && actualRed !== -1
+                                  ? "var(--predicted-win-highlight)"
+                                  : "transparent",
+                              padding:
+                                searchedTeamOnRed && actualRed !== -1
+                                  ? "0.2em 0.4em"
+                                  : "0",
+                              borderRadius:
+                                searchedTeamOnRed && actualRed !== -1
+                                  ? "4px"
+                                  : "0",
+                              fontWeight:
+                                searchedTeamOnRed && actualRed !== -1
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {actualRed}
+                          </span>{" "}
                           --{" "}
-                          <span style={{ color: "#4d8cff" }}>{actualBlue}</span>
+                          <span
+                            style={{
+                              color: "#4d8cff",
+                              background:
+                                searchedTeamOnBlue && actualBlue !== -1
+                                  ? "var(--predicted-win-highlight)"
+                                  : "transparent",
+                              padding:
+                                searchedTeamOnBlue && actualBlue !== -1
+                                  ? "0.2em 0.4em"
+                                  : "0",
+                              borderRadius:
+                                searchedTeamOnBlue && actualBlue !== -1
+                                  ? "4px"
+                                  : "0",
+                              fontWeight:
+                                searchedTeamOnBlue && actualBlue !== -1
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {actualBlue}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -443,7 +540,9 @@ export default function ClientPage({
                         style={{
                           fontWeight: "bold",
                           color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
-                          background: "var(--background)",
+                          background: highWinner
+                            ? "#ffd700"
+                            : "var(--background)",
                           padding: "0.2em 0.6em",
                           borderRadius: 4,
                         }}
@@ -464,7 +563,11 @@ export default function ClientPage({
                                 : actualWinner === "blue"
                                 ? "#4d8cff"
                                 : "#aaa",
-                            background: "var(--background)",
+                            background:
+                              (searchedTeamOnRed && actualWinner === "red") ||
+                              (searchedTeamOnBlue && actualWinner === "blue")
+                                ? "var(--predicted-win-highlight)"
+                                : "var(--background)",
                             padding: "0.2em 0.6em",
                             borderRadius: 4,
                           }}
@@ -475,6 +578,26 @@ export default function ClientPage({
                             ? "Red"
                             : "Blue"}
                         </span>
+                      </div>
+                    )}
+                    {(actualRed === -1 || actualBlue === -1
+                      ? highWinner
+                      : searchedTeamWonActual) && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "0.5rem",
+                          right: "0.5rem",
+                        }}
+                      >
+                        <img
+                          src="/logo846.png"
+                          alt="Winner"
+                          style={{
+                            width: "30px",
+                            height: "auto",
+                          }}
+                        />
                       </div>
                     )}
                   </li>
