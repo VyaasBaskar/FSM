@@ -51,20 +51,7 @@ export default async function TeamPage({
 
     const minPossibleFSM = Math.floor(minTeamFSM / 50) * 50 - 50;
     const maxPossibleFSM = Math.ceil(maxTeamFSM / 50) * 50 + 50;
-
-    const leftPadding = 70 + (maxPossibleFSM > 999 ? 10 : 0);
-    const rightPadding = 30;
-    const topPadding = 30;
-    const bottomPadding = 35;
     
-    const width = 700;
-    const height = 400;
-    
-    const points = allStats.map((s, i) => {
-      const x = leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1);
-      const y = height - bottomPadding - ((s.normFSM - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM || 1)) * (height - topPadding - bottomPadding);
-      return `${x},${y}`;
-    }).join(" ");
     return (
       <div className={styles.page} style={{ position: "relative", minHeight: "100vh", width: "100%" }}>
         <a
@@ -80,15 +67,16 @@ export default async function TeamPage({
             <p className={styles.smallheader}>{teamKey}</p>
             <div className={styles.table}>
               <div className={styles.fsmtitle}>Average Normalized FSM (2013–2025): {avgNormFSM}</div>
-              <div style={{ margin: "24px auto", maxWidth: width }}>
+              <div style={{ 
+                margin: "24px auto", 
+                width: "100%", 
+                maxWidth: "900px",
+                padding: "0 10px",
+                display: "flex",
+                justifyContent: "center"
+              }}>
                 <InteractiveChart
                   allStats={allStats}
-                  width={width}
-                  height={height}
-                  leftPadding={leftPadding}
-                  rightPadding={rightPadding}
-                  topPadding={topPadding}
-                  bottomPadding={bottomPadding}
                   minPossibleFSM={minPossibleFSM}
                   maxPossibleFSM={maxPossibleFSM}
                 />

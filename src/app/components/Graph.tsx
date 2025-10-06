@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type DataPoint = {
   year: number;
@@ -9,29 +9,48 @@ type DataPoint = {
 
 type InteractiveChartProps = {
   allStats: DataPoint[];
-  width: number;
-  height: number;
-  leftPadding: number;
-  rightPadding: number;
-  topPadding: number;
-  bottomPadding: number;
   minPossibleFSM: number;
   maxPossibleFSM: number;
 };
 
 export default function InteractiveChart({
   allStats,
-  width,
-  height,
-  leftPadding,
-  rightPadding,
-  topPadding,
-  bottomPadding,
   minPossibleFSM,
   maxPossibleFSM,
 }: InteractiveChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [dimensions, setDimensions] = useState({ width: 700, height: 400 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      const screenWidth = window.innerWidth;
+      const isMobile = screenWidth < 768;
+      
+      if (isMobile) {
+        setDimensions({
+          width: Math.min(screenWidth - 60, 400),
+          height: 300
+        });
+      } else {
+        setDimensions({
+          width: Math.min(screenWidth * 0.9, 800),
+          height: 450
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const { width, height } = dimensions;
+  const isMobile = width < 500;
+  const leftPadding = (maxPossibleFSM > 999 ? (isMobile ? 50 : 60) : (isMobile ? 40 : 50));
+  const rightPadding = isMobile ? 15 : 30;
+  const topPadding = 30;
+  const bottomPadding = isMobile ? 40 : 35;
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -41,21 +60,76 @@ export default function InteractiveChart({
     });
   };
 
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length > 0) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setMousePos({
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
+      });
+    }
+  };
+
+  const handlePointInteraction = (point: DataPoint, e: React.MouseEvent | React.TouchEvent) => {
+    setHoveredPoint(point);
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    if ('touches' in e && e.touches.length > 0) {
+      setMousePos({
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
+      });
+    } else if ('clientX' in e) {
+      setMousePos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
+
   return (
-    <div style={{ position: "relative" }}>
-      <svg width={width} height={height} onMouseMove={handleMouseMove}>
+    <div style={{ 
+      position: "relative", 
+      width: "100%", 
+      maxWidth: "900px",
+      margin: "0 auto",
+      padding: "0 20px"
+    }}>
+      <svg 
+        width="100%" 
+        height={height} 
+        viewBox={`0 0 ${width} ${height}`}
+        onMouseMove={handleMouseMove}
+        onTouchMove={handleTouchMove}
+        style={{ 
+          display: "block",
+          maxWidth: "100%",
+          height: "auto",
+          touchAction: "manipulation"
+        }}
+      >
         {Array.from({length: (maxPossibleFSM-minPossibleFSM)/50+1}, (_, i) => {
           const v = minPossibleFSM + i*50;
           const y = height - bottomPadding - ((v - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM)) * (height - topPadding - bottomPadding);
+          const fontSize = isMobile ? "10" : "12";
           return (
             <g key={v}>
               <line x1={leftPadding} y1={y} x2={width-rightPadding} y2={y} stroke="#bbb" strokeWidth="0.5" />
-              <text x={leftPadding-12} y={y+5} fontSize="13" textAnchor="end" fill="#fff">{v}</text>
+              <text x={leftPadding-8} y={y+4} fontSize={fontSize} textAnchor="end" fill="#fff">{v}</text>
             </g>
           );
         })}
         
-        <text x={leftPadding-45} y={height/2 - 10} fontSize="14" textAnchor="middle" fill="#fff" transform={`rotate(-90,${leftPadding-45},${height/2})`}>Normalized FSM</text>
+        <text 
+          x={leftPadding-25} 
+          y={height/2 - 10} 
+          fontSize={isMobile ? "10" : "12"} 
+          textAnchor="middle" 
+          fill="#fff" 
+          transform={`rotate(-90,${leftPadding-25},${height/2})`}
+        >
+          Normalized FSM
+        </text>
         
         <path
           fill="none"
@@ -104,25 +178,55 @@ export default function InteractiveChart({
         {allStats.map((s, i) => {
           const x = leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1);
           const y = height - bottomPadding - ((s.normFSM - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM || 1)) * (height - topPadding - bottomPadding);
+          const radius = isMobile ? 5 : 6;
+          const hoverRadius = isMobile ? 7 : 8;
+          const touchAreaRadius = isMobile ? 15 : 10;
+          
           return (
-            <circle
-              key={s.year}
-              cx={x}
-              cy={y}
-              r={hoveredPoint?.year === s.year ? 8 : 6}
-              fill="#0070f3"
-              stroke="#fff"
-              strokeWidth="2"
-              style={{ cursor: "pointer" }}
-              onMouseEnter={() => setHoveredPoint(s)}
-              onMouseLeave={() => setHoveredPoint(null)}
-            />
+            <g key={s.year}>
+              <circle
+                cx={x}
+                cy={y}
+                r={touchAreaRadius}
+                fill="transparent"
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setHoveredPoint(s)}
+                onMouseLeave={() => setHoveredPoint(null)}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  handlePointInteraction(s, e);
+                }}
+                onTouchEnd={() => {
+                  if (isMobile) {
+                   
+                    setTimeout(() => setHoveredPoint(null), 2000);
+                  }
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePointInteraction(s, e);
+                  if (isMobile) {
+                    setTimeout(() => setHoveredPoint(null), 2000);
+                  }
+                }}
+              />
+              <circle
+                cx={x}
+                cy={y}
+                r={hoveredPoint?.year === s.year ? hoverRadius : radius}
+                fill="#0070f3"
+                stroke="#fff"
+                strokeWidth="2"
+                style={{ pointerEvents: "none" }}
+              />
+            </g>
           );
         })}
         
         {allStats.map((s, i) => {
           const x = leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1);
-          return <text key={s.year} x={x} y={height-bottomPadding+20} fontSize="15" textAnchor="middle" fill="#fff">{(s.year % 100).toString().padStart(2, '0')}</text>;
+          const fontSize = isMobile ? "10" : "13";
+          return <text key={s.year} x={x} y={height-bottomPadding+15} fontSize={fontSize} textAnchor="middle" fill="#fff">{(s.year % 100).toString().padStart(2, '0')}</text>;
         })}
       </svg>
       
