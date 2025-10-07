@@ -59,11 +59,18 @@ export default function InteractiveChart({
   const adjustedMinFSM = Math.min(minPossibleFSM, 1450);
   const adjustedMaxFSM = Math.max(maxPossibleFSM, 1550);
 
+  const filteredStats =
+    allStats.length > 1
+      ? allStats.filter(
+          (s) => s.normFSM !== Math.min(...allStats.map((d) => d.normFSM))
+        )
+      : allStats;
+
   const avgFSM =
-    allStats.length > 0
+    filteredStats.length > 0
       ? Math.sqrt(
-          allStats.reduce((sum, s) => sum + s.normFSM * s.normFSM, 0) /
-            allStats.length
+          filteredStats.reduce((sum, s) => sum + s.normFSM * s.normFSM, 0) /
+            filteredStats.length
         )
       : 0;
 
