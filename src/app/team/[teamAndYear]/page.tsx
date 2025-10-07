@@ -3,7 +3,6 @@ import styles from "../../page.module.css";
 import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
-import LogoButton from "@/app/components/LogoButton";
 import InteractiveChart from "../../components/Graph";
 
 export default async function TeamPage({
@@ -15,66 +14,77 @@ export default async function TeamPage({
   const [teamKey, year] = teamAndYear.split("-");
 
   if (year === "general") {
-    
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 15 }, (_, i) => currentYear - i)
-      .filter(y => y !== 2020 && y !== 2021)
-      .slice(0, 10) 
-      .reverse(); 
+      .filter((y) => y !== 2020 && y !== 2021 && y >= 2013)
+      .reverse();
 
-    let normSum = 0, normCount = 0;
-    let allStats: { year: number, normFSM: number }[] = [];
+    let normSumSq = 0,
+      normCount = 0;
+    let allStats: { year: number; normFSM: number }[] = [];
     for (const y of years) {
       try {
         const globalStats = await getGlobalStats(y);
-      
-        const teamGlobalData = globalStats.find((t: any) => t.teamKey === teamKey);
+
+        const teamGlobalData = globalStats.find(
+          (t: any) => t.teamKey === teamKey
+        );
         if (!teamGlobalData) continue;
-        
+
         const fsms = globalStats.map((t: any) => Number(t.bestFSM));
         const mean = fsms.reduce((a, b) => a + b, 0) / fsms.length;
-        const variance = fsms.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / fsms.length;
+        const variance =
+          fsms.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / fsms.length;
         const stddev = Math.sqrt(variance);
         const fsm = Number(teamGlobalData.bestFSM);
         if (!isNaN(fsm) && stddev > 0) {
-          const normFSM = ((fsm - mean) / stddev * 100.0 + 1500.0);
-          normSum += normFSM;
+          const normFSM = ((fsm - mean) / stddev) * 100.0 + 1500.0;
+          normSumSq += normFSM * normFSM;
           normCount++;
           allStats.push({ year: y, normFSM });
         }
       } catch {}
     }
-    const avgNormFSM = (normCount > 0) ? (normSum / normCount).toFixed(0) : "N/A";
+    const avgNormFSM =
+      normCount > 0 ? Math.sqrt(normSumSq / normCount).toFixed(0) : "N/A";
 
-    const minTeamFSM = Math.min(...allStats.map(s => s.normFSM));
-    const maxTeamFSM = Math.max(...allStats.map(s => s.normFSM));
+    const minTeamFSM = Math.min(...allStats.map((s) => s.normFSM));
+    const maxTeamFSM = Math.max(...allStats.map((s) => s.normFSM));
 
     const minPossibleFSM = Math.floor(minTeamFSM / 50) * 50 - 50;
     const maxPossibleFSM = Math.ceil(maxTeamFSM / 50) * 50 + 50;
-    
+
     return (
-      <div className={styles.page} style={{ position: "relative", minHeight: "100vh", width: "100%" }}>
-        <a
-          href="/"
-          style={{ position: "absolute", top: 24, left: 24, textDecoration: "none", color: "inherit", fontSize: "4rem", display: "flex", alignItems: "center", zIndex: 10 }}
-          aria-label="Back to Home"
-        >
-          &#8592;
-        </a>
+      <div
+        className={styles.page}
+        style={{ position: "relative", minHeight: "100vh", width: "100%" }}
+      >
         <main className={styles.main}>
-          <h1 className={styles.title}>FunkyStats Team FSM: General (10-Year Analysis)</h1>
-          <div style={{ width: "100%", textAlign: "center", justifyContent: "center", marginBottom: 12, marginTop: 12 }}>
+          <h1 className={styles.title}>10-Year Team FSM Analaysis</h1>
+          <div
+            style={{
+              width: "100%",
+              textAlign: "center",
+              justifyContent: "center",
+              marginBottom: 12,
+              marginTop: 12,
+            }}
+          >
             <p className={styles.smallheader}>{teamKey}</p>
             <div className={styles.table}>
-              <div className={styles.fsmtitle}>Average Normalized FSM (2013–2025): {avgNormFSM}</div>
-              <div style={{ 
-                margin: "24px auto", 
-                width: "100%", 
-                maxWidth: "900px",
-                padding: "0 10px",
-                display: "flex",
-                justifyContent: "center"
-              }}>
+              <div className={styles.fsmtitle}>
+                RMS normalized FSM (2013–2025): {avgNormFSM}
+              </div>
+              <div
+                style={{
+                  margin: "24px auto",
+                  width: "100%",
+                  maxWidth: "900px",
+                  padding: "0 10px",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
                 <InteractiveChart
                   allStats={allStats}
                   minPossibleFSM={minPossibleFSM}
@@ -90,19 +100,21 @@ export default async function TeamPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {allStats.slice().reverse().map(s => (
-                      <tr key={s.year}>
-                        <td className={styles.td}>{s.year}</td>
-                        <td className={styles.td}>{s.normFSM.toFixed(0)}</td>
-                      </tr>
-                    ))}
+                    {allStats
+                      .slice()
+                      .reverse()
+                      .map((s) => (
+                        <tr key={s.year}>
+                          <td className={styles.td}>{s.year}</td>
+                          <td className={styles.td}>{s.normFSM.toFixed(0)}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
         </main>
-        <LogoButton />
       </div>
     );
   }

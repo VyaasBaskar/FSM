@@ -19,38 +19,53 @@ export default function InteractiveChart({
   maxPossibleFSM,
 }: InteractiveChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint | null>(null);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const [dimensions, setDimensions] = useState({ width: 700, height: 400 });
 
   useEffect(() => {
     const updateDimensions = () => {
       const screenWidth = window.innerWidth;
       const isMobile = screenWidth < 768;
-      
+
       if (isMobile) {
         setDimensions({
           width: Math.min(screenWidth - 60, 400),
-          height: 300
+          height: 300,
         });
       } else {
         setDimensions({
           width: Math.min(screenWidth * 0.9, 800),
-          height: 450
+          height: 450,
         });
       }
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
   const { width, height } = dimensions;
   const isMobile = width < 500;
-  const leftPadding = (maxPossibleFSM > 999 ? (isMobile ? 50 : 60) : (isMobile ? 40 : 50));
+  const leftPadding =
+    maxPossibleFSM > 999 ? (isMobile ? 50 : 60) : isMobile ? 40 : 50;
   const rightPadding = isMobile ? 15 : 30;
   const topPadding = 30;
   const bottomPadding = isMobile ? 40 : 35;
+
+  const adjustedMinFSM = Math.min(minPossibleFSM, 1450);
+  const adjustedMaxFSM = Math.max(maxPossibleFSM, 1550);
+
+  const avgFSM =
+    allStats.length > 0
+      ? Math.sqrt(
+          allStats.reduce((sum, s) => sum + s.normFSM * s.normFSM, 0) /
+            allStats.length
+        )
+      : 0;
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -70,16 +85,19 @@ export default function InteractiveChart({
     }
   };
 
-  const handlePointInteraction = (point: DataPoint, e: React.MouseEvent | React.TouchEvent) => {
+  const handlePointInteraction = (
+    point: DataPoint,
+    e: React.MouseEvent | React.TouchEvent
+  ) => {
     setHoveredPoint(point);
     const rect = e.currentTarget.getBoundingClientRect();
-    
-    if ('touches' in e && e.touches.length > 0) {
+
+    if ("touches" in e && e.touches.length > 0) {
       setMousePos({
         x: e.touches[0].clientX - rect.left,
         y: e.touches[0].clientY - rect.top,
       });
-    } else if ('clientX' in e) {
+    } else if ("clientX" in e) {
       setMousePos({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
@@ -88,49 +106,138 @@ export default function InteractiveChart({
   };
 
   return (
-    <div style={{ 
-      position: "relative", 
-      width: "100%", 
-      maxWidth: "900px",
-      margin: "0 auto",
-      padding: "0 20px"
-    }}>
-      <svg 
-        width="100%" 
-        height={height} 
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "900px",
+        margin: "0 auto",
+        padding: "0 20px",
+      }}
+    >
+      <svg
+        width="100%"
+        height={height}
         viewBox={`0 0 ${width} ${height}`}
         onMouseMove={handleMouseMove}
         onTouchMove={handleTouchMove}
-        style={{ 
+        style={{
           display: "block",
           maxWidth: "100%",
           height: "auto",
-          touchAction: "manipulation"
+          touchAction: "manipulation",
         }}
       >
-        {Array.from({length: (maxPossibleFSM-minPossibleFSM)/50+1}, (_, i) => {
-          const v = minPossibleFSM + i*50;
-          const y = height - bottomPadding - ((v - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM)) * (height - topPadding - bottomPadding);
-          const fontSize = isMobile ? "10" : "12";
-          return (
-            <g key={v}>
-              <line x1={leftPadding} y1={y} x2={width-rightPadding} y2={y} stroke="#bbb" strokeWidth="0.5" />
-              <text x={leftPadding-8} y={y+4} fontSize={fontSize} textAnchor="end" fill="#fff">{v}</text>
-            </g>
-          );
-        })}
-        
-        <text 
-          x={leftPadding-25} 
-          y={height/2 - 10} 
-          fontSize={isMobile ? "10" : "12"} 
-          textAnchor="middle" 
-          fill="#fff" 
-          transform={`rotate(-90,${leftPadding-25},${height/2})`}
+        {Array.from(
+          { length: (adjustedMaxFSM - adjustedMinFSM) / 50 + 1 },
+          (_, i) => {
+            const v = adjustedMinFSM + i * 50;
+            const y =
+              height -
+              bottomPadding -
+              ((v - adjustedMinFSM) / (adjustedMaxFSM - adjustedMinFSM)) *
+                (height - topPadding - bottomPadding);
+            const fontSize = isMobile ? "10" : "12";
+            return (
+              <g key={v}>
+                <line
+                  x1={leftPadding}
+                  y1={y}
+                  x2={width - rightPadding}
+                  y2={y}
+                  stroke="#bbb"
+                  strokeWidth="0.5"
+                />
+                <text
+                  x={leftPadding - 8}
+                  y={y + 4}
+                  fontSize={fontSize}
+                  textAnchor="end"
+                  fill="#fff"
+                >
+                  {v}
+                </text>
+              </g>
+            );
+          }
+        )}
+
+        <text
+          x={leftPadding - 40}
+          y={height / 2 - 5}
+          fontSize={isMobile ? "10" : "18"}
+          textAnchor="middle"
+          fill="#fff"
+          transform={`rotate(-90,${leftPadding - 40},${height / 2})`}
         >
           Normalized FSM
         </text>
-        
+
+        {allStats.length > 0 && (
+          <>
+            <line
+              x1={leftPadding}
+              x2={width - rightPadding}
+              y1={
+                height -
+                bottomPadding -
+                ((avgFSM - adjustedMinFSM) /
+                  (adjustedMaxFSM - adjustedMinFSM)) *
+                  (height - topPadding - bottomPadding)
+              }
+              y2={
+                height -
+                bottomPadding -
+                ((avgFSM - adjustedMinFSM) /
+                  (adjustedMaxFSM - adjustedMinFSM)) *
+                  (height - topPadding - bottomPadding)
+              }
+              stroke="yellow"
+              strokeDasharray="5,3"
+              strokeWidth="1.5"
+            />
+          </>
+        )}
+
+        {1500 >= adjustedMinFSM && 1500 <= adjustedMaxFSM && (
+          <>
+            <line
+              x1={leftPadding}
+              x2={width - rightPadding}
+              y1={
+                height -
+                bottomPadding -
+                ((1500 - adjustedMinFSM) / (adjustedMaxFSM - adjustedMinFSM)) *
+                  (height - topPadding - bottomPadding)
+              }
+              y2={
+                height -
+                bottomPadding -
+                ((1500 - adjustedMinFSM) / (adjustedMaxFSM - adjustedMinFSM)) *
+                  (height - topPadding - bottomPadding)
+              }
+              stroke="red"
+              strokeDasharray="5,3"
+              strokeWidth="1.5"
+            />
+            <text
+              x={width - rightPadding - 5}
+              y={
+                height -
+                bottomPadding -
+                ((1500 - adjustedMinFSM) / (adjustedMaxFSM - adjustedMinFSM)) *
+                  (height - topPadding - bottomPadding) -
+                5
+              }
+              textAnchor="end"
+              fontSize={isMobile ? "10" : "12"}
+              fill="red"
+            >
+              Baseline
+            </text>
+          </>
+        )}
+
         <path
           fill="none"
           stroke="#0070f3"
@@ -139,49 +246,85 @@ export default function InteractiveChart({
             if (allStats.length === 0) return "";
             if (allStats.length === 1) {
               const x = leftPadding;
-              const y = height - bottomPadding - ((allStats[0].normFSM - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM || 1)) * (height - topPadding - bottomPadding);
+              const y =
+                height -
+                bottomPadding -
+                ((allStats[0].normFSM - adjustedMinFSM) /
+                  (adjustedMaxFSM - adjustedMinFSM || 1)) *
+                  (height - topPadding - bottomPadding);
               return `M ${x},${y}`;
             }
-            
+
             let path = "";
             const coords = allStats.map((s, i) => ({
-              x: leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1),
-              y: height - bottomPadding - ((s.normFSM - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM || 1)) * (height - topPadding - bottomPadding)
+              x:
+                leftPadding +
+                (i * (width - leftPadding - rightPadding)) /
+                  (allStats.length - 1),
+              y:
+                height -
+                bottomPadding -
+                ((s.normFSM - adjustedMinFSM) /
+                  (adjustedMaxFSM - adjustedMinFSM || 1)) *
+                  (height - topPadding - bottomPadding),
             }));
-            
+
             path += `M ${coords[0].x},${coords[0].y}`;
-            
+
             for (let i = 1; i < coords.length; i++) {
               const prev = coords[i - 1];
               const curr = coords[i];
               const next = coords[i + 1];
-              
+
               const tension = 0.15;
-              const dx1 = next ? (next.x - prev.x) * tension : (curr.x - prev.x) * tension;
-              const dy1 = next ? (next.y - prev.y) * tension : (curr.y - prev.y) * tension;
-              
+              const dx1 = next
+                ? (next.x - prev.x) * tension
+                : (curr.x - prev.x) * tension;
+              const dy1 = next
+                ? (next.y - prev.y) * tension
+                : (curr.y - prev.y) * tension;
+
               const cp1x = prev.x + dx1;
               const cp1y = prev.y + dy1;
               const cp2x = curr.x - dx1;
               const cp2y = curr.y - dy1;
-              
+
               path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${curr.x},${curr.y}`;
             }
-            
+
             return path;
           })()}
         />
-        
-        <line x1={leftPadding} y1={height-bottomPadding} x2={width-rightPadding} y2={height-bottomPadding} stroke="#bbb" />
-        <line x1={leftPadding} y1={topPadding} x2={leftPadding} y2={height-bottomPadding} stroke="#bbb" />
-        
+
+        <line
+          x1={leftPadding}
+          y1={height - bottomPadding}
+          x2={width - rightPadding}
+          y2={height - bottomPadding}
+          stroke="#bbb"
+        />
+        <line
+          x1={leftPadding}
+          y1={topPadding}
+          x2={leftPadding}
+          y2={height - bottomPadding}
+          stroke="#bbb"
+        />
+
         {allStats.map((s, i) => {
-          const x = leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1);
-          const y = height - bottomPadding - ((s.normFSM - minPossibleFSM) / (maxPossibleFSM - minPossibleFSM || 1)) * (height - topPadding - bottomPadding);
+          const x =
+            leftPadding +
+            (i * (width - leftPadding - rightPadding)) / (allStats.length - 1);
+          const y =
+            height -
+            bottomPadding -
+            ((s.normFSM - adjustedMinFSM) /
+              (adjustedMaxFSM - adjustedMinFSM || 1)) *
+              (height - topPadding - bottomPadding);
           const radius = isMobile ? 5 : 6;
           const hoverRadius = isMobile ? 7 : 8;
           const touchAreaRadius = isMobile ? 15 : 10;
-          
+
           return (
             <g key={s.year}>
               <circle
@@ -198,7 +341,6 @@ export default function InteractiveChart({
                 }}
                 onTouchEnd={() => {
                   if (isMobile) {
-                   
                     setTimeout(() => setHoveredPoint(null), 2000);
                   }
                 }}
@@ -222,14 +364,27 @@ export default function InteractiveChart({
             </g>
           );
         })}
-        
+
         {allStats.map((s, i) => {
-          const x = leftPadding + (i * (width - leftPadding - rightPadding)) / (allStats.length-1);
+          const x =
+            leftPadding +
+            (i * (width - leftPadding - rightPadding)) / (allStats.length - 1);
           const fontSize = isMobile ? "10" : "13";
-          return <text key={s.year} x={x} y={height-bottomPadding+15} fontSize={fontSize} textAnchor="middle" fill="#fff">{(s.year % 100).toString().padStart(2, '0')}</text>;
+          return (
+            <text
+              key={s.year}
+              x={x}
+              y={height - bottomPadding + 15}
+              fontSize={fontSize}
+              textAnchor="middle"
+              fill="#fff"
+            >
+              {(s.year % 100).toString().padStart(2, "0")}
+            </text>
+          );
         })}
       </svg>
-      
+
       {hoveredPoint && (
         <div
           style={{
@@ -246,7 +401,9 @@ export default function InteractiveChart({
             whiteSpace: "nowrap",
           }}
         >
-          <div><strong>{hoveredPoint.year}</strong></div>
+          <div>
+            <strong>{hoveredPoint.year}</strong>
+          </div>
           <div>Normalized FSM: {hoveredPoint.normFSM.toFixed(0)}</div>
         </div>
       )}
