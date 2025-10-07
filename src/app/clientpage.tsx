@@ -250,6 +250,9 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               border: "1px solid #ccc",
             }}
           >
+            <option key="general" value="general">
+              General
+            </option>
             {[
               "2025",
               "2024",

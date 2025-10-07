@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
-    "@types/nprogress": "^0.2.3",
     "next": "15.3.5",
     "nprogress": "^0.2.0",
     "onnxruntime-node": "^1.22.0-rev",
@@ -21,6 +20,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/nprogress": "^0.2.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
