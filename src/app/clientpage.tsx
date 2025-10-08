@@ -22,7 +22,9 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
     const trimmed = eventCode.trim();
     if (trimmed && trimmed.length > 5) {
       NProgress.start();
-      if (trimmed.startsWith("2025")) {
+      if (trimmed.startsWith("2026")) {
+        router.push(`/event26/${trimmed.slice(4)}`);
+      } else if (trimmed.startsWith("2025")) {
         router.push(`/event25/${trimmed.slice(4)}`);
       } else {
         router.push(`/event/${trimmed}`);
