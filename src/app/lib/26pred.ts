@@ -23,9 +23,9 @@ export async function get26Predictions() {
     }));
   }
 
-  let stats23 = normalizeStats(astats23);
-  let stats24 = normalizeStats(astats24);
-  let stats25 = normalizeStats(astats25);
+  const stats23 = normalizeStats(astats23);
+  const stats24 = normalizeStats(astats24);
+  const stats25 = normalizeStats(astats25);
 
   const map23 = new Map(stats23.map((s) => [s.teamKey, Number(s.bestFSM)]));
   const map24 = new Map(stats24.map((s) => [s.teamKey, Number(s.bestFSM)]));
@@ -43,7 +43,6 @@ export async function get26Predictions() {
     let pred2026: number | undefined;
 
     if (y23 !== undefined && y24 !== undefined && y25 !== undefined) {
-      const xs = [2023, 2024, 2025];
       const ys = [y23, y24, y25];
       const yMean = Math.sqrt(ys.reduce((a, b) => a + b * b, 0) / ys.length);
       const candidates: [number, number][] = [];
