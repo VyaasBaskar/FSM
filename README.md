@@ -8,9 +8,3 @@
 - The game-specific match prediction model contributes to an accuracy higher than Statbotics
 - Responsive to sudden improvements in robot performance
 - Leans towards a team's better and later matches for a better estimate of their scoring capabilities
-
-### TODOs
-
-- [ ] Finish implementation of match prediction model
-- [ ] Add RP predictions
-- [ ] Add event simulations`
