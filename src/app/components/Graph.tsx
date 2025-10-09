@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 type DataPoint = {
   year: number;
@@ -13,7 +13,7 @@ type InteractiveChartProps = {
   maxPossibleFSM: number;
 };
 
-export default function InteractiveChart({
+function InteractiveChart({
   allStats,
   minPossibleFSM,
   maxPossibleFSM,
@@ -417,3 +417,5 @@ export default function InteractiveChart({
     </div>
   );
 }
+
+export default memo(InteractiveChart);
