@@ -32,6 +32,7 @@ interface ClientPageProps {
   havePreds: boolean;
   eventCode: string;
   teams: any[];
+  teamsf: { [key: string]: any };
   matchPredictions: MatchPredictions;
   matches: any[];
   playedMatches: number;
@@ -41,6 +42,7 @@ export default function ClientPage({
   havePreds,
   eventCode,
   teams,
+  teamsf,
   matchPredictions,
   matches,
   playedMatches,
@@ -85,6 +87,32 @@ export default function ClientPage({
     return Number(output[0]);
   }
 
+  const makeInput = (alliance: any[], compLevel: any, match: any) =>
+    new Float32Array([
+      ...alliance.flatMap((t) => [
+        Number(t.fsm),
+        Number(t.algae),
+        Number(t.coral),
+        Number(t.auto),
+        Number(t.climb),
+      ]),
+      compLevel,
+      Number(match.match_number),
+    ]);
+
+  const alliances: any[] = [
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+    ["0", "0", "0"],
+  ];
+
+  const scores: number[] = [0, 0, 0, 0, 0, 0, 0, 0];
+
   useEffect(() => {
     async function runPredictions() {
       if (!sessionReady || playedMatches <= 15) return;
@@ -92,7 +120,7 @@ export default function ClientPage({
       for (const match of matches) {
         let compLevel = 0;
         if (match.comp_level === "qm") compLevel = 1;
-        else if (match.comp_level === "ef") compLevel = 2;
+        else if (match.comp_level === "sf") compLevel = 2;
         else if (match.comp_level === "f") compLevel = 3;
 
         const blue = match.alliances.blue.team_keys.map((key: string) =>
@@ -104,21 +132,10 @@ export default function ClientPage({
 
         if ([...blue, ...red].some((t) => !t)) continue;
 
-        const makeInput = (alliance: any[]) =>
-          new Float32Array([
-            ...alliance.flatMap((t) => [
-              Number(t.fsm),
-              Number(t.algae),
-              Number(t.coral),
-              Number(t.auto),
-              Number(t.climb),
-            ]),
-            compLevel,
-            Number(match.match_number),
-          ]);
-
-        const redOutput = await runOnnxModel(makeInput(red));
-        const blueOutput = await runOnnxModel(makeInput(blue));
+        const redOutput = await runOnnxModel(makeInput(red, compLevel, match));
+        const blueOutput = await runOnnxModel(
+          makeInput(blue, compLevel, match)
+        );
 
         let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
         let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
@@ -129,10 +146,105 @@ export default function ClientPage({
         matchPredictions[match.key].preds[0] = avgRedOutput.toFixed(0);
         matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);
       }
+
+      // ----
+
+      const teamsCopy = [...teams];
+      const teamsLeft = [...teamsCopy];
+      const sortedTeams = [...teamsCopy].sort(
+        (a, b) => Number(b.fsm) - Number(a.fsm)
+      );
+
+      const zeroTeamKey = sortedTeams[sortedTeams.length - 1].key;
+      const zeroTeam = teams.find((team) => team.key === zeroTeamKey);
+
+      teamsLeft.sort((a, b) => Number(a.rank) - Number(b.rank));
+
+      for (let i = 0; i < 8; i++) {
+        const cap = teamsLeft.shift();
+        sortedTeams.splice(
+          sortedTeams.findIndex((team) => team.key === cap?.key),
+          1
+        );
+        if (cap) {
+          const idx = teamsLeft.findIndex((team) => team.key === cap.key);
+          if (idx !== -1) teamsLeft.splice(idx, 1);
+        }
+
+        let maxMpred = -1.0;
+        let pick = "0";
+        for (let j = 0; j < 4; j++) {
+          const team2 = sortedTeams[j];
+
+          const tempally = [cap, team2, zeroTeam];
+          let mpred = await runOnnxModel(
+            makeInput(tempally, 2, { match_number: 2 })
+          );
+          const pred2 =
+            Number(cap.fsm) + Number(team2.fsm) + Number(zeroTeam.fsm);
+          mpred = (mpred + pred2) / 2.0;
+          if (mpred > maxMpred) {
+            alliances[i] = [cap.key, team2.key, zeroTeam.key];
+            pick = team2.key;
+            maxMpred = mpred;
+          }
+        }
+        sortedTeams.splice(
+          sortedTeams.findIndex((team) => team.key === pick),
+          1
+        );
+        teamsLeft.splice(
+          teamsLeft.findIndex((team) => team.key === pick),
+          1
+        );
+      }
+      for (let i = 7; i >= 0; i--) {
+        let maxMpred2 = -100;
+        let pick = "0";
+        for (let j = 0; j < 9; j++) {
+          const team3 = sortedTeams[j];
+          const tempally0 = [...alliances[i]];
+
+          tempally0[2] = team3.key;
+
+          const tempally = tempally0.map((key) =>
+            teams.find((t) => t.key === key)
+          );
+          let mpred = await runOnnxModel(
+            makeInput(tempally, 2, { match_number: 2 })
+          );
+          const pred2 =
+            Number(tempally[0].fsm) +
+            Number(tempally[1].fsm) +
+            Number(tempally[2].fsm);
+          mpred = (mpred + pred2) / 2.0;
+          if (mpred > maxMpred2) {
+            alliances[i][2] = team3.key;
+
+            pick = team3.key;
+            maxMpred2 = mpred;
+            scores[i] = mpred;
+          }
+        }
+        sortedTeams.splice(
+          sortedTeams.findIndex((team) => team.key === pick),
+          1
+        );
+      }
+
+      console.log("Predicted alliances:", alliances);
+      console.log("Predicted scores:", scores);
     }
 
     runPredictions();
-  }, [sessionReady, playedMatches, matches, matchPredictions, teams]);
+  }, [
+    alliances,
+    sessionReady,
+    playedMatches,
+    matches,
+    matchPredictions,
+    teams,
+  ]);
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
     const getTypeOrder = (key: string) => {

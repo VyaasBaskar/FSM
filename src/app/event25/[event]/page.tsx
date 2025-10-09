@@ -44,6 +44,7 @@ export default async function EventPage({
       matchPredictions && Object.keys(matchPredictions).length > 0;
 
     const matches = await getEventQualMatches("2025" + eventCode, true);
+
     // const dataDict = [];
     // for (const match of matches) {
     //   let compLevel = 0;
@@ -83,6 +84,7 @@ export default async function EventPage({
           havePreds={havePreds}
           eventCode={eventCode}
           teams={teams}
+          teamsf={FSMs}
           matchPredictions={matchPredictions}
           matches={matches}
           playedMatches={playedMatches}
