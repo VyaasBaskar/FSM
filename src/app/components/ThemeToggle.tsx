@@ -37,10 +37,14 @@ export default function ThemeToggle() {
     const newTheme = theme === "light" ? "dark" : "light";
     const btn = buttonRef.current;
     if (btn) {
-      const rect = btn.getBoundingClientRect();
       let cx, cy;
-      cx = window.innerWidth;
-      cy = 0;
+      if (newTheme === "light") {
+        cx = 0;
+        cy = window.innerHeight;
+      } else {
+        cx = window.innerWidth;
+        cy = 0;
+      }
       const d = Math.max(
         Math.hypot(cx, cy),
         Math.hypot(window.innerWidth - cx, cy),

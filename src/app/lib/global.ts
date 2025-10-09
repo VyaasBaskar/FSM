@@ -20,7 +20,7 @@ export async function getEvents(year: number = 2025) {
   );
 
   if (!res.ok) {
-    throw new Error("Failed to fetch 2025 events");
+    throw new Error("Failed to fetch events");
   }
 
   const events = await res.json();

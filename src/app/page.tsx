@@ -6,6 +6,7 @@ import { fetchAll25Teams, setAll25Teams } from "./lib/supabase";
 
 export default async function Home() {
   const events = await getEvents();
+  events.push(...(await getEvents(2026)));
   let teams = await fetchAll25Teams();
   if (teams.length === 0) {
     console.warn("No teams found in Supabase, fetching from TBA");
@@ -13,7 +14,5 @@ export default async function Home() {
     await setAll25Teams(teams);
   }
   console.log("Fetched teams:", teams.length);
-  return (
-    <ClientHome events={events} teams={teams} />
-  );
+  return <ClientHome events={events} teams={teams} />;
 }

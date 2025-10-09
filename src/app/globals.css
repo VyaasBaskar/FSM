@@ -21,6 +21,8 @@
   --menu-color: #000;
   --option-bg: #ffffff;
   --option-text: #000000;
+
+  --predicted-win-highlight: #ffd700;
 }
 
 [data-theme="dark"] {
@@ -30,10 +32,12 @@
   --navbar-background: #141414;
   --navbar-highlight: #85858586;
   --yellow-color: #ffc600;
-  
+
   --menu-color: #fff;
   --option-bg: #2b2b2b;
   --option-text: #ededed;
+
+  --predicted-win-highlight: #ffd700;
 }
 
 html,
