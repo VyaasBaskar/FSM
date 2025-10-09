@@ -1,12 +1,23 @@
 "use client";
 /* eslint-disable */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import styles from "../../page.module.css";
-import Event25TeamsTable from "../../components/Event25TeamsTable";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import TeamLink from "@/app/components/TeamLink";
-import * as ort from "onnxruntime-web";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import type * as ort from "onnxruntime-web";
+
+const loadOnnxRuntime = () => import("onnxruntime-web");
+
+const Event25TeamsTable = dynamic(
+  () => import("../../components/Event25TeamsTable"),
+  {
+    loading: () => <LoadingSpinner message="Loading team stats..." />,
+    ssr: false,
+  }
+);
 
 type MatchPredictions = {
   [key: string]: {
@@ -47,6 +58,7 @@ export default function ClientPage({
   useEffect(() => {
     async function loadModel() {
       try {
+        const ort = await loadOnnxRuntime();
         const session = await ort.InferenceSession.create("/matchpred.onnx");
         sessionRef.current = session;
         setSessionReady(true);
@@ -54,14 +66,17 @@ export default function ClientPage({
         console.error("Failed to load ONNX model:", err);
       }
     }
-    loadModel();
-  }, []);
+    if (havePreds) {
+      loadModel();
+    }
+  }, [havePreds]);
 
   async function runOnnxModel(inputData: Float32Array) {
     if (!sessionRef.current) throw new Error("ONNX session not loaded.");
 
+    const ort = await loadOnnxRuntime();
     const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
-    const feeds: Record<string, ort.Tensor> = {
+    const feeds: Record<string, typeof inputTensor> = {
       [sessionRef.current.inputNames[0]]: inputTensor,
     };
 

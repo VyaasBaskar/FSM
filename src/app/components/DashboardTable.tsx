@@ -1,12 +1,9 @@
 "use client";
 
+import { memo } from "react";
 import SortableTable from "./SortableTable";
 
-export default function DashboardTable({
-  teams,
-}: {
-  teams: { [key: string]: string }[];
-}) {
+function DashboardTable({ teams }: { teams: { [key: string]: string }[] }) {
   const columns = [
     {
       key: "key",
@@ -54,3 +51,5 @@ export default function DashboardTable({
     />
   );
 }
+
+export default memo(DashboardTable);

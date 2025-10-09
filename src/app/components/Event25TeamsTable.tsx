@@ -1,14 +1,11 @@
 "use client";
 
+import { memo } from "react";
 import { TeamDataType } from "../lib/event";
 import SortableTable from "./SortableTable";
 import TeamLink from "./TeamLink";
 
-export default function Event25TeamsTable({
-  teams,
-}: {
-  teams: TeamDataType[];
-}) {
+function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
   const columns = [
     {
       key: "key",
@@ -86,3 +83,5 @@ export default function Event25TeamsTable({
     />
   );
 }
+
+export default memo(Event25TeamsTable);

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-import NProgress from "nprogress";
 
 interface ClientHomeProps {
   events: { key: string; value: string }[];
@@ -21,7 +20,6 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
 
     const trimmed = eventCode.trim();
     if (trimmed && trimmed.length > 5) {
-      NProgress.start();
       if (trimmed.startsWith("2026")) {
         router.push(`/event26/${trimmed.slice(4)}`);
       } else if (trimmed.startsWith("2025")) {
@@ -36,14 +34,12 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
     e.preventDefault();
     const trimmed = teamCode.trim();
     if (trimmed) {
-      NProgress.start();
       router.push(`/team/frc${trimmed}-${year}`);
     }
   };
 
   const handleGoGlobal = (e: React.FormEvent) => {
     e.preventDefault();
-    NProgress.start();
     router.push(`/global/${year}`);
   };
 
