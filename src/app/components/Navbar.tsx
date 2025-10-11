@@ -10,9 +10,9 @@ const navLinkStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: "0.75rem 1.5rem",
+  padding: "0.625rem 1.25rem",
   borderRadius: "0.5rem",
-  fontSize: "0.95rem",
+  fontSize: "0.9375rem",
   fontWeight: 600,
   background: "var(--nav-button-bg)",
   color: "var(--nav-button-text)",
@@ -24,7 +24,7 @@ const navLinkStyle: React.CSSProperties = {
   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   position: "relative",
   overflow: "hidden",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
 };
 
 export default function Navbar() {
@@ -58,8 +58,9 @@ export default function Navbar() {
       style={{
         background: "var(--navbar-background)",
         color: "white",
-        boxShadow: "0 2px 12px var(--navbar-shadow)",
-        borderBottom: "2px solid var(--navbar-border)",
+        boxShadow:
+          "0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)",
+        borderBottom: "1px solid var(--navbar-border)",
         width: "100%",
         zIndex: 10,
         padding: "0.5rem 0",
@@ -101,13 +102,11 @@ export default function Navbar() {
                 alt="Logo"
                 width={42}
                 height={47}
+                className={`navbar-logo ${logoHovered ? "logo-hovered" : ""}`}
                 style={{
                   zIndex: 1000,
                   marginLeft: "0.5rem",
                   transition: "filter 0.3s ease",
-                  filter: logoHovered
-                    ? "drop-shadow(0 0 10px var(--yellow-color)) brightness(1.1)"
-                    : "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))",
                 }}
               />
               <p
@@ -144,12 +143,12 @@ export default function Navbar() {
                       ...navLinkStyle,
                       transform:
                         hoveredLink === link.href
-                          ? "translateY(-2px)"
+                          ? "translateY(-1px)"
                           : "translateY(0)",
                       boxShadow:
                         hoveredLink === link.href
-                          ? "0 6px 20px var(--nav-button-shadow)"
-                          : "0 2px 8px rgba(0, 0, 0, 0.15)",
+                          ? "0 4px 12px var(--nav-button-shadow), 0 2px 4px rgba(0, 0, 0, 0.06)"
+                          : "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
                       background:
                         hoveredLink === link.href
                           ? "var(--nav-button-bg-hover)"

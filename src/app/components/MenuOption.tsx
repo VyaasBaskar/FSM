@@ -70,16 +70,16 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
         style={{
           background:
             menuHovered || open ? "var(--menu-hover-bg)" : "transparent",
-          border: "2px solid",
+          border: "1.5px solid",
           borderColor:
-            menuHovered || open ? "var(--yellow-color)" : "rgba(0, 0, 0, 0.1)",
+            menuHovered || open ? "var(--yellow-color)" : "rgba(0, 0, 0, 0.15)",
           padding: isMobile ? 12 : 8,
           cursor: "pointer",
           outline: "none",
           borderRadius: "0.5rem",
           transition: "all 0.3s ease",
           transform: menuHovered ? "scale(1.05)" : "scale(1)",
-          boxShadow: open ? "0 2px 8px rgba(0, 0, 0, 0.1)" : "none",
+          boxShadow: open ? "0 2px 4px rgba(0, 0, 0, 0.08)" : "none",
         }}
       >
         <div
@@ -129,7 +129,7 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
             right: 0,
             background: "var(--option-bg)",
             boxShadow:
-              "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px var(--navbar-border)",
+              "0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.08)",
             borderRadius: 12,
             padding: isMobile ? 20 : 16,
             display: "flex",

@@ -14,30 +14,30 @@
   --background: #ffffff;
   --foreground: #000000;
   --background-pred: #ffffff;
-  --navbar-background: #f8f9fa;
+  --navbar-background: #ffffff;
   --navbar-highlight: transparent;
-  --navbar-shadow: rgba(0, 0, 0, 0.12);
-  --navbar-border: rgba(0, 0, 0, 0.15);
-  --yellow-color: #c78500;
-  --yellow-glow: rgba(199, 133, 0, 0.6);
-  --logo-gradient: linear-gradient(135deg, #c78500 0%, #f0b90b 100%);
+  --navbar-shadow: rgba(0, 0, 0, 0.08);
+  --navbar-border: rgba(0, 0, 0, 0.12);
+  --yellow-color: #d89000;
+  --yellow-glow: rgba(216, 144, 0, 0.6);
+  --logo-gradient: linear-gradient(135deg, #d89000 0%, #f0b90b 100%);
 
-  --menu-color: #212529;
-  --menu-hover-bg: rgba(199, 133, 0, 0.12);
-  --menu-item-hover-bg: rgba(199, 133, 0, 0.15);
+  --menu-color: #1a1a1a;
+  --menu-hover-bg: rgba(216, 144, 0, 0.1);
+  --menu-item-hover-bg: rgba(216, 144, 0, 0.12);
   --option-bg: #ffffff;
-  --option-text: #212529;
+  --option-text: #1a1a1a;
 
-  --nav-button-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  --nav-button-bg-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  --nav-button-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --nav-button-bg-hover: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   --nav-button-text: #ffffff;
-  --nav-button-border: rgba(37, 99, 235, 0.5);
-  --nav-button-border-hover: rgba(37, 99, 235, 0.8);
-  --nav-button-shadow: rgba(37, 99, 235, 0.4);
+  --nav-button-border: rgba(59, 130, 246, 0.3);
+  --nav-button-border-hover: rgba(59, 130, 246, 0.6);
+  --nav-button-shadow: rgba(59, 130, 246, 0.35);
 
-  --clear-cache-bg: rgba(239, 68, 68, 0.12);
-  --clear-cache-hover-bg: rgba(239, 68, 68, 0.22);
-  --clear-cache-border: rgba(239, 68, 68, 0.5);
+  --clear-cache-bg: rgba(239, 68, 68, 0.1);
+  --clear-cache-hover-bg: rgba(239, 68, 68, 0.2);
+  --clear-cache-border: rgba(239, 68, 68, 0.4);
   --clear-cache-text: #dc2626;
 
   --predicted-win-highlight: #ffd700;
@@ -138,4 +138,21 @@ a {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* Logo color matching */
+[data-theme="light"] .navbar-logo {
+  filter: brightness(0) saturate(100%) invert(42%) sepia(98%) saturate(1600%) hue-rotate(9deg) brightness(80%) contrast(98%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+[data-theme="light"] .navbar-logo.logo-hovered {
+  filter: brightness(0) saturate(100%) invert(42%) sepia(98%) saturate(1600%) hue-rotate(9deg) brightness(90%) contrast(98%) drop-shadow(0 0 10px rgba(216, 144, 0, 0.6));
+}
+
+[data-theme="dark"] .navbar-logo {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+[data-theme="dark"] .navbar-logo.logo-hovered {
+  filter: drop-shadow(0 0 10px rgba(255, 198, 0, 0.5)) brightness(1.1);
 }
