@@ -5,6 +5,8 @@ import {
   getEventTeams,
   getMatchPredictions,
   getNumberPlayedMatches,
+  getEventAlliances,
+  getNexusMatchSchedule,
 } from "../../lib/event";
 import { getGlobalStats } from "@/app/lib/global";
 import ClientPage from "./clientpage";
@@ -39,10 +41,13 @@ export default async function EventPage({
       });
     }
 
-    const [matchPredictions, matches] = await Promise.all([
-      getMatchPredictions(fullEventCode, FSMs),
-      getEventQualMatches(fullEventCode, true),
-    ]);
+    const [matchPredictions, matches, actualAlliances, nexusSchedule] =
+      await Promise.all([
+        getMatchPredictions(fullEventCode, FSMs),
+        getEventQualMatches(fullEventCode, true),
+        getEventAlliances(fullEventCode),
+        getNexusMatchSchedule(fullEventCode),
+      ]);
 
     const havePreds =
       matchPredictions && Object.keys(matchPredictions).length > 0;
@@ -86,10 +91,10 @@ export default async function EventPage({
           havePreds={havePreds}
           eventCode={eventCode}
           teams={teams}
-          teamsf={FSMs}
           matchPredictions={matchPredictions}
-          matches={matches}
           playedMatches={playedMatches}
+          actualAlliances={actualAlliances}
+          nexusSchedule={nexusSchedule}
         />
       </div>
     );

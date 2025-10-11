@@ -1,63 +1,40 @@
 "use client";
-/* eslint-disable */
 
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from "../../page.module.css";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import TeamLink from "@/app/components/TeamLink";
-import LoadingSpinner from "@/app/components/LoadingSpinner";
 import type * as ort from "onnxruntime-web";
+import { ClientPageProps } from "./types";
+import AlliancePredictions from "./AlliancePredictions";
+import MatchPredictions from "./MatchPredictions";
 
 const loadOnnxRuntime = () => import("onnxruntime-web");
 
 const Event25TeamsTable = dynamic(
   () => import("../../components/Event25TeamsTable"),
   {
-    loading: () => <LoadingSpinner message="Loading team stats..." />,
+    loading: () => <div>Loading team stats...</div>,
     ssr: false,
   }
 );
-
-type MatchPredictions = {
-  [key: string]: {
-    preds: string[];
-    red: string[];
-    blue: string[];
-    result: number[];
-  };
-};
-
-interface ClientPageProps {
-  havePreds: boolean;
-  eventCode: string;
-  teams: any[];
-  teamsf: { [key: string]: any };
-  matchPredictions: MatchPredictions;
-  matches: any[];
-  playedMatches: number;
-}
 
 export default function ClientPage({
   havePreds,
   eventCode,
   teams,
-  teamsf,
   matchPredictions,
-  matches,
   playedMatches,
+  actualAlliances,
+  nexusSchedule,
 }: ClientPageProps) {
+  console.log("actualAlliances received:", actualAlliances);
+  console.log("Event code:", eventCode);
+
   const [activeTab, setActiveTab] = useState<"stats" | "preds" | "alliances">(
     "stats"
   );
   const [sessionReady, setSessionReady] = useState(false);
   const sessionRef = useRef<ort.InferenceSession | null>(null);
-
-  const [filterText, setFilterText] = useState("");
-  const [filterTeam, setFilterTeam] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "quals" | "elims">(
-    "all"
-  );
 
   useEffect(() => {
     async function loadModel() {
@@ -89,7 +66,17 @@ export default function ClientPage({
     return Number(output[0]);
   }
 
-  const makeInput = (alliance: any[], compLevel: any, match: any) =>
+  const makeInput = (
+    alliance: {
+      fsm: number;
+      algae: number;
+      coral: number;
+      auto: number;
+      climb: number;
+    }[],
+    compLevel: number,
+    match: { match_number: number }
+  ) =>
     new Float32Array([
       ...alliance.flatMap((t) => [
         Number(t.fsm),
@@ -101,210 +88,6 @@ export default function ClientPage({
       compLevel,
       Number(match.match_number),
     ]);
-
-  const alliances: any[] = [
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-    ["0", "0", "0"],
-  ];
-
-  const scores: number[] = [0, 0, 0, 0, 0, 0, 0, 0];
-
-  useEffect(() => {
-    async function runPredictions() {
-      if (!sessionReady || playedMatches <= 15) return;
-
-      for (const match of matches) {
-        let compLevel = 0;
-        if (match.comp_level === "qm") compLevel = 1;
-        else if (match.comp_level === "sf") compLevel = 2;
-        else if (match.comp_level === "f") compLevel = 3;
-
-        const blue = match.alliances.blue.team_keys.map((key: string) =>
-          teams.find((t) => t.key === key)
-        );
-        const red = match.alliances.red.team_keys.map((key: string) =>
-          teams.find((t) => t.key === key)
-        );
-
-        if ([...blue, ...red].some((t) => !t)) continue;
-
-        if (!matchPredictions[match.key]) continue;
-
-        const redOutput = await runOnnxModel(makeInput(red, compLevel, match));
-        const blueOutput = await runOnnxModel(
-          makeInput(blue, compLevel, match)
-        );
-
-        let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
-        let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
-
-        avgRedOutput = (avgRedOutput + redOutput) / 2;
-        avgBlueOutput = (avgBlueOutput + blueOutput) / 2;
-
-        matchPredictions[match.key].preds[0] = avgRedOutput.toFixed(0);
-        matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);
-      }
-
-      // ----
-
-      const teamsCopy = [...teams];
-      const teamsLeft = [...teamsCopy];
-      const sortedTeams = [...teamsCopy].sort(
-        (a, b) => Number(b.fsm) - Number(a.fsm)
-      );
-
-      const zeroTeamKey = sortedTeams[sortedTeams.length - 1].key;
-      const zeroTeam = teams.find((team) => team.key === zeroTeamKey);
-
-      teamsLeft.sort((a, b) => Number(a.rank) - Number(b.rank));
-
-      for (let i = 0; i < 8; i++) {
-        const cap = teamsLeft.shift();
-        sortedTeams.splice(
-          sortedTeams.findIndex((team) => team.key === cap?.key),
-          1
-        );
-        if (cap) {
-          const idx = teamsLeft.findIndex((team) => team.key === cap.key);
-          if (idx !== -1) teamsLeft.splice(idx, 1);
-        }
-
-        let maxMpred = -1.0;
-        let pick = "0";
-        for (let j = 0; j < 4; j++) {
-          const team2 = sortedTeams[j];
-
-          const tempally = [cap, team2, zeroTeam];
-          let mpred = await runOnnxModel(
-            makeInput(tempally, 2, { match_number: 2 })
-          );
-          const pred2 =
-            Number(cap.fsm) + Number(team2.fsm) + Number(zeroTeam.fsm);
-          mpred = (mpred + pred2) / 2.0;
-          if (mpred > maxMpred) {
-            alliances[i] = [cap.key, team2.key, zeroTeam.key];
-            pick = team2.key;
-            maxMpred = mpred;
-          }
-        }
-        sortedTeams.splice(
-          sortedTeams.findIndex((team) => team.key === pick),
-          1
-        );
-        teamsLeft.splice(
-          teamsLeft.findIndex((team) => team.key === pick),
-          1
-        );
-      }
-      for (let i = 7; i >= 0; i--) {
-        let maxMpred2 = -100;
-        let pick = "0";
-        for (let j = 0; j < 9; j++) {
-          const team3 = sortedTeams[j];
-          const tempally0 = [...alliances[i]];
-
-          tempally0[2] = team3.key;
-
-          const tempally = tempally0.map((key) =>
-            teams.find((t) => t.key === key)
-          );
-          let mpred = await runOnnxModel(
-            makeInput(tempally, 2, { match_number: 2 })
-          );
-          const pred2 =
-            Number(tempally[0].fsm) +
-            Number(tempally[1].fsm) +
-            Number(tempally[2].fsm);
-          mpred = (mpred + pred2) / 2.0;
-          if (mpred > maxMpred2) {
-            alliances[i][2] = team3.key;
-
-            pick = team3.key;
-            maxMpred2 = mpred;
-            scores[i] = mpred;
-          }
-        }
-        sortedTeams.splice(
-          sortedTeams.findIndex((team) => team.key === pick),
-          1
-        );
-      }
-
-      console.log("Predicted alliances:", alliances);
-      console.log("Predicted scores:", scores);
-    }
-
-    runPredictions();
-  }, [
-    alliances,
-    sessionReady,
-    playedMatches,
-    matches,
-    matchPredictions,
-    teams,
-  ]);
-
-  const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
-    const getTypeOrder = (key: string) => {
-      if (key.includes("_f")) return 2;
-      if (key.includes("_sf")) return 1;
-      return 0;
-    };
-    const typeA = getTypeOrder(a);
-    const typeB = getTypeOrder(b);
-
-    if (typeA !== typeB) return typeA - typeB;
-
-    const numA = parseInt(a.slice(4).match(/\d+/)?.[0] ?? "0", 10);
-    const numB = parseInt(b.slice(4).match(/\d+/)?.[0] ?? "0", 10);
-
-    return numA === numB ? a.localeCompare(b) : numA - numB;
-  });
-
-  const resultsWithGroundTruth = entries.filter(
-    ([, match]) =>
-      match.result &&
-      match.result.length === 2 &&
-      match.result[0] !== -1 &&
-      match.result[1] !== -1
-  );
-
-  const correctPredictions = resultsWithGroundTruth.filter(([, match]) => {
-    const [predRed, predBlue] = match.preds;
-    const predWinner = Number(predRed) > Number(predBlue) ? "red" : "blue";
-
-    const [actualRed, actualBlue] = match.result;
-    const actualWinner =
-      actualRed > actualBlue ? "red" : actualBlue > actualRed ? "blue" : "tie";
-
-    return predWinner === actualWinner;
-  });
-
-  const accuracy =
-    resultsWithGroundTruth.length > 0
-      ? (100 * correctPredictions.length) / resultsWithGroundTruth.length
-      : 0;
-
-  const filteredEntries = entries.filter(([key, match]) => {
-    const matchNameMatch = key.toLowerCase().includes(filterText.toLowerCase());
-    const teamMatch =
-      filterTeam === "" ||
-      [...match.red, ...match.blue].some((team) =>
-        team.toLowerCase().includes(filterTeam.toLowerCase())
-      );
-    const typeMatch =
-      filterType === "all" ||
-      (filterType === "quals" && key.includes("_qm")) ||
-      (filterType === "elims" && !key.includes("_qm"));
-
-    return matchNameMatch && teamMatch && typeMatch;
-  });
 
   return (
     <div
@@ -363,14 +146,14 @@ export default function ClientPage({
           </button>
           <button
             onClick={() => setActiveTab("alliances")}
-            disabled={!alliances || !havePreds}
+            disabled={!havePreds}
             style={{
               padding: "0.5rem 1rem",
               fontWeight: "bold",
               borderRadius: 6,
               background: activeTab === "alliances" ? "#333" : "#222",
               color: havePreds
-                ? activeTab === "preds"
+                ? activeTab === "alliances"
                   ? "#fff"
                   : "#ccc"
                 : "#888",
@@ -378,7 +161,7 @@ export default function ClientPage({
               cursor: havePreds ? "pointer" : "not-allowed",
             }}
           >
-            Alliances
+            Alliance Selection
           </button>
         </div>
 
@@ -404,357 +187,21 @@ export default function ClientPage({
         )}
 
         {activeTab === "preds" && havePreds && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              color: "var(--foreground)",
-              borderRadius: 12,
-              width: "100%",
-            }}
-          >
-            <h2 style={{ color: "var(--foreground)" }}>Match Predictions</h2>
-            <p
-              style={{
-                color: "var(--foreground)",
-                fontSize: "1rem",
-                marginTop: "0.2rem",
-              }}
-            >
-              Prediction Accuracy: {correctPredictions.length} /{" "}
-              {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
-            </p>
+          <MatchPredictions
+            matchPredictions={matchPredictions}
+            nexusSchedule={nexusSchedule}
+          />
+        )}
 
-            <br />
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.5rem",
-                justifyContent: "center",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Filter by match name"
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: 6,
-                  border: "1px solid #555",
-                }}
-              />
-              <input
-                type="text"
-                placeholder="Filter by team"
-                value={filterTeam}
-                onChange={(e) => setFilterTeam(e.target.value)}
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: 6,
-                  border: "1px solid #555",
-                }}
-              />
-              <select
-                value={filterType}
-                onChange={(e) =>
-                  setFilterType(e.target.value as "all" | "quals" | "elims")
-                }
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: 6,
-                  border: "1px solid #555",
-                }}
-              >
-                <option value="all">All</option>
-                <option value="quals">Quals</option>
-                <option value="elims">Elims</option>
-              </select>
-            </div>
-
-            <ul style={{ listStyle: "none", padding: 10 }}>
-              {filteredEntries.map(([matchKey, match]) => {
-                const [predRed, predBlue] = match.preds;
-                const predWinner =
-                  Number(predRed) > Number(predBlue) ? "red" : "blue";
-
-                const hasResult = match.result && match.result.length === 2;
-                const [actualRed, actualBlue] = hasResult
-                  ? match.result
-                  : [null, null];
-                const actualWinner =
-                  hasResult && actualRed !== null && actualBlue !== null
-                    ? actualRed > actualBlue
-                      ? "red"
-                      : actualBlue > actualRed
-                      ? "blue"
-                      : "tie"
-                    : null;
-
-                const searchedTeamOnRed =
-                  filterTeam &&
-                  match.red.some((t) =>
-                    t.toLowerCase().includes(filterTeam.toLowerCase())
-                  );
-                const searchedTeamOnBlue =
-                  filterTeam &&
-                  match.blue.some((t) =>
-                    t.toLowerCase().includes(filterTeam.toLowerCase())
-                  );
-                const highWinner =
-                  (searchedTeamOnRed && predWinner === "red") ||
-                  (searchedTeamOnBlue && predWinner === "blue");
-                const searchedTeamWonActual =
-                  (searchedTeamOnRed && actualWinner === "red") ||
-                  (searchedTeamOnBlue && actualWinner === "blue");
-
-                return (
-                  <li
-                    key={matchKey}
-                    style={{
-                      marginBottom: "2rem",
-                      textAlign: "center",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: 8,
-                      padding: "1rem",
-                      background: "var(--background-pred)",
-                      position: "relative",
-                    }}
-                  >
-                    <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
-                      {matchKey}
-                    </div>
-                    <div style={{ marginBottom: "0.5rem" }}>
-                      <span style={{ color: "#ff4d4d", fontWeight: "bold" }}>
-                        Red
-                      </span>{" "}
-                      {match.red.map((t, i) => {
-                        const isHighlighted =
-                          filterTeam &&
-                          t.toLowerCase().includes(filterTeam.toLowerCase());
-                        return (
-                          <span key={t}>
-                            {i > 0 && ", "}
-                            <span
-                              style={{
-                                background: isHighlighted
-                                  ? "var(--predicted-win-highlight)"
-                                  : "transparent",
-                                color: isHighlighted ? "#000" : "inherit",
-                                padding: isHighlighted ? "0.2em 0.4em" : "0",
-                                borderRadius: isHighlighted ? "4px" : "0",
-                                fontWeight: isHighlighted ? "bold" : "normal",
-                              }}
-                            >
-                              <TeamLink teamKey={t} year={2025} />
-                            </span>
-                          </span>
-                        );
-                      })}{" "}
-                      {" vs. "}
-                      <span style={{ color: "#4d8cff", fontWeight: "bold" }}>
-                        Blue
-                      </span>{" "}
-                      {match.blue.map((t, i) => {
-                        const isHighlighted =
-                          filterTeam &&
-                          t.toLowerCase().includes(filterTeam.toLowerCase());
-                        return (
-                          <span key={t}>
-                            {i > 0 && ", "}
-                            <span
-                              style={{
-                                background: isHighlighted
-                                  ? "var(--predicted-win-highlight)"
-                                  : "transparent",
-                                color: isHighlighted ? "#000" : "inherit",
-                                padding: isHighlighted ? "0.2em 0.4em" : "0",
-                                borderRadius: isHighlighted ? "4px" : "0",
-                                fontWeight: isHighlighted ? "bold" : "normal",
-                              }}
-                            >
-                              <TeamLink teamKey={t} year={2025} />
-                            </span>
-                          </span>
-                        );
-                      })}
-                    </div>
-
-                    <div
-                      style={{
-                        marginBottom: "0.5rem",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: "1rem",
-                        maxWidth: 320,
-                        marginInline: "auto",
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: "0.9rem", marginRight: 4 }}>
-                          Pred:
-                        </strong>
-                        <span
-                          style={{
-                            color: "#ff4d4d",
-                            background: searchedTeamOnRed
-                              ? "var(--predicted-win-highlight)"
-                              : "transparent",
-                            padding: searchedTeamOnRed ? "0.2em 0.4em" : "0",
-                            borderRadius: searchedTeamOnRed ? "4px" : "0",
-                            fontWeight: searchedTeamOnRed ? "bold" : "normal",
-                          }}
-                        >
-                          {predRed}
-                        </span>{" "}
-                        --{" "}
-                        <span
-                          style={{
-                            color: "#4d8cff",
-                            background: searchedTeamOnBlue
-                              ? "var(--predicted-win-highlight)"
-                              : "transparent",
-                            padding: searchedTeamOnBlue ? "0.2em 0.4em" : "0",
-                            borderRadius: searchedTeamOnBlue ? "4px" : "0",
-                            fontWeight: searchedTeamOnBlue ? "bold" : "normal",
-                          }}
-                        >
-                          {predBlue}
-                        </span>
-                      </div>
-                      {hasResult && (
-                        <div>
-                          <strong
-                            style={{ fontSize: "0.9rem", marginRight: 4 }}
-                          >
-                            Real:
-                          </strong>
-                          <span
-                            style={{
-                              color: "#ff4d4d",
-                              background:
-                                searchedTeamOnRed && actualRed !== -1
-                                  ? "var(--predicted-win-highlight)"
-                                  : "transparent",
-                              padding:
-                                searchedTeamOnRed && actualRed !== -1
-                                  ? "0.2em 0.4em"
-                                  : "0",
-                              borderRadius:
-                                searchedTeamOnRed && actualRed !== -1
-                                  ? "4px"
-                                  : "0",
-                              fontWeight:
-                                searchedTeamOnRed && actualRed !== -1
-                                  ? "bold"
-                                  : "normal",
-                            }}
-                          >
-                            {actualRed}
-                          </span>{" "}
-                          --{" "}
-                          <span
-                            style={{
-                              color: "#4d8cff",
-                              background:
-                                searchedTeamOnBlue && actualBlue !== -1
-                                  ? "var(--predicted-win-highlight)"
-                                  : "transparent",
-                              padding:
-                                searchedTeamOnBlue && actualBlue !== -1
-                                  ? "0.2em 0.4em"
-                                  : "0",
-                              borderRadius:
-                                searchedTeamOnBlue && actualBlue !== -1
-                                  ? "4px"
-                                  : "0",
-                              fontWeight:
-                                searchedTeamOnBlue && actualBlue !== -1
-                                  ? "bold"
-                                  : "normal",
-                            }}
-                          >
-                            {actualBlue}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ marginBottom: hasResult ? "0.5rem" : "0" }}>
-                      Predicted winner:{" "}
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
-                          background: highWinner
-                            ? "#ffd700"
-                            : "var(--background)",
-                          padding: "0.2em 0.6em",
-                          borderRadius: 4,
-                        }}
-                      >
-                        {predWinner === "red" ? "Red" : "Blue"}
-                      </span>
-                    </div>
-
-                    {hasResult && (
-                      <div>
-                        Winner:{" "}
-                        <span
-                          style={{
-                            fontWeight: "bold",
-                            color:
-                              actualWinner === "red"
-                                ? "#ff4d4d"
-                                : actualWinner === "blue"
-                                ? "#4d8cff"
-                                : "#aaa",
-                            background:
-                              (searchedTeamOnRed && actualWinner === "red") ||
-                              (searchedTeamOnBlue && actualWinner === "blue")
-                                ? "var(--predicted-win-highlight)"
-                                : "var(--background)",
-                            padding: "0.2em 0.6em",
-                            borderRadius: 4,
-                          }}
-                        >
-                          {actualWinner === "tie"
-                            ? "Tie"
-                            : actualWinner === "red"
-                            ? "Red"
-                            : "Blue"}
-                        </span>
-                      </div>
-                    )}
-                    {(actualRed === -1 || actualBlue === -1
-                      ? highWinner
-                      : searchedTeamWonActual) && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "0.5rem",
-                          right: "0.5rem",
-                        }}
-                      >
-                        <img
-                          src="/logo846.png"
-                          alt="Winner"
-                          style={{
-                            width: "30px",
-                            height: "auto",
-                          }}
-                        />
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+        {activeTab === "alliances" && (
+          <AlliancePredictions
+            teams={teams}
+            playedMatches={playedMatches}
+            actualAlliances={actualAlliances}
+            sessionReady={sessionReady}
+            runOnnxModel={runOnnxModel}
+            makeInput={makeInput}
+          />
         )}
       </main>
     </div>
