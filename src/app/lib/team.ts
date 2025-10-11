@@ -41,24 +41,24 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
     throw new Error(`No events found for team: ${teamKey}`);
   }
 
+  const eventResults = await Promise.allSettled(
+    events.map((event: { key: string }) => getEventTeams(event.key))
+  );
+
   const teamData: EventDataType[] = [];
-  for (const event of events) {
-    try {
-      const teams = await getEventTeams(event.key);
+  eventResults.forEach((result, idx) => {
+    if (result.status === "fulfilled") {
+      const teams = result.value;
       const team = teams.find((t: TeamDataType) => t.key === teamKey);
       if (team) {
         teamData.push({
-          event: event.key,
+          event: events[idx].key,
           teamfsm: team.fsm,
           teamrank: team.rank,
         });
       }
-    } catch (exc: unknown) {
-      // pass
-    } finally {
-      // pass
     }
-  }
+  });
 
   let bestFSM = 0.0;
   for (const event of teamData) {

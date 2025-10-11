@@ -67,7 +67,14 @@ export async function getScoutingData(eventCode: string) {
   return data;
 }
 
+const eventDataCache = new Map<string, { data: any; timestamp: number }>();
+
 export async function getEventDataIfOneDayAfterEnd(eventCode: string) {
+  const cached = eventDataCache.get(eventCode);
+  if (cached && Date.now() - cached.timestamp < 60 * 60 * 1000) {
+    return cached.data;
+  }
+
   const { data: existingEvent, error: fetchError } = await supabase
     .from("EventFSMv1")
     .select("data, event_end")
@@ -76,12 +83,14 @@ export async function getEventDataIfOneDayAfterEnd(eventCode: string) {
 
   if (fetchError) {
     if (fetchError.code === "PGRST116") {
+      eventDataCache.set(eventCode, { data: null, timestamp: Date.now() });
       return null;
     }
     throw fetchError;
   }
 
   if (!existingEvent) {
+    eventDataCache.set(eventCode, { data: null, timestamp: Date.now() });
     return null;
   }
 
@@ -92,9 +101,14 @@ export async function getEventDataIfOneDayAfterEnd(eventCode: string) {
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
 
   if (diffDays >= 1.0) {
+    eventDataCache.set(eventCode, {
+      data: existingEvent.data,
+      timestamp: Date.now(),
+    });
     return existingEvent.data;
   }
 
+  eventDataCache.set(eventCode, { data: null, timestamp: Date.now() });
   return null;
 }
 

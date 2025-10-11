@@ -11,7 +11,6 @@ import ClientPage from "./clientpage";
 import FuturePage from "./futurepage";
 import { getAttendingTeams } from "../../lib/event";
 import { get26Predictions } from "@/app/lib/26pred";
-import { get } from "http";
 
 export default async function EventPage({
   params,
@@ -21,9 +20,12 @@ export default async function EventPage({
   const { event: eventCode } = await params;
 
   try {
-    const teams = await getEventTeams("2026" + eventCode, true);
+    const fullEventCode = "2026" + eventCode;
 
-    const playedMatches = await getNumberPlayedMatches("2026" + eventCode);
+    const [teams, playedMatches] = await Promise.all([
+      getEventTeams(fullEventCode, true),
+      getNumberPlayedMatches(fullEventCode),
+    ]);
 
     let FSMs: { [key: string]: number } = {};
     teams.forEach((team) => {
@@ -38,14 +40,13 @@ export default async function EventPage({
       });
     }
 
-    const matchPredictions = await getMatchPredictions(
-      "2026" + eventCode,
-      FSMs
-    );
+    const [matchPredictions, matches] = await Promise.all([
+      getMatchPredictions(fullEventCode, FSMs),
+      getEventQualMatches(fullEventCode, true),
+    ]);
+
     const havePreds =
       matchPredictions && Object.keys(matchPredictions).length > 0;
-
-    const matches = await getEventQualMatches("2026" + eventCode, true);
     // const dataDict = [];
     // for (const match of matches) {
     //   let compLevel = 0;

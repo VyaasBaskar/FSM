@@ -1,5 +1,12 @@
 /* eslint-disable */
+const eventCache = new Map<string, { isRecent: boolean; timestamp: number }>();
+
 export async function isEventRecent(eventCode: string): Promise<boolean> {
+  const cached = eventCache.get(eventCode);
+  if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+    return cached.isRecent;
+  }
+
   try {
     const res = await fetch(
       `https://www.thebluealliance.com/api/v3/event/${eventCode}`,
@@ -25,7 +32,10 @@ export async function isEventRecent(eventCode: string): Promise<boolean> {
     const justEnded =
       now > endDate && now.getTime() - endDate.getTime() < 24 * 60 * 60 * 1000;
 
-    return isHappening || justEnded;
+    const isRecent = isHappening || justEnded;
+    eventCache.set(eventCode, { isRecent, timestamp: Date.now() });
+
+    return isRecent;
   } catch (error) {
     console.error(`Error checking if event is recent: ${eventCode}`, error);
     return false;
@@ -61,10 +71,21 @@ export function isEventLikelyRecent(eventCode: string): boolean {
   return eventYear >= currentYear;
 }
 
+const teamCache = new Map<
+  string,
+  { isAtRecentEvent: boolean; timestamp: number }
+>();
+
 export async function isTeamAtRecentEvent(
   teamKey: string,
   year: number = new Date().getFullYear()
 ): Promise<boolean> {
+  const cacheKey = `${teamKey}_${year}`;
+  const cached = teamCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+    return cached.isAtRecentEvent;
+  }
+
   try {
     const res = await fetch(
       `https://www.thebluealliance.com/api/v3/team/${teamKey}/events/${year}`,
@@ -94,10 +115,15 @@ export async function isTeamAtRecentEvent(
         now.getTime() - endDate.getTime() < 24 * 60 * 60 * 1000;
 
       if (isHappening || justEnded) {
+        teamCache.set(cacheKey, {
+          isAtRecentEvent: true,
+          timestamp: Date.now(),
+        });
         return true;
       }
     }
 
+    teamCache.set(cacheKey, { isAtRecentEvent: false, timestamp: Date.now() });
     return false;
   } catch (error) {
     console.error(

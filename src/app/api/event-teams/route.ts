@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEventTeams } from "@/app/lib/event";
 import { isEventRecent } from "@/app/lib/eventUtils";
 
+export const revalidate = 120;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTeams } from "@/app/lib/global";
 import { fetchAll25Teams } from "@/app/lib/supabase";
 
+export const revalidate = 604800;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -17,7 +19,12 @@ export async function GET(request: NextRequest) {
       teams = await getTeams(year);
     }
 
-    return NextResponse.json(teams);
+    return NextResponse.json(teams, {
+      headers: {
+        "Cache-Control":
+          "public, s-maxage=604800, stale-while-revalidate=2592000",
+      },
+    });
   } catch (error) {
     console.error("Error fetching teams:", error);
     return NextResponse.json(
