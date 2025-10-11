@@ -52,13 +52,6 @@ export default function MatchPredictions({
   matchPredictions,
   nexusSchedule,
 }: MatchPredictionsProps) {
-  // Force rebuild - enhanced UI with shadows, colored containers, and timing
-  console.log("Nexus schedule data:", nexusSchedule);
-  console.log(
-    "Match predictions keys:",
-    Object.keys(matchPredictions).slice(0, 5)
-  );
-
   const [, setCurrentTime] = useState(new Date());
   const [filterText, setFilterText] = useState("");
   const [filterTeam, setFilterTeam] = useState("");

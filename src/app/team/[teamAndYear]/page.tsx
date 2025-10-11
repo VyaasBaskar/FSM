@@ -1,10 +1,75 @@
 /* eslint-disable */
 import styles from "../../page.module.css";
-import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
+import {
+  getTeamStats,
+  EventDataType,
+  getTeamInfo,
+  getTeamMedia,
+} from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
-import YearDropdown from "../../components/YearDropdown";
+
+import StatCard from "./StatCard";
+import EventCard from "./EventCard";
+import TeamImageGallery from "./TeamImageGallery";
+
+function YearButtons({
+  teamKey,
+  currentYear,
+}: {
+  teamKey: string;
+  currentYear: string;
+}) {
+  const years = [
+    "general",
+    ...Array.from({ length: 13 }, (_, i) => 2013 + i).filter(
+      (y) => y !== 2020 && y !== 2021
+    ),
+  ];
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: "0.5rem",
+        marginTop: "1rem",
+        marginBottom: "2rem",
+        padding: "0 1rem",
+      }}
+    >
+      {years.map((y) => (
+        <Link
+          key={y}
+          href={`/team/${teamKey}-${y}`}
+          style={{
+            padding: "0.65rem 1.25rem",
+            borderRadius: 8,
+            border:
+              y.toString() === currentYear
+                ? "2px solid var(--yellow-color)"
+                : "2px solid var(--border-color)",
+            backgroundColor:
+              y.toString() === currentYear
+                ? "var(--yellow-color)"
+                : "var(--background-pred)",
+            color: y.toString() === currentYear ? "#000" : "var(--foreground)",
+            fontWeight: "bold",
+            textDecoration: "none",
+            transition: "all 0.2s ease",
+            boxShadow:
+              y.toString() === currentYear
+                ? "0 4px 12px rgba(253, 224, 71, 0.3)"
+                : "0 2px 4px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          {y}
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 export default async function TeamPage({
   params,
@@ -100,62 +165,155 @@ export default async function TeamPage({
         style={{ position: "relative", minHeight: "100vh", width: "100%" }}
       >
         <main className={styles.main}>
-          <h1 className={styles.title}>10-Year Team FSM Analysis</h1>
-          <YearDropdown teamKey={teamKey} currentYear={"general"} />
-          <div
+          <h1 className={styles.title}>10-Year Team Analysis</h1>
+          <h2
             style={{
-              width: "100%",
+              color: "var(--yellow-color)",
               textAlign: "center",
-              justifyContent: "center",
-              marginBottom: 12,
-              marginTop: 12,
+              fontSize: "2rem",
+              marginTop: "-1rem",
             }}
           >
-            <p className={styles.smallheader}>{teamKey}</p>
-            <div className={styles.table}>
-              <div className={styles.fsmtitle}>
-                RMS normalized FSM (2013–2025): {Number(avgNormFSM).toFixed(1)}{" "}
-                <br></br>
-                Top {(100 - teamPercentile).toFixed(2)}%
-              </div>
-              <div
-                style={{
-                  margin: "24px auto",
-                  width: "100%",
-                  maxWidth: "900px",
-                  padding: "0 10px",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <InteractiveChart
-                  allStats={allStats}
-                  minPossibleFSM={minPossibleFSM}
-                  maxPossibleFSM={maxPossibleFSM}
-                />
-              </div>
-              <div style={{ marginTop: 24 }}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th className={styles.th}>Year</th>
-                      <th className={styles.th}>Normalized FSM</th>
+            {teamKey}
+          </h2>
+          <YearButtons teamKey={teamKey} currentYear={"general"} />
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1rem",
+              justifyContent: "center",
+              padding: "0 1rem",
+              marginBottom: "2rem",
+            }}
+          >
+            <StatCard
+              label="RMS NORMALIZED FSM"
+              value={Number(avgNormFSM).toFixed(0)}
+              subtitle="2013–2025"
+            />
+            <StatCard
+              label="PERCENTILE"
+              value={`${(100 - teamPercentile).toFixed(1)}%`}
+              subtitle={`Top ${(100 - teamPercentile).toFixed(1)}%`}
+              color="#22c55e"
+            />
+          </div>
+
+          <div
+            style={{
+              background: "var(--background-pred)",
+              border: "2px solid var(--border-color)",
+              borderRadius: 12,
+              padding: "2rem",
+              margin: "0 auto 2rem",
+              maxWidth: "1000px",
+              boxShadow:
+                "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+            }}
+          >
+            <h3
+              style={{
+                color: "var(--foreground)",
+                textAlign: "center",
+                marginBottom: "1.5rem",
+                fontSize: "1.25rem",
+              }}
+            >
+              Historical Performance
+            </h3>
+            <InteractiveChart
+              allStats={allStats}
+              minPossibleFSM={minPossibleFSM}
+              maxPossibleFSM={maxPossibleFSM}
+            />
+          </div>
+
+          <div
+            style={{
+              maxWidth: "600px",
+              margin: "0 auto",
+              overflowX: "auto",
+              borderRadius: 12,
+              border: "2px solid var(--border-color)",
+              boxShadow:
+                "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: "400px",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    background: "var(--gray-more)",
+                    borderBottom: "2px solid var(--border-color)",
+                  }}
+                >
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      fontSize: "0.875rem",
+                      letterSpacing: "0.05em",
+                      color: "var(--yellow-color)",
+                    }}
+                  >
+                    YEAR
+                  </th>
+                  <th
+                    style={{
+                      padding: "1rem",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      fontSize: "0.875rem",
+                      letterSpacing: "0.05em",
+                      color: "var(--yellow-color)",
+                    }}
+                  >
+                    NORMALIZED FSM
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {allStats
+                  .slice()
+                  .reverse()
+                  .map((s, idx) => (
+                    <tr
+                      key={s.year}
+                      style={{
+                        borderBottom: "1px solid var(--border-color)",
+                        background: "var(--background-pred)",
+                      }}
+                    >
+                      <td
+                        style={{
+                          padding: "1rem",
+                          fontWeight: "600",
+                        }}
+                      >
+                        {s.year}
+                      </td>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          fontWeight: "bold",
+                          fontSize: "1.125rem",
+                          color: "var(--yellow-color)",
+                        }}
+                      >
+                        {s.normFSM.toFixed(0)}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {allStats
-                      .slice()
-                      .reverse()
-                      .map((s) => (
-                        <tr key={s.year}>
-                          <td className={styles.td}>{s.year}</td>
-                          <td className={styles.td}>{s.normFSM.toFixed(0)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </main>
       </div>
@@ -175,12 +333,14 @@ export default async function TeamPage({
   let teamStats;
   let teamInfo;
   let gstats;
+  let teamMedia;
 
   try {
-    [teamStats, teamInfo, gstats] = await Promise.all([
+    [teamStats, teamInfo, gstats, teamMedia] = await Promise.all([
       getTeamStats(teamKey, Number(yearprov)),
       getTeamInfo(teamKey),
       getGlobalStats(Number(yearprov)),
+      getTeamMedia(teamKey, Number(yearprov)),
     ]);
   } catch {
     return (
@@ -188,23 +348,42 @@ export default async function TeamPage({
         className={styles.page}
         style={{ position: "relative", minHeight: "100vh", width: "100%" }}
       >
-        <main className={styles.main} style={{ marginTop: "-8rem" }}>
+        <main className={styles.main}>
           <h1 className={styles.title}>Team Not Found</h1>
           <YearDropdown teamKey={teamKey} currentYear={yearprov} />
           <div
             style={{
-              width: "100%",
+              background: "var(--background-pred)",
+              border: "2px solid var(--border-color)",
+              borderRadius: 12,
+              padding: "3rem",
+              maxWidth: "600px",
+              margin: "0 auto",
               textAlign: "center",
-              justifyContent: "center",
-              marginBottom: 12,
-              marginTop: 12,
+              boxShadow:
+                "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
             }}
           >
-            <p className={styles.smallheader}>
+            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>⚠️</div>
+            <h2
+              style={{
+                color: "var(--foreground)",
+                marginBottom: "1rem",
+              }}
+            >
+              No Data Available
+            </h2>
+            <p
+              style={{
+                color: "var(--gray-less)",
+                fontSize: "1rem",
+                lineHeight: 1.6,
+              }}
+            >
               The team "{teamKey}" does not have data for the year {yearprov}.
-            </p>
-            <p className={styles.smallheader}>
-              Please check the team key and year, or select a different year.
+              <br />
+              Please check the team key and year, or select a different year
+              above.
             </p>
           </div>
         </main>
@@ -213,9 +392,7 @@ export default async function TeamPage({
   }
 
   let teamIndex = -1;
-
   let fsm = 0.0;
-
   let sum = 0.0;
 
   for (const [index, team] of Object.entries(gstats)) {
@@ -235,10 +412,7 @@ export default async function TeamPage({
   const variance = sum_variance / gstats.length;
   const stddev = Math.sqrt(variance);
 
-  console.log(`Mean: ${mean}, Variance: ${variance}, StdDev: ${stddev}`);
-
   const pct = ((Number(teamIndex) / gstats.length) * 100.0).toFixed(1);
-
   const normalizedFSM = (((fsm - mean) / stddev) * 100.0 + 1500.0).toFixed(0);
 
   return (
@@ -248,65 +422,118 @@ export default async function TeamPage({
     >
       <main className={styles.main}>
         <h1 className={styles.title}>{yearprov} Team FSM</h1>
-        <YearDropdown teamKey={teamKey} currentYear={yearprov} />
         <div
           style={{
-            width: "100%",
             textAlign: "center",
-            justifyContent: "center",
-            marginBottom: 12,
-            marginTop: 12,
+            marginTop: "-1rem",
+            marginBottom: "1rem",
           }}
         >
-          <p className={styles.smallheader}>
-            {teamKey}, {teamInfo.nickname}
+          <h2
+            style={{
+              color: "var(--yellow-color)",
+              fontSize: "2rem",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {teamKey}
+          </h2>
+          <p
+            style={{
+              color: "var(--foreground)",
+              fontSize: "1.25rem",
+              fontWeight: "600",
+            }}
+          >
+            {teamInfo.nickname}
           </p>
-          <p className={styles.smallheader}>
-            {teamInfo.state_prov}, {teamInfo.city}, {teamInfo.country}
+          <p style={{ color: "var(--gray-less)", fontSize: "1rem" }}>
+            {teamInfo.city}, {teamInfo.state_prov}, {teamInfo.country}
           </p>
-          <div className={styles.table}>
-            <div className={styles.fsmtitle}>
-              FSM: {fsm}, Global Rank: {teamIndex}, Top {pct}%
+        </div>
+
+        <YearButtons teamKey={teamKey} currentYear={yearprov} />
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: teamMedia.length > 0 ? "1fr 400px" : "1fr",
+            gap: "1.5rem",
+            padding: "0 1rem",
+            alignItems: "start",
+          }}
+          className="team-layout-grid"
+        >
+          {/* Main Content Column */}
+          <div>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
+                justifyContent: "center",
+                marginBottom: "2rem",
+              }}
+            >
+              <StatCard label="FSM" value={fsm.toFixed(1)} />
+              <StatCard
+                label="GLOBAL RANK"
+                value={`#${teamIndex}`}
+                color="#22c55e"
+              />
+              <StatCard
+                label="TOP PERCENTILE"
+                value={`${pct}%`}
+                color="#10b981"
+              />
+              <StatCard
+                label="NORMALIZED FSM"
+                value={normalizedFSM}
+                color="#84cc16"
+              />
             </div>
-            <div className={styles.fsmtitle}>
-              Normalized FSM: {normalizedFSM}
-            </div>
+
             <div>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>Event Code</th>
-                    <th className={styles.th}>Rank</th>
-                    <th className={styles.th}>Team FSM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teamStats.teamData.map((event: EventDataType) => (
-                    <tr key={event.event}>
-                      <td className={styles.td}>
-                        <Link
-                          href={
-                            Number(yearprov) === 2025
-                              ? `/event25/${event.event.slice(4)}`
-                              : `/event/${event.event}`
-                          }
-                          style={{
-                            textDecoration: "underline",
-                            textDecorationThickness: "1px",
-                            textUnderlineOffset: "4px",
-                          }}
-                        >
-                          {event.event}
-                        </Link>
-                      </td>
-                      <td className={styles.td}>{event.teamrank}</td>
-                      <td className={styles.td}>{event.teamfsm}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <h3
+                style={{
+                  color: "var(--foreground)",
+                  textAlign: "center",
+                  marginBottom: "1.5rem",
+                  fontSize: "1.5rem",
+                }}
+              >
+                Event Performance
+              </h3>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                {teamStats.teamData.map((event: EventDataType) => (
+                  <EventCard
+                    key={event.event}
+                    event={event}
+                    yearprov={yearprov}
+                  />
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* Media Gallery Column */}
+          {teamMedia.length > 0 && (
+            <div>
+              <TeamImageGallery
+                images={teamMedia}
+                teamKey={teamKey}
+                year={yearprov}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

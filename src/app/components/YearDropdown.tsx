@@ -2,97 +2,77 @@
 
 import { useRouter } from "next/navigation";
 
-const EXCLUDED_YEARS = [2020, 2021];
+interface YearDropdownProps {
+  currentYear: string;
+  includeOffseason: boolean;
+}
+
+const availableYears = [
+  "2025",
+  "2024",
+  "2023",
+  "2022",
+  "2019",
+  "2018",
+  "2017",
+  "2016",
+  "2015",
+  "2014",
+  "2013",
+];
 
 export default function YearDropdown({
-  teamKey,
   currentYear,
-}: {
-  teamKey: string;
-  currentYear: string;
-}) {
+  includeOffseason,
+}: YearDropdownProps) {
   const router = useRouter();
 
-  const yearOptions = [
-    <option key="general" value="general">
-      Summary
-    </option>,
-    ...Array.from(
-      { length: new Date().getFullYear() - 2012 },
-      (_, i) => new Date().getFullYear() - i
-    )
-      .filter((year) => !EXCLUDED_YEARS.includes(year))
-      .map((year) => (
-        <option key={year} value={year}>
-          {year}
-        </option>
-      )),
-  ];
-
-  const absoluteCenter = {
-    position: "absolute" as const,
-    top: "50%",
-    transform: "translateY(-50%)",
-    pointerEvents: "none" as const,
+  const handleYearChange = (newYear: string) => {
+    const suffix = includeOffseason ? "" : "-no";
+    router.push(`/global/${newYear}${suffix}`);
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        margin: "16px 0 24px",
-      }}
-    >
-      <div style={{ position: "relative" }}>
-        <select
-          value={currentYear}
-          onChange={(e) => router.push(`/team/${teamKey}-${e.target.value}`)}
-          onMouseOver={(e) => (e.currentTarget.style.borderColor = "#484848")}
-          onMouseOut={(e) => (e.currentTarget.style.borderColor = "#000")}
-          style={{
-            padding: "8px 40px 8px 16px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            borderRadius: "8px",
-            color: "var(--yellow-color)",
-            border: "2px solid #000",
-            backgroundColor: "var(--navbar-background)",
-            cursor: "pointer",
-            minWidth: "150px",
-            transition: "border-color 0.2s",
-            appearance: "none",
-          }}
-        >
-          {yearOptions}
-        </select>
-
-        <div
-          style={{
-            ...absoluteCenter,
-            right: "32px",
-            width: "1px",
-            height: "60%",
-            backgroundColor: "var(--yellow-color)",
-          }}
-        />
-
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          style={{ ...absoluteCenter, right: "12px" }}
-        >
-          <path
-            d="M2 4L6 8L10 4"
-            stroke="var(--yellow-color)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
-      </div>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <label
+        htmlFor="year-select"
+        style={{
+          fontWeight: "600",
+          color: "var(--foreground)",
+          fontSize: "1rem",
+        }}
+      >
+        Year:
+      </label>
+      <select
+        id="year-select"
+        value={currentYear}
+        onChange={(e) => handleYearChange(e.target.value)}
+        style={{
+          padding: "0.5rem 2rem 0.5rem 0.75rem",
+          borderRadius: 8,
+          border: "2px solid var(--border-color)",
+          background: "var(--background-pred)",
+          color: "var(--foreground)",
+          fontSize: "1rem",
+          fontWeight: "600",
+          cursor: "pointer",
+          outline: "none",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "var(--yellow-color)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "var(--border-color)";
+        }}
+      >
+        {availableYears.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

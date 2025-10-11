@@ -247,6 +247,120 @@ export async function getGlobalData(id: number) {
   return data.rankings;
 }
 
+const stateAbbreviations: { [key: string]: string } = {
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
+  AB: "Alberta",
+  BC: "British Columbia",
+  MB: "Manitoba",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia",
+  NT: "Northwest Territories",
+  NU: "Nunavut",
+  ON: "Ontario",
+  PE: "Prince Edward Island",
+  QC: "Quebec",
+  SK: "Saskatchewan",
+  YT: "Yukon",
+};
+
+function normalizeStateProv(stateProv: string): string {
+  if (!stateProv) return "";
+  const trimmed = stateProv.trim();
+  return stateAbbreviations[trimmed] || trimmed;
+}
+
+export async function getGlobalDataWithLocation(id: number): Promise<
+  Array<{
+    teamKey: string;
+    bestFSM: string;
+    country: string;
+    state_prov: string;
+  }>
+> {
+  const rankings = await getGlobalData(id);
+
+  const stats: Array<{
+    teamKey: string;
+    bestFSM: string;
+    country: string;
+    state_prov: string;
+  }> = [];
+
+  for (const teamKey in rankings) {
+    const value = rankings[teamKey];
+    if (typeof value === "number") {
+      stats.push({
+        teamKey,
+        bestFSM: value.toFixed(2),
+        country: "",
+        state_prov: "",
+      });
+    } else if (typeof value === "object" && value !== null) {
+      stats.push({
+        teamKey,
+        bestFSM: value.fsm.toFixed(2),
+        country: value.country || "",
+        state_prov: normalizeStateProv(value.state_prov || ""),
+      });
+    }
+  }
+
+  stats.sort((a, b) => Number(b.bestFSM) - Number(a.bestFSM));
+
+  return stats;
+}
+
 export async function needToUpdateGlobal(
   id: number,
   priority: boolean = false
@@ -278,12 +392,16 @@ export async function needToUpdateGlobal(
   const diffTime = today.getTime() - Number(existingGlobal.set_time);
   const diffHours = diffTime / (1000 * 60 * 60);
 
-  return false;
+  return diffHours >= 6;
 }
 
 export async function setGlobal(
   page: number,
-  rankings: { [key: string]: number }
+  rankings: {
+    [key: string]:
+      | number
+      | { fsm: number; country?: string; state_prov?: string };
+  }
 ) {
   const { error } = await supabase.from("GlobalRanking").upsert({
     id: page,
@@ -294,4 +412,28 @@ export async function setGlobal(
   if (error) {
     throw error;
   }
+}
+
+export async function setGlobalWithLocation(
+  page: number,
+  stats: Array<{
+    teamKey: string;
+    bestFSM: string;
+    country: string;
+    state_prov: string;
+  }>
+) {
+  const rankings: {
+    [key: string]: { fsm: number; country?: string; state_prov?: string };
+  } = {};
+
+  stats.forEach((stat) => {
+    rankings[stat.teamKey] = {
+      fsm: Number(stat.bestFSM),
+      country: stat.country || undefined,
+      state_prov: stat.state_prov || undefined,
+    };
+  });
+
+  await setGlobal(page, rankings);
 }
