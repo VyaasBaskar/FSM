@@ -1,8 +1,9 @@
 /* eslint-disable */
 import styles from "../../page.module.css";
-import { getGlobalStats } from "../../lib/global";
+import { getGlobalStatsWithoutLocation } from "../../lib/global";
 import OffseasonCheck from "./offseason";
-import PaginatedGlobalTable from "@/app/components/PaginatedGlobalTable";
+import ProgressiveGlobalTable from "@/app/components/ProgressiveGlobalTable";
+import YearDropdown from "@/app/components/YearDropdown";
 
 export async function generateStaticParams() {
   return [
@@ -12,6 +13,11 @@ export async function generateStaticParams() {
     { year: "2022" },
     { year: "2019" },
     { year: "2018" },
+    { year: "2017" },
+    { year: "2016" },
+    { year: "2015" },
+    { year: "2014" },
+    { year: "2013" },
   ];
 }
 
@@ -37,7 +43,14 @@ export default async function GlobalPage({
     year = "2025";
   }
 
-  const globalStats = await getGlobalStats(Number(year), includeOffseason);
+  const yearNum = Number(year);
+  const rankingId = yearNum * 10 + (includeOffseason ? 1 : 0);
+
+  // Fetch just FSM rankings (fast) - locations will load progressively
+  const globalStats = await getGlobalStatsWithoutLocation(
+    yearNum,
+    includeOffseason
+  );
 
   return (
     <div
@@ -46,14 +59,25 @@ export default async function GlobalPage({
     >
       <main className={styles.main}>
         <h1 className={styles.title}>{year} Global FSM Rankings</h1>
-        <div style={{ margin: "1rem 0" }}>
+        <div
+          style={{
+            margin: "1rem 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            alignItems: "center",
+          }}
+        >
+          <YearDropdown
+            currentYear={year}
+            includeOffseason={includeOffseason}
+          />
           <label
             style={{
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
               fontSize: "1.1rem",
-              width: "100%",
               justifyContent: "center",
             }}
           >
@@ -61,7 +85,11 @@ export default async function GlobalPage({
             Include Offseason
           </label>
         </div>
-        <PaginatedGlobalTable stats={globalStats} year={year} />
+        <ProgressiveGlobalTable
+          initialStats={globalStats}
+          year={year}
+          rankingId={rankingId}
+        />
       </main>
     </div>
   );

@@ -4,7 +4,9 @@
 import { getEventTeams } from "./event";
 import {
   getGlobalData,
+  getGlobalDataWithLocation,
   setGlobal,
+  setGlobalWithLocation,
   needToUpdateGlobal,
   fetchAllCachedEvents,
 } from "./supabase";
@@ -177,10 +179,119 @@ async function getGeneralStats(
   return { stats: statsFinal, updated: true };
 }
 
-export async function getGlobalStats(
+const stateAbbreviations: { [key: string]: string } = {
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
+  AB: "Alberta",
+  BC: "British Columbia",
+  MB: "Manitoba",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia",
+  NT: "Northwest Territories",
+  NU: "Nunavut",
+  ON: "Ontario",
+  PE: "Prince Edward Island",
+  QC: "Quebec",
+  SK: "Saskatchewan",
+  YT: "Yukon",
+};
+
+function normalizeStateProv(stateProv: string): string {
+  if (!stateProv) return "";
+
+  const trimmed = stateProv.trim();
+
+  if (stateAbbreviations[trimmed]) {
+    return stateAbbreviations[trimmed];
+  }
+
+  return trimmed;
+}
+
+async function getTeamLocation(teamKey: string) {
+  try {
+    const res = await fetch(
+      `https://www.thebluealliance.com/api/v3/team/${teamKey}`,
+      {
+        headers: {
+          "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+        },
+        next: { revalidate: 604800 },
+      }
+    );
+
+    if (!res.ok) {
+      return { country: "", state_prov: "" };
+    }
+
+    const teamInfo = await res.json();
+    return {
+      country: teamInfo.country || "",
+      state_prov: normalizeStateProv(teamInfo.state_prov || ""),
+    };
+  } catch {
+    return { country: "", state_prov: "" };
+  }
+}
+
+function getGlobalRankingId(year: number, includeOffseason: boolean): number {
+  return year * 10 + (includeOffseason ? 1 : 0);
+}
+
+export async function getGlobalStatsWithoutLocation(
   year: number = 2025,
   includeOffseason: boolean = true
-) {
+): Promise<Array<{ teamKey: string; bestFSM: string }>> {
   const all_stats: { [key: string]: string } = {};
 
   const pstats = await getGeneralStats(year, includeOffseason);
@@ -199,7 +310,97 @@ export async function getGlobalStats(
       bestFSM,
     }));
 
-  // console.log("Global stats fetched and sorted:", sortedGlobalStats);
-
   return sortedGlobalStats;
+}
+
+export async function getGlobalStats(
+  year: number = 2025,
+  includeOffseason: boolean = true
+) {
+  const rankingId = getGlobalRankingId(year, includeOffseason);
+
+  try {
+    const cachedData = await getGlobalDataWithLocation(rankingId);
+    if (cachedData && cachedData.length > 0) {
+      console.log(
+        `Using cached global rankings for ${year} (offseason: ${includeOffseason})`
+      );
+      return cachedData;
+    }
+  } catch (error) {
+    console.error("Error fetching cached global data:", error);
+  }
+
+  console.log(
+    `Fetching fresh global rankings for ${year} (offseason: ${includeOffseason})`
+  );
+
+  const all_stats: { [key: string]: string } = {};
+
+  const pstats = await getGeneralStats(year, includeOffseason);
+
+  const stats = pstats.stats;
+  for (const team in stats) {
+    if (stats.hasOwnProperty(team)) {
+      all_stats[team] = stats[team];
+    }
+  }
+
+  const sortedGlobalStats = Object.entries(all_stats)
+    .sort(([, a], [, b]) => Number(b) - Number(a))
+    .map(([teamKey, bestFSM]) => ({
+      teamKey,
+      bestFSM,
+    }));
+
+  const batchSize = 100;
+  const statsWithLocation: {
+    teamKey: string;
+    bestFSM: string;
+    country: string;
+    state_prov: string;
+  }[] = [];
+
+  for (let i = 0; i < sortedGlobalStats.length; i += batchSize) {
+    const batch = sortedGlobalStats.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(
+      batch.map((stat) => getTeamLocation(stat.teamKey))
+    );
+
+    batch.forEach((stat, idx) => {
+      const locationResult = batchResults[idx];
+      const location =
+        locationResult.status === "fulfilled"
+          ? locationResult.value
+          : { country: "", state_prov: "" };
+
+      statsWithLocation.push({
+        teamKey: stat.teamKey,
+        bestFSM: stat.bestFSM,
+        country: location.country,
+        state_prov: location.state_prov,
+      });
+    });
+
+    if (
+      (i + batchSize) % 500 === 0 ||
+      i + batchSize >= sortedGlobalStats.length
+    ) {
+      console.log(
+        `Processed ${Math.min(i + batchSize, sortedGlobalStats.length)} of ${
+          sortedGlobalStats.length
+        } team locations...`
+      );
+    }
+  }
+
+  try {
+    console.log(`Storing global rankings to Supabase (ID: ${rankingId})`);
+    await setGlobalWithLocation(rankingId, statsWithLocation);
+    console.log("Successfully stored global rankings to Supabase");
+  } catch (error) {
+    console.error("Error storing global rankings to Supabase:", error);
+  }
+
+  return statsWithLocation;
 }
