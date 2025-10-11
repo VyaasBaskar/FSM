@@ -2,7 +2,18 @@
 import styles from "../../page.module.css";
 import { getGlobalStats } from "../../lib/global";
 import OffseasonCheck from "./offseason";
-import TeamLink from "@/app/components/TeamLink";
+import PaginatedGlobalTable from "@/app/components/PaginatedGlobalTable";
+
+export async function generateStaticParams() {
+  return [
+    { year: "2025" },
+    { year: "2024" },
+    { year: "2023" },
+    { year: "2022" },
+    { year: "2019" },
+    { year: "2018" },
+  ];
+}
 
 export default async function GlobalPage({
   params,
@@ -50,54 +61,7 @@ export default async function GlobalPage({
             Include Offseason
           </label>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ccc",
-                  padding: "8px",
-                }}
-              >
-                FSM Rank
-              </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ccc",
-                  padding: "8px",
-                }}
-              >
-                Team Key
-              </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ccc",
-                  padding: "8px",
-                }}
-              >
-                FSM
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(globalStats).map(([teamKey, bestFSM]) => (
-              <tr key={teamKey}>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
-                  {Number(teamKey) + 1}
-                </td>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
-                  <TeamLink teamKey={bestFSM.teamKey} year={year} />
-                </td>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
-                  {bestFSM.bestFSM}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <PaginatedGlobalTable stats={globalStats} year={year} />
       </main>
     </div>
   );

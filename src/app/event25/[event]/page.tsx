@@ -19,9 +19,12 @@ export default async function EventPage({
   const { event: eventCode } = await params;
 
   try {
-    const teams = await getEventTeams("2025" + eventCode, true);
+    const fullEventCode = "2025" + eventCode;
 
-    const playedMatches = await getNumberPlayedMatches("2025" + eventCode);
+    const [teams, playedMatches] = await Promise.all([
+      getEventTeams(fullEventCode, true),
+      getNumberPlayedMatches(fullEventCode),
+    ]);
 
     let FSMs: { [key: string]: number } = {};
     teams.forEach((team) => {
@@ -36,14 +39,13 @@ export default async function EventPage({
       });
     }
 
-    const matchPredictions = await getMatchPredictions(
-      "2025" + eventCode,
-      FSMs
-    );
+    const [matchPredictions, matches] = await Promise.all([
+      getMatchPredictions(fullEventCode, FSMs),
+      getEventQualMatches(fullEventCode, true),
+    ]);
+
     const havePreds =
       matchPredictions && Object.keys(matchPredictions).length > 0;
-
-    const matches = await getEventQualMatches("2025" + eventCode, true);
 
     // const dataDict = [];
     // for (const match of matches) {

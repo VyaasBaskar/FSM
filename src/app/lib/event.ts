@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
+import { getEventRevalidationTime } from "./eventUtils";
 
 const MAX_ITERS = 50;
 const DECAY_FAC = 1.005;
@@ -26,13 +27,15 @@ function elimModRoot(x: number) {
 }
 
 export async function getAttendingTeams(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/teams`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -47,13 +50,15 @@ export async function getEventQualMatches(
   eventCode: string,
   anyFine: boolean = false
 ) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -69,13 +74,15 @@ export async function getEventQualMatches(
 }
 
 export async function getNumberPlayedMatches(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -95,13 +102,15 @@ export async function getNumberPlayedMatches(eventCode: string) {
 }
 
 async function getEventElimMatches(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -119,13 +128,15 @@ async function getEventElimMatches(eventCode: string) {
 }
 
 async function getEventRankings(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/rankings`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -371,10 +382,23 @@ export type TeamDataType = {
   foul: string;
 };
 
+const eventTeamsCache = new Map<
+  string,
+  { data: TeamDataType[]; timestamp: number }
+>();
+
 export async function getEventTeams(
   eventCode: string,
   forceRecalc: boolean = false
 ): Promise<TeamDataType[]> {
+  if (!forceRecalc) {
+    const cached = eventTeamsCache.get(eventCode);
+    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+      console.log("Using memory cache for event:", eventCode);
+      return cached.data;
+    }
+  }
+
   const TEAMDATA: { [key: string]: TeamDataType } = {};
 
   const orig_data = await getEventDataIfOneDayAfterEnd(eventCode);
@@ -397,6 +421,7 @@ export async function getEventTeams(
     const sortedData = Object.values(TEAMDATA).sort((a, b) => {
       return a.rank - b.rank || b.fsm.localeCompare(a.fsm);
     });
+    eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
     return sortedData;
   }
   console.log("Calculating FSM for event:", eventCode);
@@ -423,6 +448,18 @@ export async function getEventTeams(
     if (!fsms[team]) {
       fsms[team] = 0.0;
     }
+    if (!algaeDict[team]) {
+      algaeDict[team] = 0.0;
+    }
+    if (!coralDict[team]) {
+      coralDict[team] = 0.0;
+    }
+    if (!autoDict[team]) {
+      autoDict[team] = 0.0;
+    }
+    if (!climbDict[team]) {
+      climbDict[team] = 0.0;
+    }
     if (!foulDict[team]) {
       foulDict[team] = 0.0;
     }
@@ -441,6 +478,7 @@ export async function getEventTeams(
   const sortedData = Object.values(TEAMDATA).sort((a, b) => {
     return a.rank - b.rank || b.fsm.localeCompare(a.fsm);
   });
+  eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
   await addEventToDB(eventCode, TEAMDATA);
   return sortedData;
 }

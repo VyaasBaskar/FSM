@@ -16,6 +16,7 @@ export async function getEvents(year: number = 2025) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
+      next: { revalidate: 86400 },
     }
   );
 
@@ -42,6 +43,7 @@ export async function getTeams(year: number = 2025) {
         headers: {
           "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
         },
+        next: { revalidate: 604800 },
       }
     );
 
@@ -75,6 +77,7 @@ async function getFilteredEventKeys(
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
+      next: { revalidate: 3600 },
     }
   );
 
@@ -128,24 +131,36 @@ async function getGeneralStats(
 
   console.log(events.length, "events left to process");
 
-  let i = 0;
+  const batchSize = 5;
+  for (let i = 0; i < events.length; i += batchSize) {
+    const batch = events.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(
+      batch.map((event) => getEventTeams(event))
+    );
 
-  for (const event of events) {
-    i++;
-    try {
-      const event_stats = await getEventTeams(event);
-      for (const team of event_stats) {
-        const teamFSM = Number(team.fsm);
-        if (!stats[team.key]) {
-          stats[team.key] = [];
+    batchResults.forEach((result, idx) => {
+      if (result.status === "fulfilled") {
+        for (const team of result.value) {
+          const teamFSM = Number(team.fsm);
+          if (!stats[team.key]) {
+            stats[team.key] = [];
+          }
+          stats[team.key].push(teamFSM);
         }
-        stats[team.key].push(teamFSM);
+      } else {
+        console.error(
+          `Error fetching stats for event ${batch[idx]}:`,
+          result.reason
+        );
       }
-    } catch (error) {
-      // console.error(`Error fetching stats for event ${event}:`, error);
-    }
-    if (i % 10 === 0) {
-      console.log(`Processed ${i} of ${events.length} events...`);
+    });
+
+    if ((i + batchSize) % 50 === 0 || i + batchSize >= events.length) {
+      console.log(
+        `Processed ${Math.min(i + batchSize, events.length)} of ${
+          events.length
+        } events...`
+      );
     }
   }
 
@@ -184,7 +199,7 @@ export async function getGlobalStats(
       bestFSM,
     }));
 
-  //   console.log("Global stats fetched and sorted:", sortedGlobalStats);
+  // console.log("Global stats fetched and sorted:", sortedGlobalStats);
 
   return sortedGlobalStats;
 }

@@ -47,7 +47,9 @@ export default function ClientPage({
   matches,
   playedMatches,
 }: ClientPageProps) {
-  const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "preds" | "alliances">(
+    "stats"
+  );
   const [sessionReady, setSessionReady] = useState(false);
   const sessionRef = useRef<ort.InferenceSession | null>(null);
 
@@ -131,6 +133,8 @@ export default function ClientPage({
         );
 
         if ([...blue, ...red].some((t) => !t)) continue;
+
+        if (!matchPredictions[match.key]) continue;
 
         const redOutput = await runOnnxModel(makeInput(red, compLevel, match));
         const blueOutput = await runOnnxModel(
@@ -356,6 +360,25 @@ export default function ClientPage({
             }}
           >
             Match Predictions
+          </button>
+          <button
+            onClick={() => setActiveTab("alliances")}
+            disabled={!alliances || !havePreds}
+            style={{
+              padding: "0.5rem 1rem",
+              fontWeight: "bold",
+              borderRadius: 6,
+              background: activeTab === "alliances" ? "#333" : "#222",
+              color: havePreds
+                ? activeTab === "preds"
+                  ? "#fff"
+                  : "#ccc"
+                : "#888",
+              border: "1px solid #555",
+              cursor: havePreds ? "pointer" : "not-allowed",
+            }}
+          >
+            Alliances
           </button>
         </div>
 

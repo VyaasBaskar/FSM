@@ -104,6 +104,9 @@ export default function ClientPage({
 
         if ([...blue, ...red].some((t) => !t)) continue;
 
+        // Skip if this match doesn't have predictions
+        if (!matchPredictions[match.key]) continue;
+
         const makeInput = (alliance: any[]) =>
           new Float32Array([
             ...alliance.flatMap((t) => [

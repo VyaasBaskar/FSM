@@ -69,14 +69,20 @@ export default async function TeamPage({
     let normSumSq = 0,
       normCount = 0;
     let allStats: { year: number; normFSM: number }[] = [];
-    for (const y of years) {
-      try {
-        const globalStats = await getGlobalStats(y);
+
+    const yearResults = await Promise.allSettled(
+      years.map((y) => getGlobalStats(y))
+    );
+
+    yearResults.forEach((result, idx) => {
+      if (result.status === "fulfilled") {
+        const y = years[idx];
+        const globalStats = result.value;
 
         const teamGlobalData = globalStats.find(
           (t: any) => t.teamKey === teamKey
         );
-        if (!teamGlobalData) continue;
+        if (!teamGlobalData) return;
 
         const fsms = globalStats.map((t: any) => Number(t.bestFSM));
         const mean = fsms.reduce((a, b) => a + b, 0) / fsms.length;
@@ -88,8 +94,8 @@ export default async function TeamPage({
           const normFSM = ((fsm - mean) / stddev) * 100.0 + 1500.0;
           allStats.push({ year: y, normFSM });
         }
-      } catch {}
-    }
+      }
+    });
     const statsForAvg =
       allStats.length > 1
         ? allStats.filter(
@@ -211,9 +217,17 @@ export default async function TeamPage({
   ) {
     yearprov = "2025";
   }
+
   let teamStats;
+  let teamInfo;
+  let gstats;
+
   try {
-    teamStats = await getTeamStats(teamKey, Number(yearprov));
+    [teamStats, teamInfo, gstats] = await Promise.all([
+      getTeamStats(teamKey, Number(yearprov)),
+      getTeamInfo(teamKey),
+      getGlobalStats(Number(yearprov)),
+    ]);
   } catch {
     return (
       <div
@@ -243,9 +257,6 @@ export default async function TeamPage({
       </div>
     );
   }
-  const teamInfo = await getTeamInfo(teamKey);
-
-  const gstats = await getGlobalStats(Number(yearprov));
 
   let teamIndex = -1;
 

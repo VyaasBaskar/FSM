@@ -1,14 +1,17 @@
 /* eslint-disable */
 import { getEventTeams, TeamDataType } from "../lib/event";
+import { getTeamRevalidationTime } from "../lib/eventUtils";
 
 async function getTeamEvents(teamKey: string, year: number = 2025) {
+  const revalidateTime = await getTeamRevalidationTime(teamKey, year);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/team/${teamKey}/events/${year}`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -38,24 +41,24 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
     throw new Error(`No events found for team: ${teamKey}`);
   }
 
+  const eventResults = await Promise.allSettled(
+    events.map((event: { key: string }) => getEventTeams(event.key))
+  );
+
   const teamData: EventDataType[] = [];
-  for (const event of events) {
-    try {
-      const teams = await getEventTeams(event.key);
+  eventResults.forEach((result, idx) => {
+    if (result.status === "fulfilled") {
+      const teams = result.value;
       const team = teams.find((t: TeamDataType) => t.key === teamKey);
       if (team) {
         teamData.push({
-          event: event.key,
+          event: events[idx].key,
           teamfsm: team.fsm,
           teamrank: team.rank,
         });
       }
-    } catch (exc: unknown) {
-      // pass on error
-    } finally {
-      // pass
     }
-  }
+  });
 
   let bestFSM = 0.0;
   for (const event of teamData) {
@@ -75,7 +78,7 @@ export async function getTeamInfo(teamKey: string) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: 86400 },
     }
   );
 
