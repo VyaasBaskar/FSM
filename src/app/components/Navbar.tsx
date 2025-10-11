@@ -102,7 +102,9 @@ export default function Navbar() {
                 alt="Logo"
                 width={42}
                 height={47}
-                className={`navbar-logo ${logoHovered ? "logo-hovered" : ""}`}
+                className={
+                  logoHovered ? "navbar-logo logo-hovered" : "navbar-logo"
+                }
                 style={{
                   zIndex: 1000,
                   marginLeft: "0.5rem",

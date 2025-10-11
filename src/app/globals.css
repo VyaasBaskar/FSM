@@ -156,3 +156,9 @@ a {
 [data-theme="dark"] .navbar-logo.logo-hovered {
   filter: drop-shadow(0 0 10px rgba(255, 198, 0, 0.5)) brightness(1.1);
 }
+
+@media (max-width: 1200px) {
+  .team-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

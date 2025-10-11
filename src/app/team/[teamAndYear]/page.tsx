@@ -1,11 +1,17 @@
 /* eslint-disable */
 import styles from "../../page.module.css";
-import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
+import {
+  getTeamStats,
+  EventDataType,
+  getTeamInfo,
+  getTeamMedia,
+} from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
 import StatCard from "./StatCard";
 import EventCard from "./EventCard";
+import TeamImageGallery from "./TeamImageGallery";
 
 function YearButtons({
   teamKey,
@@ -327,12 +333,14 @@ export default async function TeamPage({
   let teamStats;
   let teamInfo;
   let gstats;
+  let teamMedia;
 
   try {
-    [teamStats, teamInfo, gstats] = await Promise.all([
+    [teamStats, teamInfo, gstats, teamMedia] = await Promise.all([
       getTeamStats(teamKey, Number(yearprov)),
       getTeamInfo(teamKey),
       getGlobalStats(Number(yearprov)),
+      getTeamMedia(teamKey, Number(yearprov)),
     ]);
   } catch {
     return (
@@ -448,54 +456,84 @@ export default async function TeamPage({
 
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "1rem",
-            justifyContent: "center",
+            display: "grid",
+            gridTemplateColumns: teamMedia.length > 0 ? "1fr 400px" : "1fr",
+            gap: "1.5rem",
             padding: "0 1rem",
-            marginBottom: "2rem",
+            alignItems: "start",
           }}
+          className="team-layout-grid"
         >
-          <StatCard label="FSM" value={fsm.toFixed(1)} />
-          <StatCard
-            label="GLOBAL RANK"
-            value={`#${teamIndex}`}
-            color="#22c55e"
-          />
-          <StatCard label="TOP PERCENTILE" value={`${pct}%`} color="#10b981" />
-          <StatCard
-            label="NORMALIZED FSM"
-            value={normalizedFSM}
-            color="#84cc16"
-          />
-        </div>
+          {/* Main Content Column */}
+          <div>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
+                justifyContent: "center",
+                marginBottom: "2rem",
+              }}
+            >
+              <StatCard label="FSM" value={fsm.toFixed(1)} />
+              <StatCard
+                label="GLOBAL RANK"
+                value={`#${teamIndex}`}
+                color="#22c55e"
+              />
+              <StatCard
+                label="TOP PERCENTILE"
+                value={`${pct}%`}
+                color="#10b981"
+              />
+              <StatCard
+                label="NORMALIZED FSM"
+                value={normalizedFSM}
+                color="#84cc16"
+              />
+            </div>
 
-        <div style={{ padding: "0 1rem" }}>
-          <h3
-            style={{
-              color: "var(--foreground)",
-              textAlign: "center",
-              marginBottom: "1.5rem",
-              fontSize: "1.5rem",
-            }}
-          >
-            Event Performance
-          </h3>
+            <div>
+              <h3
+                style={{
+                  color: "var(--foreground)",
+                  textAlign: "center",
+                  marginBottom: "1.5rem",
+                  fontSize: "1.5rem",
+                }}
+              >
+                Event Performance
+              </h3>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
-              gap: "1rem",
-              maxWidth: "1200px",
-              margin: "0 auto",
-            }}
-          >
-            {teamStats.teamData.map((event: EventDataType) => (
-              <EventCard key={event.event} event={event} yearprov={yearprov} />
-            ))}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                {teamStats.teamData.map((event: EventDataType) => (
+                  <EventCard
+                    key={event.event}
+                    event={event}
+                    yearprov={yearprov}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* Media Gallery Column */}
+          {teamMedia.length > 0 && (
+            <div>
+              <TeamImageGallery
+                images={teamMedia}
+                teamKey={teamKey}
+                year={yearprov}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>
