@@ -1,21 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TeamLink from "@/app/components/TeamLink";
 import { MatchPredictions as MatchPredictionsType } from "./types";
 
+interface NexusScheduleData {
+  scheduledTime: string | null;
+  actualTime: string | null;
+  tournamentLevel: string;
+}
+
 interface MatchPredictionsProps {
   matchPredictions: MatchPredictionsType;
+  nexusSchedule: { [key: string]: NexusScheduleData };
+}
+
+function getMatchStatus(
+  scheduledTime: string | null,
+  actualTime: string | null
+) {
+  if (!scheduledTime) return null;
+
+  const now = new Date();
+  const matchTime = new Date(scheduledTime);
+  const timeDiff = matchTime.getTime() - now.getTime();
+  const minutesDiff = Math.floor(timeDiff / 60000);
+
+  if (actualTime || timeDiff < -600000) {
+    return null;
+  }
+
+  if (minutesDiff <= 5 && minutesDiff >= 0) {
+    return "queuing";
+  } else if (minutesDiff > 5 && minutesDiff <= 10) {
+    return "ondeck";
+  }
+
+  return null;
+}
+
+function formatMatchTime(scheduledTime: string | null) {
+  if (!scheduledTime) return null;
+
+  const matchTime = new Date(scheduledTime);
+  return matchTime.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 export default function MatchPredictions({
   matchPredictions,
+  nexusSchedule,
 }: MatchPredictionsProps) {
+  // Force rebuild - enhanced UI with shadows, colored containers, and timing
+  const [, setCurrentTime] = useState(new Date());
   const [filterText, setFilterText] = useState("");
   const [filterTeam, setFilterTeam] = useState("");
   const [filterType, setFilterType] = useState<"all" | "quals" | "elims">(
     "all"
   );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
     const getTypeOrder = (key: string) => {
@@ -236,16 +289,16 @@ export default function MatchPredictions({
             actualWinner !== "tie" &&
             predWinner !== actualWinner;
 
-          const searchedTeamOnRed =
-            filterTeam &&
-            match.red.some((t) =>
-              t.toLowerCase().includes(filterTeam.toLowerCase())
-            );
-          const searchedTeamOnBlue =
-            filterTeam &&
-            match.blue.some((t) =>
-              t.toLowerCase().includes(filterTeam.toLowerCase())
-            );
+          const scheduleData = nexusSchedule[matchKey];
+          const matchStatus = scheduleData
+            ? getMatchStatus(
+                scheduleData.scheduledTime,
+                scheduleData.actualTime
+              )
+            : null;
+          const matchTime = scheduleData
+            ? formatMatchTime(scheduleData.scheduledTime)
+            : null;
 
           return (
             <div
@@ -284,58 +337,119 @@ export default function MatchPredictions({
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  flexDirection: "column",
+                  gap: "0.5rem",
                   paddingBottom: "0.75rem",
                   borderBottom: "2px solid var(--border-color)",
                 }}
               >
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "1.125rem",
-                    color: "var(--yellow-color)",
-                    letterSpacing: "0.025em",
-                  }}
-                >
-                  {matchKey}
-                </span>
                 <div
                   style={{
                     display: "flex",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    gap: "0.5rem",
                   }}
                 >
-                  {isPredictionCorrect && (
-                    <div
-                      style={{
-                        background: "rgba(34, 197, 94, 0.15)",
-                        color: "#22c55e",
-                        padding: "0.25rem 0.75rem",
-                        borderRadius: 6,
-                        fontSize: "0.75rem",
-                        fontWeight: "700",
-                      }}
-                    >
-                      CORRECT
-                    </div>
-                  )}
-                  {isPredictionWrong && (
-                    <div
-                      style={{
-                        background: "rgba(239, 68, 68, 0.15)",
-                        color: "#ef4444",
-                        padding: "0.25rem 0.75rem",
-                        borderRadius: 6,
-                        fontSize: "0.75rem",
-                        fontWeight: "700",
-                      }}
-                    >
-                      INCORRECT
-                    </div>
-                  )}
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: "1.125rem",
+                      color: "var(--yellow-color)",
+                      letterSpacing: "0.025em",
+                    }}
+                  >
+                    {matchKey}
+                  </span>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    {isPredictionCorrect && (
+                      <div
+                        style={{
+                          background: "rgba(34, 197, 94, 0.15)",
+                          color: "#22c55e",
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: 6,
+                          fontSize: "0.75rem",
+                          fontWeight: "700",
+                        }}
+                      >
+                        CORRECT
+                      </div>
+                    )}
+                    {isPredictionWrong && (
+                      <div
+                        style={{
+                          background: "rgba(239, 68, 68, 0.15)",
+                          color: "#ef4444",
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: 6,
+                          fontSize: "0.75rem",
+                          fontWeight: "700",
+                        }}
+                      >
+                        INCORRECT
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {(matchTime || matchStatus) && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {matchTime && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          fontSize: "0.875rem",
+                          color: "var(--gray-less)",
+                        }}
+                      >
+                        <span>🕐</span>
+                        <span>{matchTime}</span>
+                      </div>
+                    )}
+                    {matchStatus === "queuing" && (
+                      <div
+                        style={{
+                          background: "rgba(245, 158, 11, 0.2)",
+                          color: "#f59e0b",
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: 6,
+                          fontSize: "0.75rem",
+                          fontWeight: "700",
+                        }}
+                      >
+                        🟡 QUEUING
+                      </div>
+                    )}
+                    {matchStatus === "ondeck" && (
+                      <div
+                        style={{
+                          background: "rgba(59, 130, 246, 0.2)",
+                          color: "#3b82f6",
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: 6,
+                          fontSize: "0.75rem",
+                          fontWeight: "700",
+                        }}
+                      >
+                        🔵 ON DECK
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div
@@ -372,7 +486,7 @@ export default function MatchPredictions({
                       fontSize: "0.9rem",
                     }}
                   >
-                    {match.red.map((t, i) => {
+                    {match.red.map((t) => {
                       const isHighlighted =
                         filterTeam &&
                         t.toLowerCase().includes(filterTeam.toLowerCase());
@@ -427,7 +541,7 @@ export default function MatchPredictions({
                       fontSize: "0.9rem",
                     }}
                   >
-                    {match.blue.map((t, i) => {
+                    {match.blue.map((t) => {
                       const isHighlighted =
                         filterTeam &&
                         t.toLowerCase().includes(filterTeam.toLowerCase());

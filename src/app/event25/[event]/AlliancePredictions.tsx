@@ -17,7 +17,7 @@ export default function AlliancePredictions({
   runOnnxModel,
   makeInput,
 }: AlliancePredictionsProps) {
-  const [alliances, setAlliances] = useState<any[]>([
+  const [alliances, setAlliances] = useState<string[][]>([
     ["0", "0", "0"],
     ["0", "0", "0"],
     ["0", "0", "0"],
@@ -112,6 +112,7 @@ export default function AlliancePredictions({
     return () => {
       clearTimeout(timeoutId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionReady, playedMatches, teams]);
 
   return (

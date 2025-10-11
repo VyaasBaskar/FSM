@@ -1,14 +1,15 @@
 "use client";
 
 import TeamLink from "@/app/components/TeamLink";
+import { TeamData, AllianceData } from "./types";
 
 interface AllianceCardProps {
   alliance: string[];
   idx: number;
-  teams: any[];
+  teams: TeamData[];
   scores: number[];
   actualScores: number[];
-  actualAlliances: any[] | null;
+  actualAlliances: AllianceData[] | null;
 }
 
 export default function AllianceCard({
@@ -161,7 +162,7 @@ export default function AllianceCard({
           gap: "0.5rem",
         }}
       >
-        {allianceTeams.map((team: any, teamIdx: number) => {
+        {allianceTeams.map((team: TeamData | undefined, teamIdx: number) => {
           if (!team) return null;
           const role =
             teamIdx === 0 ? "Captain" : teamIdx === 1 ? "1st Pick" : "2nd Pick";
@@ -170,7 +171,7 @@ export default function AllianceCard({
             hasActual && alliance[teamIdx] === actualTeamKeys[teamIdx];
           const actualTeam =
             hasActual && actualTeamKeys[teamIdx]
-              ? teams.find((t: any) => t.key === actualTeamKeys[teamIdx])
+              ? teams.find((t) => t.key === actualTeamKeys[teamIdx])
               : null;
 
           return (

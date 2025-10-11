@@ -1,3 +1,5 @@
+import { TeamDataType } from "@/app/lib/event";
+
 export type MatchPredictions = {
   [key: string]: {
     preds: string[];
@@ -7,22 +9,52 @@ export type MatchPredictions = {
   };
 };
 
+export type TeamData = TeamDataType;
+
+export interface AllianceData {
+  declines: string[];
+  picks: string[];
+  status?: {
+    current_level_record: Record<string, unknown>;
+    double_elim_round: string;
+    level: string;
+    playoff_type: number;
+    record: Record<string, unknown>;
+    status: string;
+  };
+}
+
+export interface NexusScheduleData {
+  scheduledTime: string | null;
+  actualTime: string | null;
+  tournamentLevel: string;
+}
+
 export interface ClientPageProps {
   havePreds: boolean;
   eventCode: string;
-  teams: any[];
-  teamsf: { [key: string]: any };
+  teams: TeamData[];
   matchPredictions: MatchPredictions;
-  matches: any[];
   playedMatches: number;
-  actualAlliances: any[] | null;
+  actualAlliances: AllianceData[] | null;
+  nexusSchedule: { [key: string]: NexusScheduleData };
 }
 
 export interface AlliancePredictionsProps {
-  teams: any[];
+  teams: TeamData[];
   playedMatches: number;
-  actualAlliances: any[] | null;
+  actualAlliances: AllianceData[] | null;
   sessionReady: boolean;
   runOnnxModel: (inputData: Float32Array) => Promise<number>;
-  makeInput: (alliance: any[], compLevel: any, match: any) => Float32Array;
+  makeInput: (
+    alliance: {
+      fsm: number;
+      algae: number;
+      coral: number;
+      auto: number;
+      climb: number;
+    }[],
+    compLevel: number,
+    match: { match_number: number }
+  ) => Float32Array;
 }

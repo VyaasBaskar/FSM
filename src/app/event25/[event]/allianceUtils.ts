@@ -1,7 +1,19 @@
+import { TeamData, AllianceData } from "./types";
+
 export async function computeAlliancePredictions(
-  teams: any[],
+  teams: TeamData[],
   runOnnxModel: (inputData: Float32Array) => Promise<number>,
-  makeInput: (alliance: any[], compLevel: any, match: any) => Float32Array,
+  makeInput: (
+    alliance: {
+      fsm: number;
+      algae: number;
+      coral: number;
+      auto: number;
+      climb: number;
+    }[],
+    compLevel: number,
+    match: { match_number: number }
+  ) => Float32Array,
   setAllianceProgress: (progress: string) => void
 ) {
   const teamsCopy = [...teams];
@@ -27,7 +39,7 @@ export async function computeAlliancePredictions(
 
   teamsLeft.sort((a, b) => Number(a.rank) - Number(b.rank));
 
-  const newAlliances: any[] = [
+  const newAlliances: string[][] = [
     ["0", "0", "0"],
     ["0", "0", "0"],
     ["0", "0", "0"],
@@ -85,7 +97,13 @@ export async function computeAlliancePredictions(
         continue;
       }
 
-      const tempally = [cap, team2, zeroTeam];
+      const tempally = [cap, team2, zeroTeam].map((t) => ({
+        fsm: Number(t.fsm),
+        algae: Number(t.algae),
+        coral: Number(t.coral),
+        auto: Number(t.auto),
+        climb: Number(t.climb),
+      }));
       try {
         let mpred = await runOnnxModel(
           makeInput(tempally, 2, { match_number: 2 })
@@ -144,15 +162,18 @@ export async function computeAlliancePredictions(
       const tempally0 = [...newAlliances[i]];
       tempally0[2] = team3.key;
 
-      const tempally = tempally0.map((key) => teams.find((t) => t.key === key));
+      const tempallyTeams = tempally0.map((key) =>
+        teams.find((t) => t.key === key)
+      );
 
-      if (tempally.some((t) => !t)) {
+      if (tempallyTeams.some((t) => !t)) {
         console.warn(`    Couldn't find all teams for alliance check`);
         continue;
       }
 
-      const allValid = tempally.every(
+      const allValid = tempallyTeams.every(
         (t) =>
+          t &&
           !isNaN(Number(t.fsm)) &&
           !isNaN(Number(t.algae)) &&
           !isNaN(Number(t.coral)) &&
@@ -165,15 +186,25 @@ export async function computeAlliancePredictions(
         continue;
       }
 
+      const tempally = tempallyTeams
+        .filter((t): t is TeamData => t !== undefined)
+        .map((t) => ({
+          fsm: Number(t.fsm),
+          algae: Number(t.algae),
+          coral: Number(t.coral),
+          auto: Number(t.auto),
+          climb: Number(t.climb),
+        }));
+
       validChecks++;
       try {
         let mpred = await runOnnxModel(
           makeInput(tempally, 2, { match_number: 2 })
         );
         const pred2 =
-          Number(tempally[0].fsm) +
-          Number(tempally[1].fsm) +
-          Number(tempally[2].fsm);
+          Number(tempallyTeams[0]!.fsm) +
+          Number(tempallyTeams[1]!.fsm) +
+          Number(tempallyTeams[2]!.fsm);
         mpred = (mpred + pred2) / 2.0;
         if (mpred > maxMpred2) {
           newAlliances[i][2] = team3.key;
@@ -214,10 +245,20 @@ export async function computeAlliancePredictions(
 }
 
 export async function computeActualAllianceScores(
-  actualAlliances: any[],
-  teams: any[],
+  actualAlliances: AllianceData[],
+  teams: TeamData[],
   runOnnxModel: (inputData: Float32Array) => Promise<number>,
-  makeInput: (alliance: any[], compLevel: any, match: any) => Float32Array
+  makeInput: (
+    alliance: {
+      fsm: number;
+      algae: number;
+      coral: number;
+      auto: number;
+      climb: number;
+    }[],
+    compLevel: number,
+    match: { match_number: number }
+  ) => Float32Array
 ) {
   console.log("\n🔄 Computing predicted scores for actual alliances...");
   const actualPredictedScores: number[] = [];
@@ -239,14 +280,15 @@ export async function computeActualAllianceScores(
     );
 
     if (
-      allianceTeams.some((t: any) => !t) ||
+      allianceTeams.some((t) => !t) ||
       allianceTeams.some(
-        (t: any) =>
-          isNaN(Number(t.fsm)) ||
-          isNaN(Number(t.algae)) ||
-          isNaN(Number(t.coral)) ||
-          isNaN(Number(t.auto)) ||
-          isNaN(Number(t.climb))
+        (t) =>
+          t &&
+          (isNaN(Number(t.fsm)) ||
+            isNaN(Number(t.algae)) ||
+            isNaN(Number(t.coral)) ||
+            isNaN(Number(t.auto)) ||
+            isNaN(Number(t.climb)))
       )
     ) {
       console.warn(`Skipping actual alliance ${i + 1} - invalid team data`);
@@ -254,12 +296,28 @@ export async function computeActualAllianceScores(
       continue;
     }
 
+    const validTeams = allianceTeams.filter(
+      (t): t is TeamData => t !== undefined
+    );
+    if (validTeams.length < 3) {
+      actualPredictedScores.push(0);
+      continue;
+    }
+
     try {
+      const teamInputs = validTeams.map((t) => ({
+        fsm: Number(t.fsm),
+        algae: Number(t.algae),
+        coral: Number(t.coral),
+        auto: Number(t.auto),
+        climb: Number(t.climb),
+      }));
+
       let mpred = await runOnnxModel(
-        makeInput(allianceTeams, 2, { match_number: 2 })
+        makeInput(teamInputs, 2, { match_number: 2 })
       );
-      const pred2 = allianceTeams.reduce(
-        (sum: number, t: any) => sum + Number(t.fsm),
+      const pred2 = validTeams.reduce(
+        (sum: number, t) => sum + Number(t.fsm),
         0
       );
       mpred = (mpred + pred2) / 2.0;

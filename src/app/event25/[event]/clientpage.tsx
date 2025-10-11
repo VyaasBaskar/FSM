@@ -22,11 +22,10 @@ export default function ClientPage({
   havePreds,
   eventCode,
   teams,
-  teamsf,
   matchPredictions,
-  matches,
   playedMatches,
   actualAlliances,
+  nexusSchedule,
 }: ClientPageProps) {
   console.log("actualAlliances received:", actualAlliances);
   console.log("Event code:", eventCode);
@@ -67,7 +66,17 @@ export default function ClientPage({
     return Number(output[0]);
   }
 
-  const makeInput = (alliance: any[], compLevel: any, match: any) =>
+  const makeInput = (
+    alliance: {
+      fsm: number;
+      algae: number;
+      coral: number;
+      auto: number;
+      climb: number;
+    }[],
+    compLevel: number,
+    match: { match_number: number }
+  ) =>
     new Float32Array([
       ...alliance.flatMap((t) => [
         Number(t.fsm),
@@ -178,7 +187,10 @@ export default function ClientPage({
         )}
 
         {activeTab === "preds" && havePreds && (
-          <MatchPredictions matchPredictions={matchPredictions} />
+          <MatchPredictions
+            matchPredictions={matchPredictions}
+            nexusSchedule={nexusSchedule}
+          />
         )}
 
         {activeTab === "alliances" && (

@@ -161,10 +161,84 @@ export async function getEventAlliances(eventCode: string) {
   );
 
   if (!res.ok) {
-    return null; // Return null if alliances aren't available yet
+    return null;
   }
 
   return res.json();
+}
+
+export async function getNexusMatchSchedule(eventCode: string) {
+  const year = eventCode.slice(0, 4);
+  const event = eventCode.slice(4);
+
+  try {
+    const revalidateTime = await getEventRevalidationTime(eventCode);
+
+    const qualRes = await fetch(
+      `https://frc-api.firstinspires.org/v3.0/${year}/schedule/${event}?tournamentLevel=qual`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `cfrUoyT-hh16Lx2BM-wZouwj07M:`
+          ).toString("base64")}`,
+        },
+        next: { revalidate: revalidateTime },
+      }
+    );
+
+    const elimRes = await fetch(
+      `https://frc-api.firstinspires.org/v3.0/${year}/schedule/${event}?tournamentLevel=playoff`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `cfrUoyT-hh16Lx2BM-wZouwj07M:`
+          ).toString("base64")}`,
+        },
+        next: { revalidate: revalidateTime },
+      }
+    );
+
+    const scheduleData: { [key: string]: any } = {};
+
+    if (qualRes.ok) {
+      const qualData = await qualRes.json();
+      if (qualData.Schedule) {
+        for (const match of qualData.Schedule) {
+          const matchKey = `${eventCode}_qm${match.matchNumber}`;
+          scheduleData[matchKey] = {
+            scheduledTime: match.startTime,
+            actualTime: match.actualStartTime,
+            tournamentLevel: match.tournamentLevel,
+          };
+        }
+      }
+    }
+
+    if (elimRes.ok) {
+      const elimData = await elimRes.json();
+      if (elimData.Schedule) {
+        for (const match of elimData.Schedule) {
+          let levelStr = "qm";
+          if (match.tournamentLevel === "Playoff") {
+            if (match.series === 1) levelStr = "f";
+            else if (match.series === 2) levelStr = "sf";
+            else levelStr = "qf";
+          }
+          const matchKey = `${eventCode}_${levelStr}${match.matchNumber}`;
+          scheduleData[matchKey] = {
+            scheduledTime: match.startTime,
+            actualTime: match.actualStartTime,
+            tournamentLevel: match.tournamentLevel,
+          };
+        }
+      }
+    }
+
+    return scheduleData;
+  } catch (error) {
+    console.error("Error fetching Nexus schedule:", error);
+    return {};
+  }
 }
 
 function getScore(match: any, alliance: string, attribute: string) {
