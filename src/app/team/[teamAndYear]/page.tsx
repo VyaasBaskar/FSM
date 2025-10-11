@@ -9,6 +9,7 @@ import {
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
+
 import StatCard from "./StatCard";
 import EventCard from "./EventCard";
 import TeamImageGallery from "./TeamImageGallery";
@@ -176,7 +177,6 @@ export default async function TeamPage({
             {teamKey}
           </h2>
           <YearButtons teamKey={teamKey} currentYear={"general"} />
-
           <div
             style={{
               display: "flex",
@@ -350,7 +350,7 @@ export default async function TeamPage({
       >
         <main className={styles.main}>
           <h1 className={styles.title}>Team Not Found</h1>
-          <YearButtons teamKey={teamKey} currentYear={yearprov} />
+          <YearDropdown teamKey={teamKey} currentYear={yearprov} />
           <div
             style={{
               background: "var(--background-pred)",
