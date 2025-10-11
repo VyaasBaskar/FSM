@@ -4,53 +4,7 @@ import { getTeamStats, EventDataType, getTeamInfo } from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
-
-function YearButtons({
-  teamKey,
-  currentYear,
-}: {
-  teamKey: string;
-  currentYear: string;
-}) {
-  const years = [
-    "general",
-    ...Array.from({ length: 13 }, (_, i) => 2013 + i).filter(
-      (y) => y !== 2020 && y !== 2021
-    ),
-  ];
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: "8px",
-        marginTop: "16px",
-        marginBottom: "24px",
-      }}
-    >
-      {years.map((y) => (
-        <Link
-          key={y}
-          href={`/team/${teamKey}-${y}`}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-            backgroundColor:
-              y.toString() === currentYear ? "#0070f3" : "var(--yellow-color)",
-            color: y.toString() === currentYear ? "white" : "black",
-            fontWeight: "bold",
-            textDecoration: "none",
-            transition: "all 0.2s ease",
-          }}
-        >
-          {y}
-        </Link>
-      ))}
-    </div>
-  );
-}
+import YearDropdown from "../../components/YearDropdown";
 
 export default async function TeamPage({
   params,
@@ -147,7 +101,7 @@ export default async function TeamPage({
       >
         <main className={styles.main}>
           <h1 className={styles.title}>10-Year Team FSM Analysis</h1>
-          <YearButtons teamKey={teamKey} currentYear={"general"} />
+          <YearDropdown teamKey={teamKey} currentYear={"general"} />
           <div
             style={{
               width: "100%",
@@ -236,7 +190,7 @@ export default async function TeamPage({
       >
         <main className={styles.main} style={{ marginTop: "-8rem" }}>
           <h1 className={styles.title}>Team Not Found</h1>
-          <YearButtons teamKey={teamKey} currentYear={yearprov} />
+          <YearDropdown teamKey={teamKey} currentYear={yearprov} />
           <div
             style={{
               width: "100%",
@@ -294,7 +248,7 @@ export default async function TeamPage({
     >
       <main className={styles.main}>
         <h1 className={styles.title}>{yearprov} Team FSM</h1>
-        <YearButtons teamKey={teamKey} currentYear={yearprov} />
+        <YearDropdown teamKey={teamKey} currentYear={yearprov} />
         <div
           style={{
             width: "100%",

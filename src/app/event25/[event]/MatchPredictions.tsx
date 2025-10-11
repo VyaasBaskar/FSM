@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import TeamLink from "@/app/components/TeamLink";
+import RecentMatches from "./RecentMatches";
 import {
   MatchPredictions as MatchPredictionsType,
   NexusScheduleData,
@@ -255,6 +256,11 @@ export default function MatchPredictions({
         </div>
       </div>
 
+      <RecentMatches
+        matchPredictions={matchPredictions}
+        nexusSchedule={nexusSchedule}
+      />
+
       <div
         style={{
           display: "grid",
@@ -306,6 +312,7 @@ export default function MatchPredictions({
           return (
             <div
               key={matchKey}
+              id={matchKey}
               style={{
                 border: `2px solid ${
                   isPredictionCorrect
