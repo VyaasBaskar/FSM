@@ -89,3 +89,89 @@ export async function getTeamInfo(teamKey: string) {
   const teamInfo = await res.json();
   return teamInfo;
 }
+
+export type TeamMediaType = {
+  type: string;
+  foreign_key?: string;
+  direct_url?: string;
+  view_url?: string;
+  details?: any;
+  preferred?: boolean;
+};
+
+export type ProcessedMediaType = {
+  url: string;
+  type: string;
+  mediaType: "image" | "video";
+  preferred: boolean;
+  foreignKey?: string;
+};
+
+export async function getTeamMedia(teamKey: string, year: number) {
+  const revalidateTime = await getTeamRevalidationTime(teamKey, year);
+
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/team/${teamKey}/media/${year}`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+      next: { revalidate: revalidateTime },
+    }
+  );
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const media: TeamMediaType[] = await res.json();
+
+  // Process all media items
+  const processedMedia = media.map((m) => {
+    let url = "";
+    let mediaType: "image" | "video" = "image";
+
+    // Handle videos first
+    if (m.type === "youtube" && m.foreign_key) {
+      url = `https://www.youtube-nocookie.com/embed/${m.foreign_key}`;
+      mediaType = "video";
+    } else if (m.type === "grabcad" && m.foreign_key) {
+      // GrabCAD 3D models - treat as video for interactive content
+      url = `https://grabcad.com/library/${m.foreign_key}`;
+      mediaType = "video";
+    }
+    // Handle images
+    else if (m.direct_url) {
+      url = m.direct_url;
+      mediaType = "image";
+    } else if (m.type === "imgur" && m.foreign_key) {
+      // Use imgur without extension - lets imgur serve the correct format automatically
+      // This is more reliable than guessing .jpg, .png, .gif
+      url = `https://i.imgur.com/${m.foreign_key}`;
+      mediaType = "image";
+    } else if (m.type === "cdphotothread" && m.details?.image_partial) {
+      url = `https://www.chiefdelphi.com/media/img/${m.details.image_partial}`;
+      mediaType = "image";
+    } else if (m.type === "instagram-image" && m.foreign_key) {
+      // Instagram images can be treated as images
+      url = `https://www.instagram.com/p/${m.foreign_key}/`;
+      mediaType = "image";
+    }
+
+    // Log unhandled types for debugging
+    if (!url && typeof console !== "undefined") {
+      console.log(`Unhandled media type: ${m.type}`, m);
+    }
+
+    return {
+      url,
+      type: m.type,
+      mediaType,
+      preferred: m.preferred || false,
+      foreignKey: m.foreign_key,
+    };
+  });
+
+  // Filter out items without valid URLs
+  return processedMedia.filter((m) => m.url);
+}
