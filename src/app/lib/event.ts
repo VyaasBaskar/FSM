@@ -147,6 +147,26 @@ async function getEventRankings(eventCode: string) {
   return res.json();
 }
 
+export async function getEventAlliances(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
+  const res = await fetch(
+    `https://www.thebluealliance.com/api/v3/event/${eventCode}/alliances`,
+    {
+      headers: {
+        "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+      },
+      next: { revalidate: revalidateTime },
+    }
+  );
+
+  if (!res.ok) {
+    return null; // Return null if alliances aren't available yet
+  }
+
+  return res.json();
+}
+
 function getScore(match: any, alliance: string, attribute: string) {
   if (attribute === "score") {
     if (alliance === "red") {
