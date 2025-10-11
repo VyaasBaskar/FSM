@@ -172,17 +172,20 @@ export default function ClientPage({
               flexDirection: "column",
               alignItems: "center",
               color: "var(--foreground)",
-              borderRadius: 12,
               width: "100%",
+              padding: "1rem 0",
             }}
           >
-            <h2 style={{ color: "var(--foreground)" }}>Team Stats</h2>
-            <br />
-            <div
-              style={{ maxWidth: "100%", overflowX: "scroll", width: "100%" }}
+            <h2
+              style={{
+                color: "var(--foreground)",
+                textAlign: "center",
+                marginBottom: "2rem",
+              }}
             >
-              <Event25TeamsTable teams={teams} />
-            </div>
+              Team Statistics
+            </h2>
+            <Event25TeamsTable teams={teams} />
           </div>
         )}
 
