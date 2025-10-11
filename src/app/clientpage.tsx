@@ -44,11 +44,6 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
     }
   };
 
-  const handleGoGlobal = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push(`/global/${year}`);
-  };
-
   return (
     <div className={styles.modernPage}>
       <section className={styles.hero}>
