@@ -1,14 +1,17 @@
 /* eslint-disable */
 import { getEventTeams, TeamDataType } from "../lib/event";
+import { getTeamRevalidationTime } from "../lib/eventUtils";
 
 async function getTeamEvents(teamKey: string, year: number = 2025) {
+  const revalidateTime = await getTeamRevalidationTime(teamKey, year);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/team/${teamKey}/events/${year}`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -51,7 +54,7 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
         });
       }
     } catch (exc: unknown) {
-      // pass on error
+      // pass
     } finally {
       // pass
     }
@@ -75,7 +78,7 @@ export async function getTeamInfo(teamKey: string) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: 86400 },
     }
   );
 

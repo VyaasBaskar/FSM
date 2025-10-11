@@ -175,7 +175,7 @@ async function getEventEndDate(eventCode: string) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: 86400 },
     }
   );
 
@@ -264,7 +264,7 @@ export async function needToUpdateGlobal(
   const diffTime = today.getTime() - Number(existingGlobal.set_time);
   const diffHours = diffTime / (1000 * 60 * 60);
 
-  return false; //diffHours > 4.0;
+  return false;
 }
 
 export async function setGlobal(

@@ -16,6 +16,7 @@ export async function getEvents(year: number = 2025) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
+      next: { revalidate: 86400 },
     }
   );
 
@@ -42,6 +43,7 @@ export async function getTeams(year: number = 2025) {
         headers: {
           "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
         },
+        next: { revalidate: 604800 },
       }
     );
 
@@ -75,6 +77,7 @@ async function getFilteredEventKeys(
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
+      next: { revalidate: 3600 },
     }
   );
 
@@ -142,7 +145,7 @@ async function getGeneralStats(
         stats[team.key].push(teamFSM);
       }
     } catch (error) {
-      // console.error(`Error fetching stats for event ${event}:`, error);
+      console.error(`Error fetching stats for event ${event}:`, error);
     }
     if (i % 10 === 0) {
       console.log(`Processed ${i} of ${events.length} events...`);
@@ -184,7 +187,7 @@ export async function getGlobalStats(
       bestFSM,
     }));
 
-  //   console.log("Global stats fetched and sorted:", sortedGlobalStats);
+  // console.log("Global stats fetched and sorted:", sortedGlobalStats);
 
   return sortedGlobalStats;
 }

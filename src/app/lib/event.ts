@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
+import { getEventRevalidationTime } from "./eventUtils";
 
 const MAX_ITERS = 50;
 const DECAY_FAC = 1.005;
@@ -26,13 +27,15 @@ function elimModRoot(x: number) {
 }
 
 export async function getAttendingTeams(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/teams`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -47,13 +50,15 @@ export async function getEventQualMatches(
   eventCode: string,
   anyFine: boolean = false
 ) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -69,13 +74,15 @@ export async function getEventQualMatches(
 }
 
 export async function getNumberPlayedMatches(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -95,13 +102,15 @@ export async function getNumberPlayedMatches(eventCode: string) {
 }
 
 async function getEventElimMatches(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 
@@ -119,13 +128,15 @@ async function getEventElimMatches(eventCode: string) {
 }
 
 async function getEventRankings(eventCode: string) {
+  const revalidateTime = await getEventRevalidationTime(eventCode);
+
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/rankings`,
     {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      cache: "no-store",
+      next: { revalidate: revalidateTime },
     }
   );
 

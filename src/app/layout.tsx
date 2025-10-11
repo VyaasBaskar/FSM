@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import CacheManager from "./components/CacheManager";
+import CachePreloader from "./components/CachePreloader";
 
 const Navbar = dynamic(() => import("./components/Navbar"), {
   ssr: true,
@@ -31,6 +33,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <CacheManager />
+        <CachePreloader />
         <div className="page2">
           <Suspense fallback={<div style={{ height: "60px" }} />}>
             <Navbar />
