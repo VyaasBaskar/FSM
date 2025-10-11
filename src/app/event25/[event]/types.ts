@@ -27,7 +27,8 @@ export interface AllianceData {
 export interface NexusScheduleData {
   scheduledTime: string | null;
   actualTime: string | null;
-  tournamentLevel: string;
+  status: string;
+  label: string;
 }
 
 export interface ClientPageProps {

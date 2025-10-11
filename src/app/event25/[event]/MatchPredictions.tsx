@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from "react";
 import TeamLink from "@/app/components/TeamLink";
-import { MatchPredictions as MatchPredictionsType } from "./types";
-
-interface NexusScheduleData {
-  scheduledTime: string | null;
-  actualTime: string | null;
-  tournamentLevel: string;
-}
+import {
+  MatchPredictions as MatchPredictionsType,
+  NexusScheduleData,
+} from "./types";
 
 interface MatchPredictionsProps {
   matchPredictions: MatchPredictionsType;
@@ -55,6 +52,12 @@ export default function MatchPredictions({
   nexusSchedule,
 }: MatchPredictionsProps) {
   // Force rebuild - enhanced UI with shadows, colored containers, and timing
+  console.log("Nexus schedule data:", nexusSchedule);
+  console.log(
+    "Match predictions keys:",
+    Object.keys(matchPredictions).slice(0, 5)
+  );
+
   const [, setCurrentTime] = useState(new Date());
   const [filterText, setFilterText] = useState("");
   const [filterTeam, setFilterTeam] = useState("");
