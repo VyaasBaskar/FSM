@@ -82,21 +82,15 @@ export default async function EventPage({
     // console.log("Data Dictionary:", dataDict);
 
     return (
-      <div>
-        {/* <SaveTextButton
-          text={JSON.stringify(dataDict, null, 2)}
-          filename={`event_${eventCode}_data.json`}
-        /> */}
-        <ClientPage
-          havePreds={havePreds}
-          eventCode={eventCode}
-          teams={teams}
-          matchPredictions={matchPredictions}
-          playedMatches={playedMatches}
-          actualAlliances={actualAlliances}
-          nexusSchedule={nexusSchedule}
-        />
-      </div>
+      <ClientPage
+        havePreds={havePreds}
+        eventCode={eventCode}
+        teams={teams}
+        matchPredictions={matchPredictions}
+        playedMatches={playedMatches}
+        actualAlliances={actualAlliances}
+        nexusSchedule={nexusSchedule}
+      />
     );
   } catch (error) {
     let FSMs: { [key: string]: number } = {};

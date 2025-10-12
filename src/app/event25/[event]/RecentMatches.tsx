@@ -115,14 +115,12 @@ export default function RecentMatches({
   const getPredictionBorder = (match: (typeof matchPredictions)[string]) => {
     if (!match.result || match.result.length !== 2)
       return "var(--border-color)";
-    const [predRed, predBlue] = match.preds;
     const [actualRed, actualBlue] = match.result;
     if (actualRed === null || actualBlue === null || actualRed === actualBlue)
       return "var(--border-color)";
 
-    const predWinner = Number(predRed) > Number(predBlue) ? "red" : "blue";
     const actualWinner = actualRed > actualBlue ? "red" : "blue";
-    return predWinner === actualWinner ? "#22c55e" : "#ef4444";
+    return actualWinner === "red" ? "#ff4d4d" : "#4d8cff";
   };
 
   const renderMatchCard = (
@@ -139,6 +137,12 @@ export default function RecentMatches({
         ? formatMatchTime(scheduleData.scheduledTime, !isPast)
         : null;
 
+    const hasResult =
+      match.result &&
+      match.result.length === 2 &&
+      match.result[0] !== -1 &&
+      match.result[1] !== -1;
+
     return (
       <div
         key={matchKey}
@@ -148,48 +152,67 @@ export default function RecentMatches({
         }}
         style={{
           border: `2px solid ${getPredictionBorder(match)}`,
-          borderRadius: 8,
-          padding: "0.5rem 0.75rem",
+          borderRadius: 10,
+          padding: "0.75rem",
           background: "var(--background-pred)",
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
           gap: "0.75rem",
-          minWidth: "fit-content",
+          minWidth: "300px",
+          maxWidth: "350px",
           cursor: "pointer",
+          boxShadow:
+            "0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06)",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow =
+            "0 8px 16px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow =
+            "0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06)";
         }}
       >
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: "0.15rem",
-            minWidth: "80px",
+            paddingBottom: "0.5rem",
+            borderBottom: "1px solid var(--border-color)",
           }}
         >
           <span
             style={{
               fontWeight: "bold",
-              fontSize: "0.85rem",
+              fontSize: "0.95rem",
               color: "var(--yellow-color)",
-              whiteSpace: "nowrap",
+              letterSpacing: "0.025em",
             }}
           >
             {matchKey.split("_")[1] || matchKey}
           </span>
-          {matchTime && (
-            <div style={{ color: "var(--gray)", fontSize: "0.65rem" }}>
-              {matchTime}
-            </div>
-          )}
           <div
             style={{
-              minHeight: "18px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              gap: "0.5rem",
             }}
           >
+            {matchTime && (
+              <div
+                style={{
+                  color: "var(--gray-less)",
+                  fontSize: "0.7rem",
+                  fontWeight: "500",
+                }}
+              >
+                {matchTime}
+              </div>
+            )}
             {matchStatus && (
               <div
                 style={{
@@ -198,10 +221,11 @@ export default function RecentMatches({
                       ? "rgba(245, 158, 11, 0.2)"
                       : "rgba(59, 130, 246, 0.2)",
                   color: matchStatus === "queuing" ? "#f59e0b" : "#3b82f6",
-                  padding: "0.15rem 0.4rem",
-                  borderRadius: 3,
-                  fontSize: "0.55rem",
+                  padding: "0.2rem 0.5rem",
+                  borderRadius: 4,
+                  fontSize: "0.6rem",
                   fontWeight: "700",
+                  letterSpacing: "0.05em",
                 }}
               >
                 {matchStatus === "queuing" ? "QUEUING" : "ON DECK"}
@@ -211,47 +235,117 @@ export default function RecentMatches({
         </div>
 
         <div
-          style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.75rem",
+          }}
         >
-          {[
-            {
-              teams: match.red,
-              bg: "rgba(255, 77, 77, 0.2)",
-              color: "#ff6666",
-              border: "rgba(255, 77, 77, 0.3)",
-            },
-            {
-              teams: match.blue,
-              bg: "rgba(77, 140, 255, 0.2)",
-              color: "#6699ff",
-              border: "rgba(77, 140, 255, 0.3)",
-            },
-          ].map(({ teams, bg, color, border }, i) => (
-            <div key={i} style={{ display: "flex", gap: "0.25rem" }}>
-              {teams.map((t) => (
-                <span
-                  key={t}
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
+          >
+            {[
+              {
+                teams: match.red,
+                bg: "rgba(255, 77, 77, 0.15)",
+                color: "#ff6666",
+                border: "rgba(255, 77, 77, 0.3)",
+                actualScore: hasResult ? match.result[0] : null,
+                predictedScore: match.preds[0],
+              },
+              {
+                teams: match.blue,
+                bg: "rgba(77, 140, 255, 0.15)",
+                color: "#6699ff",
+                border: "rgba(77, 140, 255, 0.3)",
+                actualScore: hasResult ? match.result[1] : null,
+                predictedScore: match.preds[1],
+              },
+            ].map(
+              (
+                { teams, bg, color, border, actualScore, predictedScore },
+                i
+              ) => (
+                <div
+                  key={i}
                   style={{
-                    background: bg,
-                    color,
-                    border: `1px solid ${border}`,
-                    padding: "0.2rem 0.3rem",
-                    borderRadius: 4,
-                    fontWeight: "600",
-                    fontSize: "0.65rem",
-                    width: "46px",
-                    textAlign: "center",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    boxSizing: "border-box",
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
                   }}
                 >
-                  {t.replace("frc", "")}
-                </span>
-              ))}
-            </div>
-          ))}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "0.3rem",
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {teams.map((t) => (
+                      <span
+                        key={t}
+                        style={{
+                          background: bg,
+                          color,
+                          border: `1px solid ${border}`,
+                          padding: "0.25rem 0.3rem",
+                          borderRadius: 5,
+                          fontWeight: "600",
+                          fontSize: "0.68rem",
+                          minWidth: "42px",
+                          maxWidth: "48px",
+                          textAlign: "center",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          boxSizing: "border-box",
+                          flex: "0 1 auto",
+                        }}
+                      >
+                        {t.replace("frc", "")}
+                      </span>
+                    ))}
+                  </div>
+                  {actualScore !== null ? (
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "0.85rem",
+                        color,
+                        minWidth: "38px",
+                        textAlign: "right",
+                        flexShrink: 0,
+                        paddingLeft: "0.25rem",
+                      }}
+                    >
+                      {actualScore}
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontWeight: "600",
+                        fontSize: "0.85rem",
+                        color,
+                        minWidth: "38px",
+                        textAlign: "right",
+                        fontStyle: "italic",
+                        opacity: 0.8,
+                        flexShrink: 0,
+                        paddingLeft: "0.25rem",
+                      }}
+                    >
+                      {predictedScore}
+                    </span>
+                  )}
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
     );
@@ -260,44 +354,69 @@ export default function RecentMatches({
   return (
     <div
       suppressHydrationWarning
-      style={{ width: "100%", marginBottom: "2rem", padding: "0 1rem" }}
+      style={{
+        width: "100%",
+        marginBottom: "3rem",
+        padding: "0 1rem",
+      }}
     >
       <div
         suppressHydrationWarning
         style={{
           display: "flex",
-          gap: "2rem",
+          gap: "3rem",
           justifyContent: "center",
           alignItems: "flex-start",
           flexWrap: "wrap",
         }}
       >
         {[
-          { title: "Recent Matches", matches: recentPast, isPast: true },
-          { title: "Upcoming Matches", matches: nextUpcoming, isPast: false },
+          {
+            title: "Recent Matches",
+            matches: recentPast,
+            isPast: true,
+            color: "#6b7280",
+          },
+          {
+            title: "Upcoming Matches",
+            matches: nextUpcoming,
+            isPast: false,
+            color: "var(--yellow-color)",
+          },
         ].map(
-          ({ title, matches, isPast }) =>
+          ({ title, matches, isPast, color }) =>
             matches.length > 0 && (
-              <div key={title} style={{ flex: "0 1 auto" }}>
+              <div
+                key={title}
+                style={{
+                  flex: "0 1 auto",
+                  background: "var(--gray-more)",
+                  padding: "1.5rem",
+                  borderRadius: 12,
+                  border: "2px solid var(--border-color)",
+                  boxShadow:
+                    "0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
+                }}
+              >
                 <h3
                   style={{
                     color: "var(--foreground)",
-                    fontSize: "1rem",
+                    fontSize: "1.1rem",
                     fontWeight: "bold",
-                    marginBottom: "0.75rem",
+                    marginBottom: "1rem",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "0.5rem",
+                    letterSpacing: "0.025em",
                   }}
                 >
-                  <span>{title}</span>
+                  <span style={{ color }}>{title}</span>
                 </h3>
                 <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "0.5rem",
+                    gap: "0.75rem",
                   }}
                 >
                   {matches.map(([key, match]) =>
