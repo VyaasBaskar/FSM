@@ -45,7 +45,6 @@ export default async function GlobalPage({
   const yearNum = Number(year);
   const rankingId = yearNum * 10 + (includeOffseason ? 1 : 0);
 
-  // Fetch just FSM rankings (fast) - locations will load progressively
   const globalStats = await getGlobalStatsWithoutLocation(
     yearNum,
     includeOffseason

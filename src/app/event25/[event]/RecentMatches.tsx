@@ -152,14 +152,15 @@ export default function RecentMatches({
         }}
         style={{
           border: `2px solid ${getPredictionBorder(match)}`,
-          borderRadius: 10,
-          padding: "0.75rem",
+          borderRadius: 6,
+          padding: "0.4rem",
           background: "var(--background-pred)",
           display: "flex",
           flexDirection: "column",
-          gap: "0.75rem",
-          minWidth: "300px",
-          maxWidth: "350px",
+          gap: "0.3rem",
+          minWidth: "180px",
+          maxWidth: "220px",
+          flex: "1 1 auto",
           cursor: "pointer",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06)",
@@ -181,14 +182,14 @@ export default function RecentMatches({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingBottom: "0.5rem",
+            paddingBottom: "0.3rem",
             borderBottom: "1px solid var(--border-color)",
           }}
         >
           <span
             style={{
               fontWeight: "bold",
-              fontSize: "0.95rem",
+              fontSize: "0.75rem",
               color: "var(--yellow-color)",
               letterSpacing: "0.025em",
             }}
@@ -206,7 +207,7 @@ export default function RecentMatches({
               <div
                 style={{
                   color: "var(--gray-less)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.6rem",
                   fontWeight: "500",
                 }}
               >
@@ -239,11 +240,11 @@ export default function RecentMatches({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "0.75rem",
+            gap: "0.5rem",
           }}
         >
           <div
-            style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}
+            style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}
           >
             {[
               {
@@ -271,7 +272,7 @@ export default function RecentMatches({
                   key={i}
                   style={{
                     display: "flex",
-                    gap: "0.5rem",
+                    gap: "0.4rem",
                     alignItems: "center",
                     justifyContent: "space-between",
                     width: "100%",
@@ -280,7 +281,7 @@ export default function RecentMatches({
                   <div
                     style={{
                       display: "flex",
-                      gap: "0.3rem",
+                      gap: "0.25rem",
                       flex: 1,
                       minWidth: 0,
                       overflow: "hidden",
@@ -293,12 +294,12 @@ export default function RecentMatches({
                           background: bg,
                           color,
                           border: `1px solid ${border}`,
-                          padding: "0.25rem 0.3rem",
-                          borderRadius: 5,
+                          padding: "0.15rem 0.25rem",
+                          borderRadius: 3,
                           fontWeight: "600",
-                          fontSize: "0.68rem",
-                          minWidth: "42px",
-                          maxWidth: "48px",
+                          fontSize: "0.6rem",
+                          minWidth: "32px",
+                          maxWidth: "38px",
                           textAlign: "center",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -315,12 +316,12 @@ export default function RecentMatches({
                     <span
                       style={{
                         fontWeight: "bold",
-                        fontSize: "0.85rem",
+                        fontSize: "0.75rem",
                         color,
-                        minWidth: "38px",
+                        minWidth: "28px",
                         textAlign: "right",
                         flexShrink: 0,
-                        paddingLeft: "0.25rem",
+                        paddingLeft: "0.2rem",
                       }}
                     >
                       {actualScore}
@@ -329,14 +330,14 @@ export default function RecentMatches({
                     <span
                       style={{
                         fontWeight: "600",
-                        fontSize: "0.85rem",
+                        fontSize: "0.75rem",
                         color,
-                        minWidth: "38px",
+                        minWidth: "28px",
                         textAlign: "right",
                         fontStyle: "italic",
                         opacity: 0.8,
                         flexShrink: 0,
-                        paddingLeft: "0.25rem",
+                        paddingLeft: "0.2rem",
                       }}
                     >
                       {predictedScore}
@@ -364,7 +365,7 @@ export default function RecentMatches({
         suppressHydrationWarning
         style={{
           display: "flex",
-          gap: "3rem",
+          gap: "0.75rem",
           justifyContent: "center",
           alignItems: "flex-start",
           flexWrap: "wrap",
@@ -391,8 +392,8 @@ export default function RecentMatches({
                 style={{
                   flex: "0 1 auto",
                   background: "var(--gray-more)",
-                  padding: "1.5rem",
-                  borderRadius: 12,
+                  padding: "0.5rem",
+                  borderRadius: 10,
                   border: "2px solid var(--border-color)",
                   boxShadow:
                     "0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
@@ -401,9 +402,9 @@ export default function RecentMatches({
                 <h3
                   style={{
                     color: "var(--foreground)",
-                    fontSize: "1.1rem",
+                    fontSize: "0.85rem",
                     fontWeight: "bold",
-                    marginBottom: "1rem",
+                    marginBottom: "0.4rem",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -415,8 +416,9 @@ export default function RecentMatches({
                 <div
                   style={{
                     display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
+                    flexDirection: "row",
+                    gap: "0.4rem",
+                    justifyContent: "center",
                   }}
                 >
                   {matches.map(([key, match]) =>

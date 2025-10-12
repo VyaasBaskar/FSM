@@ -971,7 +971,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                       gap: "0.5rem",
                     }}
                   >
-                    <span style={{ fontSize: "1.5rem" }}>🎥</span>
                     <h3
                       style={{
                         color: "var(--yellow-color)",
@@ -1171,7 +1170,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                 )}
               </div>
 
-              {/* Recent Matches Section */}
               {teamRecentMatches.length > 0 && (
                 <div
                   style={{
@@ -1441,7 +1439,6 @@ export default function ClientPage({ events }: ClientPageProps) {
               )}
             </div>
 
-            {/* Right Side - Combined Leaderboards and Stats */}
             <div
               style={{
                 flex: "0 1 350px",
@@ -1451,7 +1448,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                 gap: "1rem",
               }}
             >
-              {/* Team Stats Box */}
               <div
                 style={{
                   background: "var(--gray-more)",
@@ -1481,7 +1477,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                   const teamData = teams.find((t) => t.key === selectedTeam);
                   if (!teamData) return null;
 
-                  // Calculate record from ALL completed matches at the event
                   let wins = 0;
                   let losses = 0;
                   let ties = 0;
@@ -1536,7 +1531,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                         gap: "0.4rem",
                       }}
                     >
-                      {/* Combined Record & Ranking */}
                       <div
                         style={{
                           background: "var(--background-pred)",
@@ -1553,7 +1547,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                             textAlign: "center",
                           }}
                         >
-                          {/* Record */}
                           <div>
                             <div
                               style={{
@@ -1585,7 +1578,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                             </div>
                           </div>
 
-                          {/* Rank */}
                           {rankingData && (
                             <div>
                               <div
@@ -1619,7 +1611,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                             </div>
                           )}
 
-                          {/* RPS */}
                           {rankingData && (
                             <div>
                               <div
@@ -1656,7 +1647,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                         </div>
                       </div>
 
-                      {/* FSM Score & Performance */}
                       <div
                         style={{
                           background: "var(--background-pred)",
@@ -1665,7 +1655,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                           border: "1px solid var(--border-color)",
                         }}
                       >
-                        {/* FSM Score - Prominent */}
                         <div
                           style={{
                             textAlign: "center",
@@ -1696,7 +1685,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                           </div>
                         </div>
 
-                        {/* Performance Stats */}
                         <div
                           style={{
                             fontSize: "0.6rem",
@@ -2183,7 +2171,6 @@ export default function ClientPage({ events }: ClientPageProps) {
             }}
           >
             <div style={{ textAlign: "center", maxWidth: "500px" }}>
-              <div style={{ fontSize: "5rem", marginBottom: "1rem" }}>📊</div>
               <h2
                 style={{
                   fontSize: "1.5rem",

@@ -198,7 +198,7 @@ export default function MatchPredictions({
       >
         <input
           type="text"
-          placeholder="🔍 Filter by match name..."
+          placeholder="Filter by match name..."
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
           style={{
@@ -214,7 +214,7 @@ export default function MatchPredictions({
         <div style={{ display: "flex", gap: "0.75rem", width: "100%" }}>
           <input
             type="text"
-            placeholder="🤖 Filter by team..."
+            placeholder="Filter by team..."
             value={filterTeam}
             onChange={(e) => setFilterTeam(e.target.value)}
             style={{
