@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import TeamLink from "@/app/components/TeamLink";
+import RecentMatches from "./RecentMatches";
 import {
   MatchPredictions as MatchPredictionsType,
   NexusScheduleData,
@@ -248,6 +249,11 @@ export default function MatchPredictions({
         </div>
       </div>
 
+      <RecentMatches
+        matchPredictions={matchPredictions}
+        nexusSchedule={nexusSchedule}
+      />
+
       <div
         style={{
           display: "grid",
@@ -299,12 +305,13 @@ export default function MatchPredictions({
           return (
             <div
               key={matchKey}
+              id={matchKey}
               style={{
                 border: `2px solid ${
-                  isPredictionCorrect
-                    ? "#22c55e"
-                    : isPredictionWrong
-                    ? "#ef4444"
+                  actualWinner === "red"
+                    ? "#ff4d4d"
+                    : actualWinner === "blue"
+                    ? "#4d8cff"
                     : "var(--border-color)"
                 }`,
                 borderRadius: 12,
@@ -594,7 +601,7 @@ export default function MatchPredictions({
                       letterSpacing: "0.05em",
                     }}
                   >
-                    PREDICTED SCORE
+                    PREDICTED
                   </div>
                   <div
                     style={{
@@ -608,7 +615,7 @@ export default function MatchPredictions({
                       style={{
                         color: "#ff4d4d",
                         fontWeight: "bold",
-                        fontSize: "1.5rem",
+                        fontSize: "1.3rem",
                       }}
                     >
                       {predRed}
@@ -626,7 +633,7 @@ export default function MatchPredictions({
                       style={{
                         color: "#4d8cff",
                         fontWeight: "bold",
-                        fontSize: "1.5rem",
+                        fontSize: "1.3rem",
                       }}
                     >
                       {predBlue}
@@ -641,7 +648,7 @@ export default function MatchPredictions({
                       fontWeight: "600",
                     }}
                   >
-                    Predicted: {predWinner === "red" ? "Red" : "Blue"}
+                    {predWinner === "red" ? "Red" : "Blue"} Win
                   </div>
                 </div>
 
@@ -664,7 +671,7 @@ export default function MatchPredictions({
                         letterSpacing: "0.05em",
                       }}
                     >
-                      ACTUAL SCORE
+                      ACTUAL
                     </div>
                     <div
                       style={{
@@ -678,7 +685,7 @@ export default function MatchPredictions({
                         style={{
                           color: "#ff4d4d",
                           fontWeight: "bold",
-                          fontSize: "1.5rem",
+                          fontSize: "1.3rem",
                         }}
                       >
                         {actualRed}
@@ -696,7 +703,7 @@ export default function MatchPredictions({
                         style={{
                           color: "#4d8cff",
                           fontWeight: "bold",
-                          fontSize: "1.5rem",
+                          fontSize: "1.3rem",
                         }}
                       >
                         {actualBlue}
@@ -716,12 +723,12 @@ export default function MatchPredictions({
                         fontWeight: "600",
                       }}
                     >
-                      Winner:{" "}
                       {actualWinner === "tie"
                         ? "Tie"
                         : actualWinner === "red"
                         ? "Red"
-                        : "Blue"}
+                        : "Blue"}{" "}
+                      Win
                     </div>
                   </div>
                 )}

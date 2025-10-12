@@ -1,13 +1,13 @@
 .page {
   --gray-rgb: 0, 0, 0;
-  --gray-less: rgba(0, 0, 0, 0.3);
-  --gray-more: rgba(0, 0, 0, 0.1);
-  --border-color: #333;
+  --gray-less: rgba(0, 0, 0, 0.15);
+  --gray-more: rgba(0, 0, 0, 0.04);
+  --border-color: rgba(0, 0, 0, 0.12);
   --input-bg: #ffffff;
   --input-text: #000000;
   --button-pre-hover: #383838;
   --button-after-hover: #f2f2f2;
-  --yellow-color: #daa807;
+  --yellow-color: #d89000;
 
   display: grid;
   grid-template-rows: 20px 1fr 20px;
@@ -37,14 +37,14 @@
 
 [data-theme="light"] .page {
   --gray-rgb: 0, 0, 0;
-  --gray-less: rgba(0, 0, 0, 0.3);
-  --gray-more: rgba(0, 0, 0, 0.1);
-  --border-color: #333;
+  --gray-less: rgba(0, 0, 0, 0.15);
+  --gray-more: rgba(0, 0, 0, 0.04);
+  --border-color: rgba(0, 0, 0, 0.12);
   --input-bg: #ffffff;
   --input-text: #000000;
   --button-pre-hover: #383838;
   --button-after-hover: #f2f2f2;
-  --yellow-color: #dfa803;
+  --yellow-color: #d89000;
 }
 
 [data-theme="dark"] .page {

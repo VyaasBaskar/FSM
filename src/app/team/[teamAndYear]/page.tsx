@@ -9,6 +9,7 @@ import {
 import { getGlobalStats } from "@/app/lib/global";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
+
 import StatCard from "./StatCard";
 import EventCard from "./EventCard";
 import TeamImageGallery from "./TeamImageGallery";
@@ -176,7 +177,6 @@ export default async function TeamPage({
             {teamKey}
           </h2>
           <YearButtons teamKey={teamKey} currentYear={"general"} />
-
           <div
             style={{
               display: "flex",
@@ -464,7 +464,6 @@ export default async function TeamPage({
           }}
           className="team-layout-grid"
         >
-          {/* Main Content Column */}
           <div>
             <div
               style={{
@@ -524,7 +523,6 @@ export default async function TeamPage({
             </div>
           </div>
 
-          {/* Media Gallery Column */}
           {teamMedia.length > 0 && (
             <div>
               <TeamImageGallery

@@ -41,14 +41,31 @@ export async function getNexusMatchSchedule(
       console.log(`Processing ${eventData.matches.length} matches from Nexus`);
 
       for (const match of eventData.matches) {
-        const matchKey = `${eventCode}_${match.key}`;
+        const label = match.label || '';
+        let matchKey = '';
+        
+        if (label.includes('Practice')) {
+          const num = label.replace(/[^0-9]/g, '');
+          matchKey = `${eventCode}_pm${num}`;
+        } else if (label.includes('Qualification')) {
+          const num = label.replace(/[^0-9]/g, '');
+          matchKey = `${eventCode}_qm${num}`;
+        } else if (label.includes('Playoff')) {
+          const num = label.replace(/[^0-9]/g, '');
+          matchKey = `${eventCode}_sf${num}m1`;
+        } else if (label.includes('Final')) {
+          const num = label.replace(/[^0-9]/g, '');
+          matchKey = `${eventCode}_f1m${num}`;
+        } else {
+          matchKey = `${eventCode}_${label.replace(/\s+/g, '_').toLowerCase()}`;
+        }
 
         scheduleData[matchKey] = {
-          scheduledTime: match.estimatedTime
-            ? new Date(match.estimatedTime).toISOString()
+          scheduledTime: match.times?.estimatedStartTime
+            ? new Date(match.times.estimatedStartTime).toISOString()
             : null,
-          actualTime: match.actualTime
-            ? new Date(match.actualTime).toISOString()
+          actualTime: match.times?.startTime
+            ? new Date(match.times.startTime).toISOString()
             : null,
           status: match.status,
           label: match.label,

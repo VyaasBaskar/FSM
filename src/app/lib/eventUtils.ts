@@ -1,4 +1,3 @@
-/* eslint-disable */
 const eventCache = new Map<string, { isRecent: boolean; timestamp: number }>();
 
 export async function isEventRecent(eventCode: string): Promise<boolean> {

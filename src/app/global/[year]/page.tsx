@@ -1,4 +1,3 @@
-/* eslint-disable */
 import styles from "../../page.module.css";
 import { getGlobalStatsWithoutLocation } from "../../lib/global";
 import OffseasonCheck from "./offseason";
