@@ -340,7 +340,7 @@ export default function RecentMatches({
                         paddingLeft: "0.2rem",
                       }}
                     >
-                      {predictedScore}
+                      {Math.round(Number(predictedScore))}
                     </span>
                   )}
                 </div>
@@ -353,82 +353,118 @@ export default function RecentMatches({
   };
 
   return (
-    <div
-      suppressHydrationWarning
-      style={{
-        width: "100%",
-        marginBottom: "3rem",
-        padding: "0 1rem",
-      }}
-    >
+    <>
       <div
         suppressHydrationWarning
+        className="recent-matches-container"
         style={{
-          display: "flex",
-          gap: "0.75rem",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          width: "100%",
+          marginBottom: "3rem",
+          padding: "0 1rem",
         }}
       >
-        {[
-          {
-            title: "Recent Matches",
-            matches: recentPast,
-            isPast: true,
-            color: "#6b7280",
-          },
-          {
-            title: "Upcoming Matches",
-            matches: nextUpcoming,
-            isPast: false,
-            color: "var(--yellow-color)",
-          },
-        ].map(
-          ({ title, matches, isPast, color }) =>
-            matches.length > 0 && (
-              <div
-                key={title}
-                style={{
-                  flex: "0 1 auto",
-                  background: "var(--gray-more)",
-                  padding: "0.5rem",
-                  borderRadius: 10,
-                  border: "2px solid var(--border-color)",
-                  boxShadow:
-                    "0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
-                }}
-              >
-                <h3
-                  style={{
-                    color: "var(--foreground)",
-                    fontSize: "0.85rem",
-                    fontWeight: "bold",
-                    marginBottom: "0.4rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    letterSpacing: "0.025em",
-                  }}
-                >
-                  <span style={{ color }}>{title}</span>
-                </h3>
+        <div
+          suppressHydrationWarning
+          style={{
+            display: "flex",
+            gap: "0.75rem",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+          }}
+        >
+          {[
+            {
+              title: "Recent Matches",
+              matches: recentPast,
+              isPast: true,
+              color: "#6b7280",
+            },
+            {
+              title: "Upcoming Matches",
+              matches: nextUpcoming,
+              isPast: false,
+              color: "var(--yellow-color)",
+            },
+          ].map(
+            ({ title, matches, isPast, color }) =>
+              matches.length > 0 && (
                 <div
+                  key={title}
+                  className="matches-section"
                   style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "0.4rem",
-                    justifyContent: "center",
+                    flex: "0 1 auto",
+                    background: "var(--gray-more)",
+                    padding: "0.5rem",
+                    borderRadius: 10,
+                    border: "2px solid var(--border-color)",
+                    boxShadow:
+                      "0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
                   }}
                 >
-                  {matches.map(([key, match]) =>
-                    renderMatchCard(key, match, isPast)
-                  )}
+                  <h3
+                    style={{
+                      color: "var(--foreground)",
+                      fontSize: "0.85rem",
+                      fontWeight: "bold",
+                      marginBottom: "0.4rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      letterSpacing: "0.025em",
+                    }}
+                  >
+                    <span style={{ color }}>{title}</span>
+                  </h3>
+                  <div
+                    className="matches-cards-wrapper"
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: "0.4rem",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {matches.map(([key, match]) =>
+                      renderMatchCard(key, match, isPast)
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-        )}
+              )
+          )}
+        </div>
       </div>
-    </div>
+      <style jsx>{`
+        @media (max-width: 767px) {
+          .recent-matches-container {
+            padding: 0 0.5rem !important;
+          }
+          .matches-section {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+          }
+          .matches-cards-wrapper {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--yellow-color) var(--gray-more);
+            padding-bottom: 0.5rem;
+          }
+          .matches-cards-wrapper::-webkit-scrollbar {
+            height: 6px;
+          }
+          .matches-cards-wrapper::-webkit-scrollbar-track {
+            background: var(--gray-more);
+            border-radius: 3px;
+          }
+          .matches-cards-wrapper::-webkit-scrollbar-thumb {
+            background: var(--yellow-color);
+            border-radius: 3px;
+          }
+        }
+      `}</style>
+    </>
   );
 }

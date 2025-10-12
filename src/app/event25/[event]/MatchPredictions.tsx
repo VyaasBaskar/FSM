@@ -109,7 +109,10 @@ export default function MatchPredictions({
       : 0;
 
   const filteredEntries = entries.filter(([key, match]) => {
-    const matchNameMatch = key.toLowerCase().includes(filterText.toLowerCase());
+    const keyWithoutYear = key.replace(/^\d{4}/, "");
+    const matchNameMatch = keyWithoutYear
+      .toLowerCase()
+      .includes(filterText.toLowerCase());
     const teamMatch =
       filterTeam === "" ||
       [...match.red, ...match.blue].some((team) =>
@@ -121,6 +124,32 @@ export default function MatchPredictions({
       (filterType === "elims" && !key.includes("_qm"));
 
     return matchNameMatch && teamMatch && typeMatch;
+  });
+
+  const qualsEntries = entries.filter(([key, match]) => {
+    const keyWithoutYear = key.replace(/^\d{4}/, "");
+    const matchNameMatch = keyWithoutYear
+      .toLowerCase()
+      .includes(filterText.toLowerCase());
+    const teamMatch =
+      filterTeam === "" ||
+      [...match.red, ...match.blue].some((team) =>
+        team.toLowerCase().includes(filterTeam.toLowerCase())
+      );
+    return key.includes("_qm") && matchNameMatch && teamMatch;
+  });
+
+  const elimsEntries = entries.filter(([key, match]) => {
+    const keyWithoutYear = key.replace(/^\d{4}/, "");
+    const matchNameMatch = keyWithoutYear
+      .toLowerCase()
+      .includes(filterText.toLowerCase());
+    const teamMatch =
+      filterTeam === "" ||
+      [...match.red, ...match.blue].some((team) =>
+        team.toLowerCase().includes(filterTeam.toLowerCase())
+      );
+    return !key.includes("_qm") && matchNameMatch && teamMatch;
   });
 
   return (
@@ -187,6 +216,7 @@ export default function MatchPredictions({
       </div>
 
       <div
+        className="filters-container"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -211,59 +241,57 @@ export default function MatchPredictions({
             width: "100%",
           }}
         />
-        <div style={{ display: "flex", gap: "0.75rem", width: "100%" }}>
-          <input
-            type="text"
-            placeholder="Filter by team..."
-            value={filterTeam}
-            onChange={(e) => setFilterTeam(e.target.value)}
-            style={{
-              padding: "0.75rem",
-              borderRadius: 8,
-              border: "1px solid var(--border-color)",
-              background: "var(--input-bg)",
-              color: "var(--input-text)",
-              fontSize: "1rem",
-              flex: 1,
-            }}
-          />
-          <select
-            value={filterType}
-            onChange={(e) =>
-              setFilterType(e.target.value as "all" | "quals" | "elims")
-            }
-            style={{
-              padding: "0.75rem",
-              borderRadius: 8,
-              border: "1px solid var(--border-color)",
-              background: "var(--input-bg)",
-              color: "var(--input-text)",
-              fontSize: "1rem",
-              minWidth: "120px",
-            }}
-          >
-            <option value="all">All Matches</option>
-            <option value="quals">Quals Only</option>
-            <option value="elims">Elims Only</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          placeholder="Filter by team..."
+          value={filterTeam}
+          onChange={(e) => setFilterTeam(e.target.value)}
+          className="team-filter-input"
+          style={{
+            padding: "0.75rem",
+            borderRadius: 8,
+            border: "1px solid var(--border-color)",
+            background: "var(--input-bg)",
+            color: "var(--input-text)",
+            fontSize: "1rem",
+            width: "100%",
+          }}
+        />
+        <select
+          value={filterType}
+          onChange={(e) =>
+            setFilterType(e.target.value as "all" | "quals" | "elims")
+          }
+          className="match-type-filter-mobile"
+          style={{
+            padding: "0.75rem",
+            borderRadius: 8,
+            border: "1px solid var(--border-color)",
+            background: "var(--input-bg)",
+            color: "var(--input-text)",
+            fontSize: "1rem",
+            width: "100%",
+          }}
+        >
+          <option value="all">All Matches</option>
+          <option value="quals">Quals Only</option>
+          <option value="elims">Elims Only</option>
+        </select>
       </div>
+      <style jsx>{`
+        @media (min-width: 768px) {
+          .match-type-filter-mobile {
+            display: none !important;
+          }
+        }
+      `}</style>
 
       <RecentMatches
         matchPredictions={matchPredictions}
         nexusSchedule={nexusSchedule}
       />
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-          gap: "1rem",
-          width: "100%",
-          maxWidth: "1400px",
-        }}
-      >
+      <div className="mobile-matches-container">
         {filteredEntries.map(([matchKey, match]) => {
           const [predRed, predBlue] = match.preds;
           const predWinner =
@@ -314,8 +342,8 @@ export default function MatchPredictions({
                     ? "#4d8cff"
                     : "var(--border-color)"
                 }`,
-                borderRadius: 12,
-                padding: "1.25rem",
+                borderRadius: 6,
+                padding: "0.5rem",
                 background: "var(--background-pred)",
                 display: "flex",
                 flexDirection: "column",
@@ -341,9 +369,9 @@ export default function MatchPredictions({
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "0.5rem",
-                  paddingBottom: "0.75rem",
-                  borderBottom: "2px solid var(--border-color)",
+                  gap: "0.15rem",
+                  paddingBottom: "0.35rem",
+                  borderBottom: "1px solid var(--border-color)",
                 }}
               >
                 <div
@@ -356,7 +384,7 @@ export default function MatchPredictions({
                   <span
                     style={{
                       fontWeight: "bold",
-                      fontSize: "1.125rem",
+                      fontSize: "0.8rem",
                       color: "var(--yellow-color)",
                       letterSpacing: "0.025em",
                     }}
@@ -375,9 +403,9 @@ export default function MatchPredictions({
                         style={{
                           background: "rgba(34, 197, 94, 0.15)",
                           color: "#22c55e",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: 6,
-                          fontSize: "0.75rem",
+                          padding: "0.15rem 0.5rem",
+                          borderRadius: 4,
+                          fontSize: "0.65rem",
                           fontWeight: "700",
                         }}
                       >
@@ -389,9 +417,9 @@ export default function MatchPredictions({
                         style={{
                           background: "rgba(239, 68, 68, 0.15)",
                           color: "#ef4444",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: 6,
-                          fontSize: "0.75rem",
+                          padding: "0.15rem 0.5rem",
+                          borderRadius: 4,
+                          fontSize: "0.65rem",
                           fontWeight: "700",
                         }}
                       >
@@ -415,7 +443,7 @@ export default function MatchPredictions({
                           display: "flex",
                           alignItems: "center",
                           gap: "0.25rem",
-                          fontSize: "0.875rem",
+                          fontSize: "0.75rem",
                           color: "var(--gray-less)",
                         }}
                       >
@@ -428,9 +456,9 @@ export default function MatchPredictions({
                         style={{
                           background: "rgba(245, 158, 11, 0.2)",
                           color: "#f59e0b",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: 6,
-                          fontSize: "0.75rem",
+                          padding: "0.15rem 0.5rem",
+                          borderRadius: 4,
+                          fontSize: "0.65rem",
                           fontWeight: "700",
                         }}
                       >
@@ -442,9 +470,9 @@ export default function MatchPredictions({
                         style={{
                           background: "rgba(59, 130, 246, 0.2)",
                           color: "#3b82f6",
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: 6,
-                          fontSize: "0.75rem",
+                          padding: "0.15rem 0.5rem",
+                          borderRadius: 4,
+                          fontSize: "0.65rem",
                           fontWeight: "700",
                         }}
                       >
@@ -458,35 +486,36 @@ export default function MatchPredictions({
               <div
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
+                  flexDirection: "row",
+                  gap: "0.35rem",
                 }}
               >
                 <div
                   style={{
+                    flex: 1,
                     background: "rgba(255, 77, 77, 0.05)",
-                    padding: "0.75rem",
-                    borderRadius: 8,
+                    padding: "0.35rem",
+                    borderRadius: 4,
                     border: "1px solid rgba(255, 77, 77, 0.2)",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "0.7rem",
+                      fontSize: "0.55rem",
                       fontWeight: "700",
                       color: "#ff4d4d",
-                      marginBottom: "0.5rem",
+                      marginBottom: "0.25rem",
                       letterSpacing: "0.05em",
                     }}
                   >
-                    RED ALLIANCE
+                    RED
                   </div>
                   <div
                     style={{
                       display: "flex",
-                      flexWrap: "wrap",
-                      gap: "0.5rem",
-                      fontSize: "0.9rem",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     {match.red.map((t) => {
@@ -501,13 +530,14 @@ export default function MatchPredictions({
                               ? "var(--predicted-win-highlight)"
                               : "rgba(255, 77, 77, 0.15)",
                             color: isHighlighted ? "#000" : "#ff6666",
-                            padding: "0.4rem 0.7rem",
-                            borderRadius: 6,
+                            padding: "0.2rem 0.4rem",
+                            borderRadius: 3,
                             fontWeight: isHighlighted ? "bold" : "600",
                             border: isHighlighted
                               ? "2px solid var(--yellow-color)"
                               : "1px solid rgba(255, 77, 77, 0.3)",
                             transition: "all 0.2s",
+                            textAlign: "center",
                           }}
                         >
                           <TeamLink teamKey={t} year={2025} />
@@ -519,29 +549,30 @@ export default function MatchPredictions({
 
                 <div
                   style={{
+                    flex: 1,
                     background: "rgba(77, 140, 255, 0.05)",
-                    padding: "0.75rem",
-                    borderRadius: 8,
+                    padding: "0.35rem",
+                    borderRadius: 4,
                     border: "1px solid rgba(77, 140, 255, 0.2)",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "0.7rem",
+                      fontSize: "0.55rem",
                       fontWeight: "700",
                       color: "#4d8cff",
-                      marginBottom: "0.5rem",
+                      marginBottom: "0.25rem",
                       letterSpacing: "0.05em",
                     }}
                   >
-                    BLUE ALLIANCE
+                    BLUE
                   </div>
                   <div
                     style={{
                       display: "flex",
-                      flexWrap: "wrap",
-                      gap: "0.5rem",
-                      fontSize: "0.9rem",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     {match.blue.map((t) => {
@@ -556,13 +587,14 @@ export default function MatchPredictions({
                               ? "var(--predicted-win-highlight)"
                               : "rgba(77, 140, 255, 0.15)",
                             color: isHighlighted ? "#000" : "#6699ff",
-                            padding: "0.4rem 0.7rem",
-                            borderRadius: 6,
+                            padding: "0.2rem 0.4rem",
+                            borderRadius: 3,
                             fontWeight: isHighlighted ? "bold" : "600",
                             border: isHighlighted
                               ? "2px solid var(--yellow-color)"
                               : "1px solid rgba(77, 140, 255, 0.3)",
                             transition: "all 0.2s",
+                            textAlign: "center",
                           }}
                         >
                           <TeamLink teamKey={t} year={2025} />
@@ -577,53 +609,53 @@ export default function MatchPredictions({
                 style={{
                   display: "flex",
                   flexDirection: hasResult ? "row" : "column",
-                  gap: "1rem",
-                  paddingTop: "0.75rem",
-                  marginTop: "0.5rem",
-                  borderTop: "2px solid var(--border-color)",
+                  gap: "0.25rem",
+                  paddingTop: "0.25rem",
+                  marginTop: "0.2rem",
+                  borderTop: "1px solid var(--border-color)",
                 }}
               >
                 <div
                   style={{
                     flex: 1,
                     background: "var(--gray-more)",
-                    padding: "0.75rem",
-                    borderRadius: 8,
+                    padding: "0.25rem",
+                    borderRadius: 3,
                     border: "1px solid var(--border-color)",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "0.7rem",
+                      fontSize: "0.5rem",
                       color: "var(--gray-less)",
-                      marginBottom: "0.5rem",
+                      marginBottom: "0.15rem",
                       fontWeight: "700",
                       letterSpacing: "0.05em",
                     }}
                   >
-                    PREDICTED
+                    PRED
                   </div>
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: "0.75rem",
+                      gap: "0.25rem",
                     }}
                   >
                     <span
                       style={{
                         color: "#ff4d4d",
                         fontWeight: "bold",
-                        fontSize: "1.3rem",
+                        fontSize: "0.85rem",
                       }}
                     >
-                      {predRed}
+                      {Math.round(Number(predRed))}
                     </span>
                     <span
                       style={{
                         color: "var(--gray-less)",
-                        fontSize: "1rem",
+                        fontSize: "0.7rem",
                         fontWeight: "bold",
                       }}
                     >
@@ -633,22 +665,11 @@ export default function MatchPredictions({
                       style={{
                         color: "#4d8cff",
                         fontWeight: "bold",
-                        fontSize: "1.3rem",
+                        fontSize: "0.85rem",
                       }}
                     >
-                      {predBlue}
+                      {Math.round(Number(predBlue))}
                     </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: predWinner === "red" ? "#ff4d4d" : "#4d8cff",
-                      marginTop: "0.5rem",
-                      textAlign: "center",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {predWinner === "red" ? "Red" : "Blue"} Win
                   </div>
                 </div>
 
@@ -657,16 +678,16 @@ export default function MatchPredictions({
                     style={{
                       flex: 1,
                       background: "var(--gray-more)",
-                      padding: "0.75rem",
-                      borderRadius: 8,
+                      padding: "0.25rem",
+                      borderRadius: 3,
                       border: "1px solid var(--border-color)",
                     }}
                   >
                     <div
                       style={{
-                        fontSize: "0.7rem",
+                        fontSize: "0.5rem",
                         color: "var(--gray-less)",
-                        marginBottom: "0.5rem",
+                        marginBottom: "0.15rem",
                         fontWeight: "700",
                         letterSpacing: "0.05em",
                       }}
@@ -678,14 +699,14 @@ export default function MatchPredictions({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "0.75rem",
+                        gap: "0.25rem",
                       }}
                     >
                       <span
                         style={{
                           color: "#ff4d4d",
                           fontWeight: "bold",
-                          fontSize: "1.3rem",
+                          fontSize: "0.85rem",
                         }}
                       >
                         {actualRed}
@@ -693,7 +714,7 @@ export default function MatchPredictions({
                       <span
                         style={{
                           color: "var(--gray-less)",
-                          fontSize: "1rem",
+                          fontSize: "0.7rem",
                           fontWeight: "bold",
                         }}
                       >
@@ -703,32 +724,11 @@ export default function MatchPredictions({
                         style={{
                           color: "#4d8cff",
                           fontWeight: "bold",
-                          fontSize: "1.3rem",
+                          fontSize: "0.85rem",
                         }}
                       >
                         {actualBlue}
                       </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color:
-                          actualWinner === "red"
-                            ? "#ff4d4d"
-                            : actualWinner === "blue"
-                            ? "#4d8cff"
-                            : "var(--gray-less)",
-                        marginTop: "0.5rem",
-                        textAlign: "center",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {actualWinner === "tie"
-                        ? "Tie"
-                        : actualWinner === "red"
-                        ? "Red"
-                        : "Blue"}{" "}
-                      Win
                     </div>
                   </div>
                 )}
@@ -737,6 +737,1018 @@ export default function MatchPredictions({
           );
         })}
       </div>
+
+      <div className="desktop-matches-container">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1.5rem",
+            width: "100%",
+            maxWidth: "1200px",
+            margin: "0 auto",
+            alignItems: "start",
+          }}
+        >
+          <div>
+            <h3
+              style={{
+                color: "var(--yellow-color)",
+                textAlign: "center",
+                marginBottom: "1rem",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+              }}
+            >
+              Qualification Matches
+            </h3>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              {qualsEntries.map(([matchKey, match]) => {
+                const [predRed, predBlue] = match.preds;
+                const predWinner =
+                  Number(predRed) > Number(predBlue) ? "red" : "blue";
+
+                const hasResult = match.result && match.result.length === 2;
+                const [actualRed, actualBlue] = hasResult
+                  ? match.result
+                  : [null, null];
+                const actualWinner =
+                  hasResult && actualRed !== null && actualBlue !== null
+                    ? actualRed > actualBlue
+                      ? "red"
+                      : actualBlue > actualRed
+                      ? "blue"
+                      : "tie"
+                    : null;
+
+                const isPredictionCorrect =
+                  actualWinner !== null &&
+                  actualWinner !== "tie" &&
+                  predWinner === actualWinner;
+                const isPredictionWrong =
+                  actualWinner !== null &&
+                  actualWinner !== "tie" &&
+                  predWinner !== actualWinner;
+
+                const scheduleData = nexusSchedule[matchKey];
+                const matchStatus = scheduleData
+                  ? getMatchStatus(
+                      scheduleData.scheduledTime,
+                      scheduleData.actualTime
+                    )
+                  : null;
+                const matchTime = scheduleData
+                  ? formatMatchTime(scheduleData.scheduledTime)
+                  : null;
+
+                return (
+                  <div
+                    key={matchKey}
+                    id={matchKey}
+                    style={{
+                      border: `2px solid ${
+                        actualWinner === "red"
+                          ? "#ff4d4d"
+                          : actualWinner === "blue"
+                          ? "#4d8cff"
+                          : "var(--border-color)"
+                      }`,
+                      borderRadius: 6,
+                      padding: "0.5rem",
+                      background: "var(--background-pred)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.75rem",
+                      position: "relative",
+                      boxShadow:
+                        "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+                      transition: "all 0.2s ease",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        paddingBottom: "0.75rem",
+                        borderBottom: "2px solid var(--border-color)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "0.8rem",
+                            color: "var(--yellow-color)",
+                            letterSpacing: "0.025em",
+                          }}
+                        >
+                          {matchKey}
+                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {isPredictionCorrect && (
+                            <div
+                              style={{
+                                background: "rgba(34, 197, 94, 0.15)",
+                                color: "#22c55e",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              CORRECT
+                            </div>
+                          )}
+                          {isPredictionWrong && (
+                            <div
+                              style={{
+                                background: "rgba(239, 68, 68, 0.15)",
+                                color: "#ef4444",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              INCORRECT
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {(matchTime || matchStatus) && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {matchTime && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                fontSize: "0.75rem",
+                                color: "var(--gray-less)",
+                              }}
+                            >
+                              <span>🕐</span>
+                              <span>{matchTime}</span>
+                            </div>
+                          )}
+                          {matchStatus === "queuing" && (
+                            <div
+                              style={{
+                                background: "rgba(245, 158, 11, 0.2)",
+                                color: "#f59e0b",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              🟡 QUEUING
+                            </div>
+                          )}
+                          {matchStatus === "ondeck" && (
+                            <div
+                              style={{
+                                background: "rgba(59, 130, 246, 0.2)",
+                                color: "#3b82f6",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              🔵 ON DECK
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "rgba(255, 77, 77, 0.05)",
+                          padding: "0.35rem",
+                          borderRadius: 4,
+                          border: "1px solid rgba(255, 77, 77, 0.2)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.55rem",
+                            fontWeight: "700",
+                            color: "#ff4d4d",
+                            marginBottom: "0.25rem",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          RED
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: "0.25rem",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {match.red.map((t) => {
+                            const isHighlighted =
+                              filterTeam &&
+                              t
+                                .toLowerCase()
+                                .includes(filterTeam.toLowerCase());
+                            return (
+                              <span
+                                key={t}
+                                style={{
+                                  background: isHighlighted
+                                    ? "var(--predicted-win-highlight)"
+                                    : "rgba(255, 77, 77, 0.15)",
+                                  color: isHighlighted ? "#000" : "#ff6666",
+                                  padding: "0.2rem 0.4rem",
+                                  borderRadius: 3,
+                                  fontWeight: isHighlighted ? "bold" : "600",
+                                  border: isHighlighted
+                                    ? "2px solid var(--yellow-color)"
+                                    : "1px solid rgba(255, 77, 77, 0.3)",
+                                  transition: "all 0.2s",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <TeamLink teamKey={t} year={2025} />
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "rgba(77, 140, 255, 0.05)",
+                          padding: "0.35rem",
+                          borderRadius: 4,
+                          border: "1px solid rgba(77, 140, 255, 0.2)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.55rem",
+                            fontWeight: "700",
+                            color: "#4d8cff",
+                            marginBottom: "0.25rem",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          BLUE
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: "0.25rem",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {match.blue.map((t) => {
+                            const isHighlighted =
+                              filterTeam &&
+                              t
+                                .toLowerCase()
+                                .includes(filterTeam.toLowerCase());
+                            return (
+                              <span
+                                key={t}
+                                style={{
+                                  background: isHighlighted
+                                    ? "var(--predicted-win-highlight)"
+                                    : "rgba(77, 140, 255, 0.15)",
+                                  color: isHighlighted ? "#000" : "#6699ff",
+                                  padding: "0.2rem 0.4rem",
+                                  borderRadius: 3,
+                                  fontWeight: isHighlighted ? "bold" : "600",
+                                  border: isHighlighted
+                                    ? "2px solid var(--yellow-color)"
+                                    : "1px solid rgba(77, 140, 255, 0.3)",
+                                  transition: "all 0.2s",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <TeamLink teamKey={t} year={2025} />
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: hasResult ? "row" : "column",
+                        gap: "0.25rem",
+                        paddingTop: "0.25rem",
+                        marginTop: "0.2rem",
+                        borderTop: "1px solid var(--border-color)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "var(--gray-more)",
+                          padding: "0.25rem",
+                          borderRadius: 3,
+                          border: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.5rem",
+                            color: "var(--gray-less)",
+                            marginBottom: "0.15rem",
+                            fontWeight: "700",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          PRED
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: "#ff4d4d",
+                              fontWeight: "bold",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            {predRed}
+                          </span>
+                          <span
+                            style={{
+                              color: "var(--gray-less)",
+                              fontSize: "0.7rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            -
+                          </span>
+                          <span
+                            style={{
+                              color: "#4d8cff",
+                              fontWeight: "bold",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            {predBlue}
+                          </span>
+                        </div>
+                      </div>
+
+                      {hasResult && (
+                        <div
+                          style={{
+                            flex: 1,
+                            background: "var(--gray-more)",
+                            padding: "0.25rem",
+                            borderRadius: 3,
+                            border: "1px solid var(--border-color)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.5rem",
+                              color: "var(--gray-less)",
+                              marginBottom: "0.15rem",
+                              fontWeight: "700",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            ACTUAL
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.25rem",
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: "#ff4d4d",
+                                fontWeight: "bold",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              {actualRed}
+                            </span>
+                            <span
+                              style={{
+                                color: "var(--gray-less)",
+                                fontSize: "0.7rem",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              -
+                            </span>
+                            <span
+                              style={{
+                                color: "#4d8cff",
+                                fontWeight: "bold",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              {actualBlue}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {qualsEntries.length === 0 && (
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--gray-less)",
+                    background: "var(--background-pred)",
+                    borderRadius: 12,
+                    border: "2px solid var(--border-color)",
+                  }}
+                >
+                  No qualification matches found
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Elims Column */}
+          <div>
+            <h3
+              style={{
+                color: "var(--yellow-color)",
+                textAlign: "center",
+                marginBottom: "1rem",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+              }}
+            >
+              Elimination Matches
+            </h3>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              {elimsEntries.map(([matchKey, match]) => {
+                const [predRed, predBlue] = match.preds;
+                const predWinner =
+                  Number(predRed) > Number(predBlue) ? "red" : "blue";
+
+                const hasResult = match.result && match.result.length === 2;
+                const [actualRed, actualBlue] = hasResult
+                  ? match.result
+                  : [null, null];
+                const actualWinner =
+                  hasResult && actualRed !== null && actualBlue !== null
+                    ? actualRed > actualBlue
+                      ? "red"
+                      : actualBlue > actualRed
+                      ? "blue"
+                      : "tie"
+                    : null;
+
+                const isPredictionCorrect =
+                  actualWinner !== null &&
+                  actualWinner !== "tie" &&
+                  predWinner === actualWinner;
+                const isPredictionWrong =
+                  actualWinner !== null &&
+                  actualWinner !== "tie" &&
+                  predWinner !== actualWinner;
+
+                const scheduleData = nexusSchedule[matchKey];
+                const matchStatus = scheduleData
+                  ? getMatchStatus(
+                      scheduleData.scheduledTime,
+                      scheduleData.actualTime
+                    )
+                  : null;
+                const matchTime = scheduleData
+                  ? formatMatchTime(scheduleData.scheduledTime)
+                  : null;
+
+                return (
+                  <div
+                    key={matchKey}
+                    id={matchKey}
+                    style={{
+                      border: `2px solid ${
+                        actualWinner === "red"
+                          ? "#ff4d4d"
+                          : actualWinner === "blue"
+                          ? "#4d8cff"
+                          : "var(--border-color)"
+                      }`,
+                      borderRadius: 6,
+                      padding: "0.5rem",
+                      background: "var(--background-pred)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.75rem",
+                      position: "relative",
+                      boxShadow:
+                        "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+                      transition: "all 0.2s ease",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 12px 24px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        paddingBottom: "0.75rem",
+                        borderBottom: "2px solid var(--border-color)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "0.8rem",
+                            color: "var(--yellow-color)",
+                            letterSpacing: "0.025em",
+                          }}
+                        >
+                          {matchKey}
+                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {isPredictionCorrect && (
+                            <div
+                              style={{
+                                background: "rgba(34, 197, 94, 0.15)",
+                                color: "#22c55e",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              CORRECT
+                            </div>
+                          )}
+                          {isPredictionWrong && (
+                            <div
+                              style={{
+                                background: "rgba(239, 68, 68, 0.15)",
+                                color: "#ef4444",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              INCORRECT
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {(matchTime || matchStatus) && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {matchTime && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                fontSize: "0.75rem",
+                                color: "var(--gray-less)",
+                              }}
+                            >
+                              <span>🕐</span>
+                              <span>{matchTime}</span>
+                            </div>
+                          )}
+                          {matchStatus === "queuing" && (
+                            <div
+                              style={{
+                                background: "rgba(245, 158, 11, 0.2)",
+                                color: "#f59e0b",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              🟡 QUEUING
+                            </div>
+                          )}
+                          {matchStatus === "ondeck" && (
+                            <div
+                              style={{
+                                background: "rgba(59, 130, 246, 0.2)",
+                                color: "#3b82f6",
+                                padding: "0.15rem 0.5rem",
+                                borderRadius: 4,
+                                fontSize: "0.65rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              🔵 ON DECK
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "rgba(255, 77, 77, 0.05)",
+                          padding: "0.35rem",
+                          borderRadius: 4,
+                          border: "1px solid rgba(255, 77, 77, 0.2)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.55rem",
+                            fontWeight: "700",
+                            color: "#ff4d4d",
+                            marginBottom: "0.25rem",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          RED
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: "0.25rem",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {match.red.map((t) => {
+                            const isHighlighted =
+                              filterTeam &&
+                              t
+                                .toLowerCase()
+                                .includes(filterTeam.toLowerCase());
+                            return (
+                              <span
+                                key={t}
+                                style={{
+                                  background: isHighlighted
+                                    ? "var(--predicted-win-highlight)"
+                                    : "rgba(255, 77, 77, 0.15)",
+                                  color: isHighlighted ? "#000" : "#ff6666",
+                                  padding: "0.2rem 0.4rem",
+                                  borderRadius: 3,
+                                  fontWeight: isHighlighted ? "bold" : "600",
+                                  border: isHighlighted
+                                    ? "2px solid var(--yellow-color)"
+                                    : "1px solid rgba(255, 77, 77, 0.3)",
+                                  transition: "all 0.2s",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <TeamLink teamKey={t} year={2025} />
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "rgba(77, 140, 255, 0.05)",
+                          padding: "0.35rem",
+                          borderRadius: 4,
+                          border: "1px solid rgba(77, 140, 255, 0.2)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.55rem",
+                            fontWeight: "700",
+                            color: "#4d8cff",
+                            marginBottom: "0.25rem",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          BLUE
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            gap: "0.25rem",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {match.blue.map((t) => {
+                            const isHighlighted =
+                              filterTeam &&
+                              t
+                                .toLowerCase()
+                                .includes(filterTeam.toLowerCase());
+                            return (
+                              <span
+                                key={t}
+                                style={{
+                                  background: isHighlighted
+                                    ? "var(--predicted-win-highlight)"
+                                    : "rgba(77, 140, 255, 0.15)",
+                                  color: isHighlighted ? "#000" : "#6699ff",
+                                  padding: "0.2rem 0.4rem",
+                                  borderRadius: 3,
+                                  fontWeight: isHighlighted ? "bold" : "600",
+                                  border: isHighlighted
+                                    ? "2px solid var(--yellow-color)"
+                                    : "1px solid rgba(77, 140, 255, 0.3)",
+                                  transition: "all 0.2s",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <TeamLink teamKey={t} year={2025} />
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: hasResult ? "row" : "column",
+                        gap: "0.25rem",
+                        paddingTop: "0.25rem",
+                        marginTop: "0.2rem",
+                        borderTop: "1px solid var(--border-color)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          background: "var(--gray-more)",
+                          padding: "0.25rem",
+                          borderRadius: 3,
+                          border: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.5rem",
+                            color: "var(--gray-less)",
+                            marginBottom: "0.15rem",
+                            fontWeight: "700",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          PRED
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: "#ff4d4d",
+                              fontWeight: "bold",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            {predRed}
+                          </span>
+                          <span
+                            style={{
+                              color: "var(--gray-less)",
+                              fontSize: "0.7rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            -
+                          </span>
+                          <span
+                            style={{
+                              color: "#4d8cff",
+                              fontWeight: "bold",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            {predBlue}
+                          </span>
+                        </div>
+                      </div>
+
+                      {hasResult && (
+                        <div
+                          style={{
+                            flex: 1,
+                            background: "var(--gray-more)",
+                            padding: "0.25rem",
+                            borderRadius: 3,
+                            border: "1px solid var(--border-color)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.5rem",
+                              color: "var(--gray-less)",
+                              marginBottom: "0.15rem",
+                              fontWeight: "700",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            ACTUAL
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.25rem",
+                            }}
+                          >
+                            <span
+                              style={{
+                                color: "#ff4d4d",
+                                fontWeight: "bold",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              {actualRed}
+                            </span>
+                            <span
+                              style={{
+                                color: "var(--gray-less)",
+                                fontSize: "0.7rem",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              -
+                            </span>
+                            <span
+                              style={{
+                                color: "#4d8cff",
+                                fontWeight: "bold",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              {actualBlue}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {elimsEntries.length === 0 && (
+                <div
+                  style={{
+                    padding: "2rem",
+                    textAlign: "center",
+                    color: "var(--gray-less)",
+                    background: "var(--background-pred)",
+                    borderRadius: 12,
+                    border: "2px solid var(--border-color)",
+                  }}
+                >
+                  No elimination matches found
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .mobile-matches-container {
+          display: grid;
+          grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(100%, 320px), 1fr)
+          );
+          gap: 0.75rem;
+          width: 100%;
+          max-width: 1400px;
+        }
+        .desktop-matches-container {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .mobile-matches-container {
+            display: none;
+          }
+          .desktop-matches-container {
+            display: block;
+            width: 100%;
+          }
+        }
+      `}</style>
 
       {filteredEntries.length === 0 && (
         <div
