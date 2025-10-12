@@ -97,7 +97,11 @@ export default function RecentMatches({
       const isPast = matchTime
         ? matchTime < now || scheduleData.actualTime
         : hasResult;
-      isPast ? past.push(entry) : upcoming.push(entry);
+      if (isPast) {
+        past.push(entry);
+      } else {
+        upcoming.push(entry);
+      }
       return [past, upcoming];
     },
     [[], []]

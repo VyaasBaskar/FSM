@@ -350,7 +350,7 @@ export default async function TeamPage({
       >
         <main className={styles.main}>
           <h1 className={styles.title}>Team Not Found</h1>
-          <YearDropdown teamKey={teamKey} currentYear={yearprov} />
+          <YearButtons teamKey={teamKey} currentYear={yearprov} />
           <div
             style={{
               background: "var(--background-pred)",
@@ -464,7 +464,6 @@ export default async function TeamPage({
           }}
           className="team-layout-grid"
         >
-          {/* Main Content Column */}
           <div>
             <div
               style={{
@@ -524,7 +523,6 @@ export default async function TeamPage({
             </div>
           </div>
 
-          {/* Media Gallery Column */}
           {teamMedia.length > 0 && (
             <div>
               <TeamImageGallery
