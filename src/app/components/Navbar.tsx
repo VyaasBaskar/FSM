@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import "@/app/globals.css";
 import MenuOption from "./MenuOption";
 
@@ -28,11 +29,22 @@ const navLinkStyle: React.CSSProperties = {
 };
 
 export default function Navbar() {
-  const links = [{ href: "/global/2025", label: "Explore Teams" }];
+  const links = [
+    { href: "/global/2025", label: "Explore Teams" },
+    { href: "/dashboard", label: "Dashboard" },
+  ];
 
   const [isMobile, setIsMobile] = React.useState(false);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const [logoHovered, setLogoHovered] = useState(false);
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const isDashboardWithSelections =
+    pathname === "/dashboard" &&
+    searchParams.get("event") &&
+    searchParams.get("team");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -128,6 +140,22 @@ export default function Navbar() {
               </p>
             </div>
           </Link>
+
+          {isDashboardWithSelections && (
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: "var(--foreground)",
+                fontWeight: "600",
+                fontSize: "1.2rem",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Dashboard
+            </div>
+          )}
           <div
             style={{
               display: "flex",
