@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 type TeamMedia = {
   url: string;
@@ -92,19 +93,15 @@ export default function TeamImageGallery({
         Media {year}
       </h3>
 
-      {/* Main Media Display */}
       <div
         style={{
           position: "relative",
           width: "100%",
-          minHeight: "300px",
+          height: "400px",
           marginBottom: "1rem",
           borderRadius: 8,
           overflow: "hidden",
           background: "var(--gray-more)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
         {currentMedia.mediaType === "video" && (
@@ -137,7 +134,7 @@ export default function TeamImageGallery({
             title={`${teamKey} video ${year}`}
             style={{
               width: "100%",
-              height: "400px",
+              height: "100%",
               border: "none",
             }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -145,19 +142,17 @@ export default function TeamImageGallery({
             frameBorder="0"
           />
         ) : (
-          <img
+          <Image
+            key={currentMedia.url}
             src={currentMedia.url}
             alt={`${teamKey} robot ${year}`}
-            loading="lazy"
+            fill
+            priority={selectedIndex === 0}
             style={{
-              maxWidth: "100%",
-              maxHeight: "500px",
               objectFit: "contain",
-              width: "auto",
-              height: "auto",
             }}
             onLoad={(e) => {
-              const img = e.currentTarget;
+              const img = e.currentTarget as HTMLImageElement;
               if (
                 (img.naturalWidth === 161 && img.naturalHeight === 81) ||
                 (img.naturalWidth < 200 &&
@@ -173,6 +168,7 @@ export default function TeamImageGallery({
               e.currentTarget.style.display = "none";
               handleMediaError(selectedIndex);
             }}
+            unoptimized
           />
         )}
       </div>
@@ -239,15 +235,14 @@ export default function TeamImageGallery({
                   >
                     {media.type === "youtube" && media.foreignKey ? (
                       <>
-                        <img
+                        <Image
                           src={`https://img.youtube.com/vi/${media.foreignKey}/default.jpg`}
                           alt={`${teamKey} video thumbnail ${idx + 1}`}
-                          loading="lazy"
+                          fill
                           style={{
-                            width: "100%",
-                            height: "100%",
                             objectFit: "cover",
                           }}
+                          unoptimized
                         />
                         <div
                           style={{
@@ -275,17 +270,15 @@ export default function TeamImageGallery({
                     )}
                   </div>
                 ) : (
-                  <img
+                  <Image
                     src={media.url}
                     alt={`${teamKey} thumbnail ${idx + 1}`}
-                    loading="lazy"
+                    fill
                     style={{
-                      width: "100%",
-                      height: "100%",
                       objectFit: "cover",
                     }}
                     onLoad={(e) => {
-                      const img = e.currentTarget;
+                      const img = e.currentTarget as HTMLImageElement;
                       if (
                         (img.naturalWidth === 161 &&
                           img.naturalHeight === 81) ||
@@ -303,6 +296,7 @@ export default function TeamImageGallery({
                       if (button) button.style.display = "none";
                       handleMediaError(idx);
                     }}
+                    unoptimized
                   />
                 )}
               </button>
@@ -325,7 +319,12 @@ export default function TeamImageGallery({
               marginBottom: "0.25rem",
             }}
           >
-            {selectedIndex + 1} of {validMedia.length}
+            {
+              images.filter(
+                (_, idx) => idx <= selectedIndex && !mediaErrors.has(idx)
+              ).length
+            }{" "}
+            of {validMedia.length}
           </p>
           {currentMedia.mediaType === "video" && (
             <p
