@@ -147,8 +147,42 @@ export default function RecentMatches({
       <div
         key={matchKey}
         onClick={() => {
-          const element = document.getElementById(matchKey);
-          element?.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Find all elements with this ID (there are duplicates in mobile/desktop containers)
+          const elements = Array.from(
+            document.querySelectorAll<HTMLElement>(`[id="${matchKey}"]`)
+          );
+
+          // Find the visible one by checking if parent container is visible
+          const visibleElement = elements.find((el) => {
+            // Check if element and all parents are visible
+            let current: HTMLElement | null = el;
+            while (current) {
+              const computed = window.getComputedStyle(current);
+              if (
+                computed.display === "none" ||
+                computed.visibility === "hidden"
+              ) {
+                return false;
+              }
+              current = current.parentElement;
+            }
+            return true;
+          });
+
+          if (visibleElement) {
+            visibleElement.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+
+            // Add highlight class after scroll animation
+            setTimeout(() => {
+              visibleElement.classList.add("highlight-match");
+              setTimeout(() => {
+                visibleElement.classList.remove("highlight-match");
+              }, 2000);
+            }, 500);
+          }
         }}
         style={{
           border: `2px solid ${getPredictionBorder(match)}`,
@@ -158,8 +192,8 @@ export default function RecentMatches({
           display: "flex",
           flexDirection: "column",
           gap: "0.3rem",
-          minWidth: "180px",
-          maxWidth: "220px",
+          minWidth: "220px",
+          maxWidth: "260px",
           flex: "1 1 auto",
           cursor: "pointer",
           boxShadow:
@@ -189,7 +223,7 @@ export default function RecentMatches({
           <span
             style={{
               fontWeight: "bold",
-              fontSize: "0.75rem",
+              fontSize: "0.85rem",
               color: "var(--yellow-color)",
               letterSpacing: "0.025em",
             }}
@@ -207,7 +241,7 @@ export default function RecentMatches({
               <div
                 style={{
                   color: "var(--gray-less)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.7rem",
                   fontWeight: "500",
                 }}
               >
@@ -224,7 +258,7 @@ export default function RecentMatches({
                   color: matchStatus === "queuing" ? "#f59e0b" : "#3b82f6",
                   padding: "0.2rem 0.5rem",
                   borderRadius: 4,
-                  fontSize: "0.6rem",
+                  fontSize: "0.7rem",
                   fontWeight: "700",
                   letterSpacing: "0.05em",
                 }}
@@ -282,7 +316,7 @@ export default function RecentMatches({
                     style={{
                       display: "flex",
                       gap: "0.25rem",
-                      flex: 1,
+                      flex: "0 1 auto",
                       minWidth: 0,
                       overflow: "hidden",
                     }}
@@ -297,9 +331,9 @@ export default function RecentMatches({
                           padding: "0.15rem 0.25rem",
                           borderRadius: 3,
                           fontWeight: "600",
-                          fontSize: "0.6rem",
-                          minWidth: "32px",
-                          maxWidth: "38px",
+                          fontSize: "0.7rem",
+                          minWidth: "34px",
+                          maxWidth: "42px",
                           textAlign: "center",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -316,12 +350,13 @@ export default function RecentMatches({
                     <span
                       style={{
                         fontWeight: "bold",
-                        fontSize: "0.75rem",
+                        fontSize: "0.85rem",
                         color,
-                        minWidth: "28px",
+                        minWidth: "45px",
                         textAlign: "right",
                         flexShrink: 0,
-                        paddingLeft: "0.2rem",
+                        marginLeft: "auto",
+                        paddingLeft: "1.5rem",
                       }}
                     >
                       {actualScore}
@@ -330,14 +365,15 @@ export default function RecentMatches({
                     <span
                       style={{
                         fontWeight: "600",
-                        fontSize: "0.75rem",
+                        fontSize: "0.85rem",
                         color,
-                        minWidth: "28px",
+                        minWidth: "45px",
                         textAlign: "right",
                         fontStyle: "italic",
                         opacity: 0.8,
                         flexShrink: 0,
-                        paddingLeft: "0.2rem",
+                        marginLeft: "auto",
+                        paddingLeft: "1.5rem",
                       }}
                     >
                       {Math.round(Number(predictedScore))}
@@ -367,10 +403,9 @@ export default function RecentMatches({
           suppressHydrationWarning
           style={{
             display: "flex",
+            flexDirection: "column",
             gap: "0.75rem",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
           {[
@@ -395,7 +430,7 @@ export default function RecentMatches({
                   style={{
                     flex: "0 1 auto",
                     background: "var(--gray-more)",
-                    padding: "0.5rem",
+                    padding: "0.65rem 0.75rem",
                     borderRadius: 10,
                     border: "2px solid var(--border-color)",
                     boxShadow:
@@ -405,7 +440,7 @@ export default function RecentMatches({
                   <h3
                     style={{
                       color: "var(--foreground)",
-                      fontSize: "0.85rem",
+                      fontSize: "0.95rem",
                       fontWeight: "bold",
                       marginBottom: "0.4rem",
                       display: "flex",
@@ -463,6 +498,22 @@ export default function RecentMatches({
             background: var(--yellow-color);
             border-radius: 3px;
           }
+        }
+
+        @keyframes highlight-pulse {
+          0%,
+          100% {
+            outline: 0px solid var(--yellow-color);
+            outline-offset: 0px;
+          }
+          50% {
+            outline: 4px solid var(--yellow-color);
+            outline-offset: 2px;
+          }
+        }
+
+        :global(.highlight-match) {
+          animation: highlight-pulse 0.6s ease-in-out 1;
         }
       `}</style>
     </>

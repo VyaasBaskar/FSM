@@ -1771,6 +1771,12 @@ export default function MatchPredictions({
             width: 100%;
           }
         }
+
+        /* Add scroll offset for match cards */
+        .mobile-matches-container > div,
+        .desktop-matches-container div[id] {
+          scroll-margin-top: 100px;
+        }
       `}</style>
 
       {filteredEntries.length === 0 && (
