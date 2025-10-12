@@ -702,7 +702,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                       const [predRed, predBlue] = match.preds;
                       const predWinner =
                         Number(predRed) > Number(predBlue) ? "red" : "blue";
-                      const isOnRed = match.red.includes(selectedTeam);
 
                       return (
                         <div
@@ -1202,22 +1201,14 @@ export default function ClientPage({ events }: ClientPageProps) {
                     }}
                   >
                     {teamRecentMatches.map(([matchKey, match]) => {
-                      const scheduleData = nexusSchedule[matchKey];
-                      const matchTime = scheduleData?.scheduledTime
-                        ? formatMatchTime(scheduleData.scheduledTime)
-                        : null;
                       const [predRed, predBlue] = match.preds;
                       const [actualRed, actualBlue] = match.result;
-                      const predWinner =
-                        Number(predRed) > Number(predBlue) ? "red" : "blue";
                       const actualWinner =
                         actualRed > actualBlue
                           ? "red"
                           : actualBlue > actualRed
                           ? "blue"
                           : "tie";
-                      const isPredictionCorrect =
-                        actualWinner !== "tie" && predWinner === actualWinner;
                       const isOnRed = match.red.includes(selectedTeam);
                       const teamWon =
                         (isOnRed && actualWinner === "red") ||
@@ -1481,37 +1472,35 @@ export default function ClientPage({ events }: ClientPageProps) {
                   let losses = 0;
                   let ties = 0;
 
-                  Object.entries(matchPredictions).forEach(
-                    ([matchKey, match]) => {
-                      const hasTeam =
-                        match.red.includes(selectedTeam) ||
-                        match.blue.includes(selectedTeam);
-                      const hasResult =
-                        match.result[0] !== -1 && match.result[1] !== -1;
+                  Object.entries(matchPredictions).forEach(([, match]) => {
+                    const hasTeam =
+                      match.red.includes(selectedTeam) ||
+                      match.blue.includes(selectedTeam);
+                    const hasResult =
+                      match.result[0] !== -1 && match.result[1] !== -1;
 
-                      if (hasTeam && hasResult) {
-                        const [actualRed, actualBlue] = match.result;
-                        const isOnRed = match.red.includes(selectedTeam);
-                        const actualWinner =
-                          actualRed > actualBlue
-                            ? "red"
-                            : actualBlue > actualRed
-                            ? "blue"
-                            : "tie";
+                    if (hasTeam && hasResult) {
+                      const [actualRed, actualBlue] = match.result;
+                      const isOnRed = match.red.includes(selectedTeam);
+                      const actualWinner =
+                        actualRed > actualBlue
+                          ? "red"
+                          : actualBlue > actualRed
+                          ? "blue"
+                          : "tie";
 
-                        if (actualWinner === "tie") {
-                          ties++;
-                        } else if (
-                          (isOnRed && actualWinner === "red") ||
-                          (!isOnRed && actualWinner === "blue")
-                        ) {
-                          wins++;
-                        } else {
-                          losses++;
-                        }
+                      if (actualWinner === "tie") {
+                        ties++;
+                      } else if (
+                        (isOnRed && actualWinner === "red") ||
+                        (!isOnRed && actualWinner === "blue")
+                      ) {
+                        wins++;
+                      } else {
+                        losses++;
                       }
                     }
-                  );
+                  });
 
                   const totalMatches = wins + losses + ties;
                   const winRate =

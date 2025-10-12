@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import TeamLink from "@/app/components/TeamLink";
 import RecentMatches from "./RecentMatches";
+import MatchDetailModal from "./MatchDetailModal";
 import {
   MatchPredictions as MatchPredictionsType,
   NexusScheduleData,
@@ -58,6 +59,11 @@ export default function MatchPredictions({
   const [filterType, setFilterType] = useState<"all" | "quals" | "elims">(
     "all"
   );
+  const [selectedMatch, setSelectedMatch] = useState<{
+    matchKey: string;
+    match: (typeof matchPredictions)[string];
+  } | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,6 +71,18 @@ export default function MatchPredictions({
     }, 30000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Detect if desktop view (768px+)
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+
+    return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
@@ -831,6 +849,9 @@ export default function MatchPredictions({
                       transition: "all 0.2s ease",
                       cursor: "pointer",
                     }}
+                    onClick={() => {
+                      setSelectedMatch({ matchKey, match });
+                    }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-4px)";
                       e.currentTarget.style.boxShadow =
@@ -1236,7 +1257,6 @@ export default function MatchPredictions({
             </div>
           </div>
 
-          {/* Elims Column */}
           <div>
             <h3
               style={{
@@ -1317,6 +1337,9 @@ export default function MatchPredictions({
                         "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
                       transition: "all 0.2s ease",
                       cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setSelectedMatch({ matchKey, match });
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-4px)";
@@ -1778,6 +1801,14 @@ export default function MatchPredictions({
             Try adjusting your filters to see more results
           </p>
         </div>
+      )}
+
+      {selectedMatch && isDesktop && (
+        <MatchDetailModal
+          matchKey={selectedMatch.matchKey}
+          match={selectedMatch.match}
+          onClose={() => setSelectedMatch(null)}
+        />
       )}
     </div>
   );

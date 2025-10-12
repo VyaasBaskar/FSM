@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import TeamLink from "@/app/components/TeamLink";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import MatchDetailModal from "./MatchDetailModal";
 import type * as ort from "onnxruntime-web";
 
 const loadOnnxRuntime = () => import("onnxruntime-web");
@@ -48,6 +49,11 @@ export default function ClientPage({
   const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
   const [sessionReady, setSessionReady] = useState(false);
   const sessionRef = useRef<ort.InferenceSession | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<{
+    matchKey: string;
+    match: MatchPredictions[string];
+  } | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   const [filterText, setFilterText] = useState("");
   const [filterTeam, setFilterTeam] = useState("");
@@ -84,6 +90,18 @@ export default function ClientPage({
     const output = results[sessionRef.current.outputNames[0]].data;
     return Number(output[0]);
   }
+
+  useEffect(() => {
+    // Detect if desktop view (768px+)
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   useEffect(() => {
     async function runPredictions() {
@@ -179,7 +197,6 @@ export default function ClientPage({
       : 0;
 
   const filteredEntries = entries.filter(([key, match]) => {
-    // Remove year prefix (first 4 digits) when matching
     const keyWithoutYear = key.replace(/^\d{4}/, "");
     const matchNameMatch = keyWithoutYear
       .toLowerCase()
@@ -398,7 +415,6 @@ export default function ClientPage({
               }
             `}</style>
 
-            {/* Mobile view - single column with filter */}
             <ul
               className="mobile-matches-list"
               style={{ listStyle: "none", padding: 10 }}
@@ -579,7 +595,6 @@ export default function ClientPage({
               })}
             </ul>
 
-            {/* Desktop view - two columns */}
             <div
               className="desktop-matches-container"
               style={{ marginTop: "2rem" }}
@@ -594,7 +609,6 @@ export default function ClientPage({
                   margin: "0 auto",
                 }}
               >
-                {/* Quals Column */}
                 <div>
                   <h3
                     style={{
@@ -626,6 +640,9 @@ export default function ClientPage({
                       return (
                         <li
                           key={matchKey}
+                          onClick={() => {
+                            setSelectedMatch({ matchKey, match });
+                          }}
                           style={{
                             marginBottom: "2rem",
                             textAlign: "center",
@@ -633,6 +650,18 @@ export default function ClientPage({
                             borderRadius: 8,
                             padding: "1rem",
                             background: "var(--background-pred)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform =
+                              "translateY(-2px)";
+                            e.currentTarget.style.boxShadow =
+                              "0 8px 16px rgba(0, 0, 0, 0.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "none";
                           }}
                         >
                           <div
@@ -886,7 +915,6 @@ export default function ClientPage({
                   </ul>
                 </div>
 
-                {/* Elims Column */}
                 <div>
                   <h3
                     style={{
@@ -918,6 +946,9 @@ export default function ClientPage({
                       return (
                         <li
                           key={matchKey}
+                          onClick={() => {
+                            setSelectedMatch({ matchKey, match });
+                          }}
                           style={{
                             marginBottom: "2rem",
                             textAlign: "center",
@@ -925,6 +956,18 @@ export default function ClientPage({
                             borderRadius: 8,
                             padding: "1rem",
                             background: "var(--background-pred)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform =
+                              "translateY(-2px)";
+                            e.currentTarget.style.boxShadow =
+                              "0 8px 16px rgba(0, 0, 0, 0.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "none";
                           }}
                         >
                           <div
@@ -1197,6 +1240,14 @@ export default function ClientPage({
               }
             `}</style>
           </div>
+        )}
+
+        {selectedMatch && isDesktop && (
+          <MatchDetailModal
+            matchKey={selectedMatch.matchKey}
+            match={selectedMatch.match}
+            onClose={() => setSelectedMatch(null)}
+          />
         )}
       </main>
     </div>
