@@ -449,10 +449,28 @@ export async function getEventTeams(
   console.log("Calculating FSM for event:", eventCode);
 
   const matches = await getEventQualMatches(eventCode);
+  const attendingTeams = await getAttendingTeams(eventCode);
+
   if (matches.length === 0) {
+    // No matches played yet, return all attending teams with default values
+    for (const team of attendingTeams) {
+      TEAMDATA[team.key] = {
+        key: team.key,
+        rank: 0,
+        fsm: "0.00",
+        algae: "0.00",
+        coral: "0.00",
+        auto: "0.00",
+        climb: "0.00",
+        foul: "0.00",
+      };
+    }
+    const sortedData = Object.values(TEAMDATA);
+    eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
     await addEventToDB(eventCode, TEAMDATA);
-    throw new Error(`No qualification matches found for event: ${eventCode}`);
+    return sortedData;
   }
+
   const elimMatches = await getEventElimMatches(eventCode);
   const rankings = (await getEventRankings(eventCode)).rankings;
   const fsmdata = calculateFSM(matches);
@@ -464,6 +482,7 @@ export async function getEventTeams(
   const foulDict = fsmdata.foulDict;
   elimAdjustFSM(elimMatches, fsms);
 
+  // First, add all teams from rankings
   for (let i = 0; i < rankings.length; i++) {
     const teamset = rankings[i];
     const team = teamset.team_key;
@@ -495,6 +514,22 @@ export async function getEventTeams(
       climb: climbDict[team].toFixed(2),
       foul: foulDict[team].toFixed(2),
     };
+  }
+
+  // Then, add any attending teams that aren't in rankings yet
+  for (const team of attendingTeams) {
+    if (!TEAMDATA[team.key]) {
+      TEAMDATA[team.key] = {
+        key: team.key,
+        rank: rankings.length + 1,
+        fsm: fsms[team.key]?.toFixed(2) || "0.00",
+        algae: algaeDict[team.key]?.toFixed(2) || "0.00",
+        coral: coralDict[team.key]?.toFixed(2) || "0.00",
+        auto: autoDict[team.key]?.toFixed(2) || "0.00",
+        climb: climbDict[team.key]?.toFixed(2) || "0.00",
+        foul: foulDict[team.key]?.toFixed(2) || "0.00",
+      };
+    }
   }
 
   const sortedData = Object.values(TEAMDATA).sort((a, b) => {

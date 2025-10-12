@@ -4,21 +4,7 @@ import OffseasonCheck from "./offseason";
 import ProgressiveGlobalTable from "@/app/components/ProgressiveGlobalTable";
 import YearDropdown from "@/app/components/YearDropdown";
 
-export async function generateStaticParams() {
-  return [
-    { year: "2025" },
-    { year: "2024" },
-    { year: "2023" },
-    { year: "2022" },
-    { year: "2019" },
-    { year: "2018" },
-    { year: "2017" },
-    { year: "2016" },
-    { year: "2015" },
-    { year: "2014" },
-    { year: "2013" },
-  ];
-}
+export const revalidate = 3600;
 
 export default async function GlobalPage({
   params,
@@ -84,6 +70,7 @@ export default async function GlobalPage({
           </label>
         </div>
         <ProgressiveGlobalTable
+          key={rankingId}
           initialStats={globalStats}
           year={year}
           rankingId={rankingId}

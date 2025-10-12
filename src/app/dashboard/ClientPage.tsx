@@ -375,6 +375,14 @@ export default function ClientPage({ events }: ClientPageProps) {
     return [...teams].sort((a, b) => Number(b.fsm) - Number(a.fsm));
   }, [teams]);
 
+  const sortedTeamsForDropdown = useMemo(() => {
+    return [...teams].sort((a, b) => {
+      const teamNumA = parseInt(a.key.replace("frc", ""), 10);
+      const teamNumB = parseInt(b.key.replace("frc", ""), 10);
+      return teamNumA - teamNumB;
+    });
+  }, [teams]);
+
   const event2025Options = events.filter((e) => e.key.startsWith("2025"));
 
   const filteredEvents = useMemo(() => {
@@ -624,7 +632,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                     }}
                   >
                     <option value="">Select Team</option>
-                    {teams.map((team) => (
+                    {sortedTeamsForDropdown.map((team) => (
                       <option key={team.key} value={team.key}>
                         {team.key.replace("frc", "")}
                       </option>
