@@ -23,8 +23,8 @@
 @media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;
-    --gray-less: rgba(255, 255, 255, 0.145);
-    --gray-more: rgba(255, 255, 255, 0.06);
+    --gray-less: rgba(255, 255, 255, 0.5);
+    --gray-more: rgba(255, 255, 255, 0.09);
     --border-color: #555;
     --input-bg: #333;
     --input-text: #ffffff;
@@ -49,8 +49,8 @@
 
 [data-theme="dark"] .page {
   --gray-rgb: 255, 255, 255;
-  --gray-less: rgba(255, 255, 255, 0.145);
-  --gray-more: rgba(255, 255, 255, 0.06);
+  --gray-less: rgba(255, 255, 255, 0.5);
+  --gray-more: rgba(255, 255, 255, 0.09);
   --border-color: #555;
   --input-bg: #333;
   --input-text: #ffffff;
@@ -143,7 +143,6 @@ a.secondary {
   flex-shrink: 0;
 }
 
-/* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
     background: var(--button-pre-hover);
@@ -280,7 +279,6 @@ a.secondary {
   border: none;
 }
 
-/* Modern Home Page Styles */
 .modernPage {
   min-height: 100vh;
   width: 100%;
@@ -588,7 +586,7 @@ a.secondary {
   margin-bottom: 1.5rem;
 }
 
-/* Responsive Design */
+
 @media (max-width: 1024px) {
   .searchGrid {
     grid-template-columns: 1fr;

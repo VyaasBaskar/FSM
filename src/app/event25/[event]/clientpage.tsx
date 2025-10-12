@@ -123,7 +123,7 @@ export default function ClientPage({
               cursor: "pointer",
             }}
           >
-            Team Stats
+            Stats
           </button>
           <button
             onClick={() => setActiveTab("preds")}
@@ -142,7 +142,7 @@ export default function ClientPage({
               cursor: havePreds ? "pointer" : "not-allowed",
             }}
           >
-            Match Predictions
+            Matches
           </button>
           <button
             onClick={() => setActiveTab("alliances")}
@@ -161,7 +161,7 @@ export default function ClientPage({
               cursor: havePreds ? "pointer" : "not-allowed",
             }}
           >
-            Alliance Selection
+            Alliances
           </button>
         </div>
 

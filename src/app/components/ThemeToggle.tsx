@@ -532,47 +532,37 @@ export default function ThemeToggle() {
       ref={buttonRef}
       onClick={toggleTheme}
       disabled={isAnimating}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        zIndex: 1000,
-        background: `${theme === "light" ? "#002afaff" : "#fad400ff"}`,
-        color: "var(--background)",
-        border: `2px solid ${
-          theme === "light" ? "rgba(0, 42, 250, 0.5)" : "rgba(250, 212, 0, 0.5)"
-        }`,
-        borderRadius: "12px",
-        width: isMobile ? 120 : 110,
-        height: isMobile ? 42 : 38,
-        cursor: isAnimating ? "not-allowed" : "pointer",
-        fontSize: 20,
-        marginTop: 4,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        opacity: isAnimating ? 0.7 : 1,
-        transform: isAnimating
+      onMouseEnter={(e) => {
+        setIsHovered(true);
+        e.currentTarget.style.background = "var(--menu-item-hover-bg)";
+        e.currentTarget.style.color = "var(--yellow-color)";
+        e.currentTarget.style.transform = isAnimating
           ? "scale(0.95)"
-          : isHovered
-          ? "scale(1.05) translateY(-2px)"
-          : "scale(1)",
-        boxShadow: isHovered
-          ? `0 6px 20px ${
-              theme === "light"
-                ? "rgba(0, 42, 250, 0.3)"
-                : "rgba(250, 212, 0, 0.3)"
-            }`
-          : "0 2px 8px rgba(0, 0, 0, 0.1)",
-        fontWeight: 600,
+          : "translateX(4px)";
+      }}
+      onMouseLeave={(e) => {
+        setIsHovered(false);
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "var(--option-text)";
+        e.currentTarget.style.transform = "translateX(0)";
+      }}
+      style={{
+        padding: isMobile ? "12px 20px" : "10px 16px",
+        border: "none",
+        background: "transparent",
+        borderRadius: 8,
+        fontSize: isMobile ? 17 : 15,
+        cursor: isAnimating ? "not-allowed" : "pointer",
+        color: "var(--option-text)",
+        width: "100%",
+        textAlign: "center",
+        fontWeight: 500,
+        transition: "all 0.2s ease",
         animation: "slideIn 0.3s ease 0.1s both",
+        opacity: isAnimating ? 0.7 : 1,
       }}
     >
-      {theme === "light" ? (
-        <p style={{ fontSize: isMobile ? 15 : 14, margin: 0 }}>⏾ Theme</p>
-      ) : (
-        <p style={{ fontSize: isMobile ? 15 : 14, margin: 0 }}>☀︎ Theme</p>
-      )}
+      {theme === "light" ? "⏾ Theme" : "☀︎ Theme"}
     </button>
   );
 }

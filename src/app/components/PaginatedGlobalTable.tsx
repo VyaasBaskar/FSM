@@ -270,7 +270,7 @@ export default function PaginatedGlobalTable({
               fontSize: "0.9rem",
             }}
           >
-            🌍 Country:
+            Country:
           </label>
           <select
             value={countryFilter}
@@ -304,7 +304,7 @@ export default function PaginatedGlobalTable({
               fontSize: "0.9rem",
             }}
           >
-            📍 State:
+            State:
           </label>
           <select
             value={stateFilter}
@@ -386,7 +386,7 @@ export default function PaginatedGlobalTable({
             color: "var(--foreground)",
           }}
         >
-          📊 Sorted by{" "}
+          Sorted by{" "}
           <span style={{ color: "var(--yellow-color)" }}>
             {getSortFieldLabel()}
           </span>{" "}

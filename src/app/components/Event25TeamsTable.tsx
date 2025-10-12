@@ -75,19 +75,17 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
   };
 
   const getSortIcon = (field: string) => {
-    if (sortField !== field) return "↕️";
-    return isAscending ? "↑" : "↓";
+    if (sortField !== field) return "";
+    return isAscending ? "▲" : "▼";
   };
 
   const getStatColor = (value: number, max: number) => {
     const percentage = (value / max) * 100;
-    if (percentage >= 90) return "#10b981"; // Emerald - Top tier
-    if (percentage >= 75) return "#22c55e"; // Green - Excellent
-    if (percentage >= 60) return "#84cc16"; // Lime - Very good
-    if (percentage >= 45) return "#eab308"; // Yellow - Good
-    if (percentage >= 30) return "#f59e0b"; // Amber - Average
-    if (percentage >= 15) return "#f97316"; // Orange - Below average
-    return "#ef4444"; // Red - Low
+    if (percentage >= 99) return "#10b981"; // Emerald - 99-100
+    if (percentage >= 90) return "#22c55e"; // Green - 90-99
+    if (percentage >= 75) return "#84cc16"; // Lime - 75-90
+    if (percentage >= 25) return "#eab308"; // Yellow - 25-75
+    return "#ef4444"; // Red - 0-25
   };
 
   const maxValues = useMemo(() => {
@@ -134,94 +132,6 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
 
       <div
         style={{
-          background: "var(--background-pred)",
-          border: "2px solid var(--border-color)",
-          borderRadius: 12,
-          padding: "1rem 1.5rem",
-          maxWidth: "900px",
-          alignSelf: "center",
-          boxShadow:
-            "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "0.875rem",
-            fontWeight: "700",
-            color: "var(--yellow-color)",
-            marginBottom: "0.75rem",
-            letterSpacing: "0.05em",
-          }}
-        >
-          PERFORMANCE COLOR KEY
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-            justifyContent: "center",
-          }}
-        >
-          {[
-            { color: "#10b981", label: "Top Tier", range: "90-100%" },
-            { color: "#22c55e", label: "Excellent", range: "75-90%" },
-            { color: "#84cc16", label: "Very Good", range: "60-75%" },
-            { color: "#eab308", label: "Good", range: "45-60%" },
-            { color: "#f59e0b", label: "Average", range: "30-45%" },
-            { color: "#f97316", label: "Below Avg", range: "15-30%" },
-            { color: "#ef4444", label: "Low", range: "<15%" },
-          ].map((item) => (
-            <div
-              key={item.color}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 0.75rem",
-                background: "var(--gray-more)",
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              <div
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: 4,
-                  background: item.color,
-                  border: "2px solid rgba(255, 255, 255, 0.2)",
-                }}
-              />
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span
-                  style={{
-                    fontSize: "0.75rem",
-                    fontWeight: "700",
-                    color: item.color,
-                    lineHeight: 1,
-                  }}
-                >
-                  {item.label}
-                </span>
-                <span
-                  style={{
-                    fontSize: "0.65rem",
-                    color: "var(--gray-less)",
-                    lineHeight: 1.2,
-                    marginTop: "0.15rem",
-                  }}
-                >
-                  {item.range}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
           overflowX: "auto",
           borderRadius: 12,
           border: "2px solid var(--border-color)",
@@ -251,9 +161,10 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                   fontSize: "0.875rem",
                   letterSpacing: "0.05em",
                   color: "var(--yellow-color)",
+                  width: "140px",
                 }}
               >
-                {sortField !== "rank" && "SORTED RANK"}
+                SORTED RANK
               </th>
               {[
                 { key: "key", label: "TEAM", sortable: false },
@@ -324,9 +235,10 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                       padding: "1rem",
                       fontWeight: "600",
                       color: "var(--gray-less)",
+                      width: "140px",
                     }}
                   >
-                    {sortField !== "rank" && idx + 1}
+                    {idx + 1}
                   </td>
                   <td style={{ padding: "1rem", fontWeight: "600" }}>
                     <TeamLink teamKey={team.key} year={2025} />
@@ -452,6 +364,85 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
           </p>
         </div>
       )}
+
+      {/* Performance Color Key */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.5rem",
+          padding: "1.5rem 1rem",
+          fontSize: "0.9rem",
+          color: "var(--foreground)",
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontWeight: "600" }}>Key (Percentile):</span>
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            style={{
+              padding: "0.4rem 0.8rem",
+              borderRadius: 6,
+              background: "#ef4444",
+              color: "#fff",
+              fontWeight: "500",
+            }}
+          >
+            0 - 25
+          </span>
+          <span
+            style={{
+              padding: "0.4rem 0.8rem",
+              borderRadius: 6,
+              background: "#eab308",
+              color: "#fff",
+              fontWeight: "500",
+            }}
+          >
+            25 - 75
+          </span>
+          <span
+            style={{
+              padding: "0.4rem 0.8rem",
+              borderRadius: 6,
+              background: "#84cc16",
+              color: "#fff",
+              fontWeight: "500",
+            }}
+          >
+            75 - 90
+          </span>
+          <span
+            style={{
+              padding: "0.4rem 0.8rem",
+              borderRadius: 6,
+              background: "#22c55e",
+              color: "#fff",
+              fontWeight: "500",
+            }}
+          >
+            90 - 99
+          </span>
+          <span
+            style={{
+              padding: "0.4rem 0.8rem",
+              borderRadius: 6,
+              background: "#10b981",
+              color: "#fff",
+              fontWeight: "500",
+            }}
+          >
+            99 - 100
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
