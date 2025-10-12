@@ -162,3 +162,23 @@ a {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Desktop: show graph, hide table */
+@media (min-width: 769px) {
+  .desktop-only {
+    display: block !important;
+  }
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* Mobile: hide graph, show table */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
+}

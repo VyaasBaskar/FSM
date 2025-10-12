@@ -23,7 +23,7 @@ function InteractiveChart({
     x: 0,
     y: 0,
   });
-  const [dimensions, setDimensions] = useState({ width: 700, height: 400 });
+  const [dimensions, setDimensions] = useState({ width: 1000, height: 600 });
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -37,8 +37,8 @@ function InteractiveChart({
         });
       } else {
         setDimensions({
-          width: Math.min(screenWidth * 0.9, 800),
-          height: 450,
+          width: screenWidth * 0.95,
+          height: 600,
         });
       }
     };
@@ -117,7 +117,7 @@ function InteractiveChart({
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: "900px",
+        maxWidth: "95%",
         margin: "0 auto",
         padding: "0 20px",
       }}

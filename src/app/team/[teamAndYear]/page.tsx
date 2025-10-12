@@ -201,13 +201,14 @@ export default async function TeamPage({
           </div>
 
           <div
+            className="desktop-only"
             style={{
               background: "var(--background-pred)",
               border: "2px solid var(--border-color)",
               borderRadius: 12,
               padding: "2rem",
               margin: "0 auto 2rem",
-              maxWidth: "1000px",
+              maxWidth: "95%",
               boxShadow:
                 "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
             }}
@@ -230,8 +231,9 @@ export default async function TeamPage({
           </div>
 
           <div
+            className="mobile-only"
             style={{
-              maxWidth: "600px",
+              maxWidth: "min(600px, 95%)",
               margin: "0 auto",
               overflowX: "auto",
               borderRadius: 12,
@@ -244,7 +246,6 @@ export default async function TeamPage({
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                minWidth: "400px",
               }}
             >
               <thead>
