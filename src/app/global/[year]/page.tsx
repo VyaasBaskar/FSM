@@ -4,7 +4,8 @@ import OffseasonCheck from "./offseason";
 import ProgressiveGlobalTable from "@/app/components/ProgressiveGlobalTable";
 import YearDropdown from "@/app/components/YearDropdown";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function GlobalPage({
   params,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTeams } from "@/app/lib/global";
 import { fetchAll25Teams } from "@/app/lib/supabase";
 
-export const revalidate = 604800;
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(teams, {
       headers: {
         "Cache-Control":
-          "public, s-maxage=604800, stale-while-revalidate=2592000",
+          "public, max-age=3600, s-maxage=7200, stale-while-revalidate=86400",
+        Vary: "Accept, Accept-Encoding",
       },
     });
   } catch (error) {

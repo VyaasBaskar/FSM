@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isEventRecent } from "@/app/lib/eventUtils";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,13 +33,14 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
 
     const isRecent = await isEventRecent(fullEventCode);
-    const cacheMaxAge = isRecent ? 120 : 3600;
+    const cacheMaxAge = isRecent ? 60 : 600;
 
     return NextResponse.json(data, {
       headers: {
         "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${
           cacheMaxAge * 2
-        }, stale-while-revalidate=${cacheMaxAge * 10}`,
+        }, stale-while-revalidate=${cacheMaxAge * 5}`,
+        Vary: "Accept, Accept-Encoding",
       },
     });
   } catch (error) {

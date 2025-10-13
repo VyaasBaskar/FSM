@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGlobalStats } from "@/app/lib/global";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(stats, {
       headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "Cache-Control":
+          "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
+        Vary: "Accept, Accept-Encoding",
       },
     });
   } catch (error) {

@@ -3,6 +3,9 @@
 import { getEvents } from "@/app/lib/global";
 import ClientPage from "./ClientPage";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   try {
     const events = await getEvents(2025);
