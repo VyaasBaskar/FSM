@@ -87,6 +87,11 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
     if (percentage >= 25) return "#eab308"; // Yellow - 25-75
     return "#ef4444"; // Red - 0-25
   };
+  const getFoulColor = (value: number) => {
+    if (value > 0) return "#ef4444";
+    if (value < 0) return "#22c55e";
+    return "var(--foreground)";
+  };
 
   const maxValues = useMemo(() => {
     return {
@@ -212,6 +217,7 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                 Number(team.algae) * 1.4 +
                 Number(team.auto) +
                 Number(team.coral);
+              const foulValue = parseFloat(team.foul);
 
               return (
                 <tr
@@ -313,11 +319,11 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                   <td
                     style={{
                       padding: "1rem",
-                      color: "#ef4444",
+                      color: getFoulColor(foulValue),
                       fontWeight: "600",
                     }}
                   >
-                    {parseFloat(team.foul).toFixed(2)}
+                    {foulValue.toFixed(2)}
                   </td>
                   <td
                     style={{
