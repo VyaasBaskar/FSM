@@ -340,7 +340,145 @@ function calculateFSM(matches: any[]) {
         const blueAuto = getScore(match, "blue", "auto");
 
         const redClimb = match.score_breakdown.red.endGameBargePoints;
-        const blueClimb = match.score_breakdown.blue.endGameBargePoints;
+        const redCl1 =
+          match.score_breakdown.red.endGameRobot1 === "Parked"
+            ? 2
+            : match.score_breakdown.red.endGameRobot1 === "DeepCage"
+            ? 12
+            : match.score_breakdown.red.endGameRobot1 === "ShallowCage"
+            ? 6
+            : 0;
+        const redCl2 =
+          match.score_breakdown.red.endGameRobot2 === "Parked"
+            ? 2
+            : match.score_breakdown.red.endGameRobot2 === "DeepCage"
+            ? 12
+            : match.score_breakdown.red.endGameRobot2 === "ShallowCage"
+            ? 6
+            : 0;
+        const redCl3 =
+          match.score_breakdown.red.endGameRobot3 === "Parked"
+            ? 2
+            : match.score_breakdown.red.endGameRobot3 === "DeepCage"
+            ? 12
+            : match.score_breakdown.red.endGameRobot3 === "ShallowCage"
+            ? 6
+            : 0;
+        const blueCl1 =
+          match.score_breakdown.blue.endGameRobot1 === "Parked"
+            ? 2
+            : match.score_breakdown.blue.endGameRobot1 === "DeepCage"
+            ? 12
+            : match.score_breakdown.blue.endGameRobot1 === "ShallowCage"
+            ? 6
+            : 0;
+        const blueCl2 =
+          match.score_breakdown.blue.endGameRobot2 === "Parked"
+            ? 2
+            : match.score_breakdown.blue.endGameRobot2 === "DeepCage"
+            ? 12
+            : match.score_breakdown.blue.endGameRobot2 === "ShallowCage"
+            ? 6
+            : 0;
+        const blueCl3 =
+          match.score_breakdown.blue.endGameRobot3 === "Parked"
+            ? 2
+            : match.score_breakdown.blue.endGameRobot3 === "DeepCage"
+            ? 12
+            : match.score_breakdown.blue.endGameRobot3 === "ShallowCage"
+            ? 6
+            : 0;
+
+        if (
+          climbDict[redTeams[0]] === undefined ||
+          isNaN(climbDict[redTeams[0]])
+        ) {
+          climbDict[redTeams[0]] = 0;
+        }
+        if (
+          climbDict[redTeams[1]] === undefined ||
+          isNaN(climbDict[redTeams[1]])
+        ) {
+          climbDict[redTeams[1]] = 0;
+        }
+        if (
+          climbDict[redTeams[2]] === undefined ||
+          isNaN(climbDict[redTeams[2]])
+        ) {
+          climbDict[redTeams[2]] = 0;
+        }
+        if (
+          climbDict[blueTeams[0]] === undefined ||
+          isNaN(climbDict[blueTeams[0]])
+        ) {
+          climbDict[blueTeams[0]] = 0;
+        }
+        if (
+          climbDict[blueTeams[1]] === undefined ||
+          isNaN(climbDict[blueTeams[1]])
+        ) {
+          climbDict[blueTeams[1]] = 0;
+        }
+        if (
+          climbDict[blueTeams[2]] === undefined ||
+          isNaN(climbDict[blueTeams[2]])
+        ) {
+          climbDict[blueTeams[2]] = 0;
+        }
+
+        var deltaC = redCl1 - climbDict[redTeams[0]];
+        if (deltaC > 0) {
+          climbDict[redTeams[0]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[redTeams[0]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
+
+        deltaC = redCl2 - climbDict[redTeams[1]];
+        if (deltaC > 0) {
+          climbDict[redTeams[1]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[redTeams[1]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
+
+        deltaC = (redCl3 - climbDict[redTeams[2]]) / 3.0;
+        if (deltaC > 0) {
+          climbDict[redTeams[2]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[redTeams[2]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
+
+        deltaC = (blueCl1 - climbDict[blueTeams[0]]) / 3.0;
+        if (deltaC > 0) {
+          climbDict[blueTeams[0]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[blueTeams[0]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
+
+        deltaC = (blueCl2 - climbDict[blueTeams[1]]) / 3.0;
+        if (deltaC > 0) {
+          climbDict[blueTeams[1]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[blueTeams[1]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
+
+        deltaC = (blueCl3 - climbDict[blueTeams[2]]) / 3.0;
+        if (deltaC > 0) {
+          climbDict[blueTeams[2]] +=
+            deltaC * attributeMult * FSM_UP_FAC * DECAY_FAC ** i;
+        } else {
+          climbDict[blueTeams[2]] +=
+            deltaC * attributeReduc * FSM_DOWN_FAC * DECAY_FAC ** i;
+        }
 
         const redFoul = getScore(match, "red", "penalty");
         const blueFoul = getScore(match, "blue", "penalty");
@@ -354,8 +492,8 @@ function calculateFSM(matches: any[]) {
         updateDict(coralDict, blueTeams, blueCoral, i, true);
         updateDict(autoDict, redTeams, redAuto, i, true);
         updateDict(autoDict, blueTeams, blueAuto, i, true);
-        updateDict(climbDict, redTeams, redClimb, i, true);
-        updateDict(climbDict, blueTeams, blueClimb, i, true);
+        // updateDict(climbDict, redTeams, redClimb, i, true);
+        // updateDict(climbDict, blueTeams, blueClimb, i, true);
         updateDict(foulDict, redTeams, redFoul, i, true);
         updateDict(foulDict, blueTeams, blueFoul, i, true);
       }
@@ -452,7 +590,6 @@ export async function getEventTeams(
   const attendingTeams = await getAttendingTeams(eventCode);
 
   if (matches.length === 0) {
-    // No matches played yet, return all attending teams with default values
     for (const team of attendingTeams) {
       TEAMDATA[team.key] = {
         key: team.key,
@@ -482,7 +619,6 @@ export async function getEventTeams(
   const foulDict = fsmdata.foulDict;
   elimAdjustFSM(elimMatches, fsms);
 
-  // First, add all teams from rankings
   for (let i = 0; i < rankings.length; i++) {
     const teamset = rankings[i];
     const team = teamset.team_key;
@@ -516,7 +652,6 @@ export async function getEventTeams(
     };
   }
 
-  // Then, add any attending teams that aren't in rankings yet
   for (const team of attendingTeams) {
     if (!TEAMDATA[team.key]) {
       TEAMDATA[team.key] = {
