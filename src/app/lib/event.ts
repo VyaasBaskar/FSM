@@ -389,6 +389,8 @@ function calculateFSM(matches: any[]) {
             ? 6
             : 0;
 
+        // TODO: make less messy
+
         if (
           climbDict[redTeams[0]] === undefined ||
           isNaN(climbDict[redTeams[0]])
