@@ -172,7 +172,8 @@ async function getGeneralStats(
     if (teamFSMs.length === 1) {
       statsFinal[team] = teamFSMs[0].toFixed(2);
     } else {
-      statsFinal[team] = ((teamFSMs[0] + teamFSMs[1]) / 2).toFixed(2);
+      const rms = Math.sqrt((teamFSMs[0] ** 2 + teamFSMs[1] ** 2) / 2);
+      statsFinal[team] = rms.toFixed(2);
     }
   }
 

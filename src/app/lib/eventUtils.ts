@@ -137,10 +137,13 @@ export async function getTeamCacheTTL(
   teamKey: string,
   year: number = new Date().getFullYear()
 ): Promise<number> {
+  const currentYear = new Date().getFullYear();
   const isAtRecentEvent = await isTeamAtRecentEvent(teamKey, year);
 
   if (isAtRecentEvent) {
     return 2 * 60 * 1000;
+  } else if (year === currentYear) {
+    return 10 * 60 * 1000;
   } else {
     return 24 * 60 * 60 * 1000;
   }
@@ -150,10 +153,13 @@ export async function getTeamRevalidationTime(
   teamKey: string,
   year: number = new Date().getFullYear()
 ): Promise<number> {
+  const currentYear = new Date().getFullYear();
   const isAtRecentEvent = await isTeamAtRecentEvent(teamKey, year);
 
   if (isAtRecentEvent) {
     return 120;
+  } else if (year === currentYear) {
+    return 600;
   } else {
     return 3600;
   }

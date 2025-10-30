@@ -60,12 +60,15 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
     }
   });
 
+  const fsms = teamData.map((event) => parseFloat(event.teamfsm));
+  fsms.sort((a, b) => b - a);
+
   let bestFSM = 0.0;
-  for (const event of teamData) {
-    const fsmValue = parseFloat(event.teamfsm);
-    if (fsmValue > bestFSM) {
-      bestFSM = fsmValue;
-    }
+  if (fsms.length === 1) {
+    bestFSM = fsms[0];
+  } else {
+    const rms = Math.sqrt((fsms[0] ** 2 + fsms[1] ** 2) / 2);
+    bestFSM = rms;
   }
 
   return { teamData, bestFSM };

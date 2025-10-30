@@ -392,29 +392,43 @@ export default async function TeamPage({
     );
   }
 
-  let teamIndex = -1;
-  let fsm = 0.0;
-  let sum = 0.0;
+  const teamFSM = teamStats.bestFSM;
 
-  for (const [index, team] of Object.entries(gstats)) {
+  const statsWithUpdatedFSM = gstats.map((team) => {
     if (team.teamKey === teamKey) {
-      teamIndex = Number(index) + 1;
-      fsm = Number(team.bestFSM);
+      return { ...team, bestFSM: teamFSM.toString() };
     }
+    return team;
+  });
+
+  const sortedStats = [...statsWithUpdatedFSM].sort(
+    (a, b) => Number(b.bestFSM) - Number(a.bestFSM)
+  );
+
+  const teamIndex =
+    sortedStats.findIndex((team) => team.teamKey === teamKey) + 1;
+
+  let sum = 0.0;
+  for (const team of statsWithUpdatedFSM) {
     sum += Number(team.bestFSM);
   }
-  const mean = sum / gstats.length;
+  const mean = sum / statsWithUpdatedFSM.length;
 
   let sum_variance = 0.0;
-  for (const team of gstats) {
+  for (const team of statsWithUpdatedFSM) {
     const diff = Number(team.bestFSM) - mean;
     sum_variance += diff * diff;
   }
-  const variance = sum_variance / gstats.length;
+  const variance = sum_variance / statsWithUpdatedFSM.length;
   const stddev = Math.sqrt(variance);
 
-  const pct = ((Number(teamIndex) / gstats.length) * 100.0).toFixed(1);
-  const normalizedFSM = (((fsm - mean) / stddev) * 100.0 + 1500.0).toFixed(0);
+  const pct = (
+    (Number(teamIndex) / statsWithUpdatedFSM.length) *
+    100.0
+  ).toFixed(1);
+  const normalizedFSM = (((teamFSM - mean) / stddev) * 100.0 + 1500.0).toFixed(
+    0
+  );
 
   return (
     <div
@@ -475,7 +489,7 @@ export default async function TeamPage({
                 marginBottom: "2rem",
               }}
             >
-              <StatCard label="FSM" value={fsm.toFixed(1)} />
+              <StatCard label="FSM" value={teamFSM.toFixed(1)} />
               <StatCard
                 label="GLOBAL RANK"
                 value={`#${teamIndex}`}
