@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNexusMatchSchedule } from "@/app/lib/event";
-import { isEventRecent } from "@/app/lib/eventUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -20,14 +19,10 @@ export async function GET(request: NextRequest) {
 
     const nexusSchedule = await getNexusMatchSchedule(fullEventCode);
 
-    const isRecent = await isEventRecent(fullEventCode);
-    const cacheMaxAge = isRecent ? 30 : 600;
-
     return NextResponse.json(nexusSchedule, {
       headers: {
-        "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${
-          cacheMaxAge * 2
-        }, stale-while-revalidate=${cacheMaxAge * 5}`,
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
         Vary: "Accept, Accept-Encoding",
       },
     });
@@ -37,7 +32,8 @@ export async function GET(request: NextRequest) {
       {},
       {
         headers: {
-          "Cache-Control": "public, max-age=120, s-maxage=240",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
         },
       }
     );

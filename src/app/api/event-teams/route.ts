@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventTeams } from "@/app/lib/event";
-import { isEventRecent } from "@/app/lib/eventUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -18,14 +17,10 @@ export async function GET(request: NextRequest) {
 
     const teams = await getEventTeams(event);
 
-    const isRecent = await isEventRecent(event);
-    const cacheMaxAge = isRecent ? 60 : 600;
-
     return NextResponse.json(teams, {
       headers: {
-        "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${
-          cacheMaxAge * 2
-        }, stale-while-revalidate=${cacheMaxAge * 5}`,
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
         Vary: "Accept, Accept-Encoding",
       },
     });

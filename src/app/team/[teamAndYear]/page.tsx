@@ -7,6 +7,7 @@ import {
   getTeamMedia,
 } from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
+import { updateSingleTeamGlobalFSM } from "@/app/lib/supabase";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
 
@@ -393,6 +394,13 @@ export default async function TeamPage({
   }
 
   const teamFSM = teamStats.bestFSM;
+
+  const rankingId = Number(yearprov) * 10 + 1;
+  updateSingleTeamGlobalFSM(rankingId, `frc${teamKey}`, teamFSM).catch(
+    (err) => {
+      console.error("Failed to update global FSM:", err);
+    }
+  );
 
   const statsWithUpdatedFSM = gstats.map((team) => {
     if (team.teamKey === teamKey) {

@@ -437,3 +437,39 @@ export async function setGlobalWithLocation(
 
   await setGlobal(page, rankings);
 }
+
+export async function updateSingleTeamGlobalFSM(
+  rankingId: number,
+  teamKey: string,
+  fsm: number
+) {
+  try {
+    const { data: existingData } = await supabase
+      .from("GlobalRanking")
+      .select("rankings")
+      .eq("id", rankingId)
+      .single();
+
+    if (!existingData || !existingData.rankings) {
+      return;
+    }
+
+    const rankings = { ...existingData.rankings };
+
+    if (typeof rankings[teamKey] === "object" && rankings[teamKey] !== null) {
+      rankings[teamKey] = { ...rankings[teamKey], fsm };
+    } else {
+      rankings[teamKey] = fsm;
+    }
+
+    await supabase
+      .from("GlobalRanking")
+      .update({
+        rankings: rankings,
+        set_time: new Date().getTime(),
+      })
+      .eq("id", rankingId);
+  } catch (error) {
+    console.error(`Error updating team ${teamKey} FSM:`, error);
+  }
+}

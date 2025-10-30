@@ -18,7 +18,7 @@ export async function getEvents(year: number = 2025) {
       headers: {
         "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
       },
-      next: { revalidate: 86400 },
+      next: { revalidate: 0 },
     }
   );
 
