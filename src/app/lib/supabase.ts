@@ -456,6 +456,22 @@ export async function updateSingleTeamGlobalFSM(
 
     const rankings = { ...existingData.rankings };
 
+    const teamNumber = teamKey.replace(/^frc/, "");
+    const oldKey = teamNumber;
+    const doubleKey = `frc${teamNumber}`;
+
+    if (rankings[oldKey] !== undefined && oldKey !== teamKey) {
+      delete rankings[oldKey];
+    }
+
+    if (
+      rankings[doubleKey] !== undefined &&
+      doubleKey !== teamKey &&
+      doubleKey.startsWith("frcfrc")
+    ) {
+      delete rankings[doubleKey];
+    }
+
     if (typeof rankings[teamKey] === "object" && rankings[teamKey] !== null) {
       rankings[teamKey] = { ...rankings[teamKey], fsm };
     } else {
@@ -473,3 +489,49 @@ export async function updateSingleTeamGlobalFSM(
     console.error(`Error updating team ${teamKey} FSM:`, error);
   }
 }
+
+// TEMP
+// export async function cleanupDuplicateTeamKeys(rankingId: number) {
+//   try {
+//     const { data: existingData } = await supabase
+//       .from("GlobalRanking")
+//       .select("rankings")
+//       .eq("id", rankingId)
+//       .single();
+
+//     if (!existingData || !existingData.rankings) {
+//       return { removed: 0 };
+//     }
+
+//     const rankings = { ...existingData.rankings };
+//     let removed = 0;
+
+//     for (const key of Object.keys(rankings)) {
+//       if (
+//         key.startsWith("frcfrc") ||
+//         (!key.startsWith("frc") && /^\d+$/.test(key))
+//       ) {
+//         delete rankings[key];
+//         removed++;
+//       }
+//     }
+
+//     if (removed > 0) {
+//       await supabase
+//         .from("GlobalRanking")
+//         .update({
+//           rankings: rankings,
+//           set_time: new Date().getTime(),
+//         })
+//         .eq("id", rankingId);
+//     }
+
+//     return { removed };
+//   } catch (error) {
+//     console.error(
+//       `Error cleaning up duplicate keys for ranking ${rankingId}:`,
+//       error
+//     );
+//     return { removed: 0 };
+//   }
+// }

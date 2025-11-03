@@ -3,6 +3,7 @@ import { getGlobalStatsWithoutLocation } from "../../lib/global";
 import OffseasonCheck from "./offseason";
 import ProgressiveGlobalTable from "@/app/components/ProgressiveGlobalTable";
 import YearDropdown from "@/app/components/YearDropdown";
+// import { cleanupDuplicateTeamKeys } from "../../lib/supabase";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,6 +32,14 @@ export default async function GlobalPage({
 
   const yearNum = Number(year);
   const rankingId = yearNum * 10 + (includeOffseason ? 1 : 0);
+
+  // TEMP
+  // const rankingsToCleanup = [yearNum * 10 + 1, yearNum * 10 + 0];
+  // rankingsToCleanup.forEach((id) => {
+  //   cleanupDuplicateTeamKeys(id).catch((err) => {
+  //     console.error(`Error cleaning up duplicate keys for ${id}:`, err);
+  //   });
+  // });
 
   const globalStats = await getGlobalStatsWithoutLocation(
     yearNum,

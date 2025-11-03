@@ -396,11 +396,9 @@ export default async function TeamPage({
   const teamFSM = teamStats.bestFSM;
 
   const rankingId = Number(yearprov) * 10 + 1;
-  updateSingleTeamGlobalFSM(rankingId, `frc${teamKey}`, teamFSM).catch(
-    (err) => {
-      console.error("Failed to update global FSM:", err);
-    }
-  );
+  updateSingleTeamGlobalFSM(rankingId, teamKey, teamFSM).catch((err) => {
+    console.error("Failed to update global FSM:", err);
+  });
 
   const statsWithUpdatedFSM = gstats.map((team) => {
     if (team.teamKey === teamKey) {
