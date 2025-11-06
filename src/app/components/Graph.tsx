@@ -357,9 +357,9 @@ function InteractiveChart({
                 path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p1.x},${p1.y}`;
               } else {
                 const tau = 1 / 3;
-                let cp1x = p0.x + dx * tau;
+                const cp1x = p0.x + dx * tau;
                 let cp1y = p0.y + m0 * dx * tau;
-                let cp2x = p1.x - dx * tau;
+                const cp2x = p1.x - dx * tau;
                 let cp2y = p1.y - m1 * dx * tau;
 
                 if (delta > 0) {
