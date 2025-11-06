@@ -370,7 +370,6 @@ function Event25TeamsTable({
         </div>
       )}
 
-      {/* Performance Color Key */}
       <div
         style={{
           display: "flex",

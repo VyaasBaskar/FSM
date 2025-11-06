@@ -100,10 +100,24 @@ export default async function EventPage({
       attendingKeys.push(team.key);
     }
 
-    const globalStats = await get26Predictions();
+    const predictions2026 = await get26Predictions();
 
-    globalStats.forEach(({ teamKey, bestFSM }) => {
-      if (attendingKeys.includes(teamKey)) FSMs[teamKey] = Number(bestFSM);
+    const predFSMs = predictions2026.map((p) => Number(p.bestFSM));
+    const predMean = predFSMs.reduce((a, b) => a + b, 0) / predFSMs.length;
+    const predVariance =
+      predFSMs.reduce((a, b) => a + Math.pow(b - predMean, 2), 0) /
+      predFSMs.length;
+    const predStddev = Math.sqrt(predVariance);
+
+    predictions2026.forEach(({ teamKey, bestFSM }) => {
+      if (attendingKeys.includes(teamKey)) {
+        const predFSM = Number(bestFSM);
+        if (!isNaN(predFSM) && predStddev > 0) {
+          const normPredFSM =
+            ((predFSM - predMean) / predStddev) * 100.0 + 1500.0;
+          FSMs[teamKey] = normPredFSM;
+        }
+      }
     });
 
     return <FuturePage code={eventCode} fsms={FSMs} />;

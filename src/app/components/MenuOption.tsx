@@ -108,7 +108,7 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
             setMenuPosition({
               top: rect.bottom + 8,
               right: window.innerWidth - rect.right,
-              width: 0, // auto width
+              width: 0,
             });
           }
         }
@@ -223,7 +223,6 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
         >
           {isMobile ? (
             <>
-              {/* First row: Home | Teams */}
               <div
                 style={{
                   display: "grid",
@@ -267,7 +266,6 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                 ))}
               </div>
 
-              {/* Second row: Theme | Clear Cache */}
               <div
                 style={{
                   display: "grid",
@@ -333,7 +331,6 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                 </button>
               </div>
 
-              {/* Horizontal divider */}
               <div
                 style={{
                   width: "100%",
@@ -344,7 +341,6 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                 }}
               />
 
-              {/* Search bar */}
               <div
                 onClick={(e) => e.stopPropagation()}
                 style={{
@@ -363,7 +359,6 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                 />
               </div>
 
-              {/* Footer */}
               {!isSearching && (
                 <p
                   style={{

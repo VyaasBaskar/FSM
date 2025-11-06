@@ -8,6 +8,7 @@ import {
 } from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import { updateSingleTeamGlobalFSM } from "@/app/lib/supabase";
+import { get26Predictions } from "@/app/lib/26pred";
 import Link from "next/link";
 import InteractiveChart from "../../components/Graph";
 
@@ -88,7 +89,8 @@ export default async function TeamPage({
 
     let normSumSq = 0,
       normCount = 0;
-    let allStats: { year: number; normFSM: number }[] = [];
+    let allStats: { year: number; normFSM: number; isPrediction?: boolean }[] =
+      [];
 
     const yearResults = await Promise.allSettled(
       years.map((y) => getGlobalStats(y))
@@ -116,6 +118,35 @@ export default async function TeamPage({
         }
       }
     });
+
+    // Add 2026 predicted FSM
+    try {
+      const predictions2026 = await get26Predictions();
+      const teamPrediction = predictions2026.find((p) => p.teamKey === teamKey);
+
+      if (teamPrediction) {
+        // Normalize the predicted FSM using the distribution of all 2026 predictions
+        const predFSMs = predictions2026.map((p) => Number(p.bestFSM));
+        const predMean = predFSMs.reduce((a, b) => a + b, 0) / predFSMs.length;
+        const predVariance =
+          predFSMs.reduce((a, b) => a + Math.pow(b - predMean, 2), 0) /
+          predFSMs.length;
+        const predStddev = Math.sqrt(predVariance);
+        const predFSM = Number(teamPrediction.bestFSM);
+
+        if (!isNaN(predFSM) && predStddev > 0) {
+          const normPredFSM =
+            ((predFSM - predMean) / predStddev) * 100.0 + 1500.0;
+          allStats.push({
+            year: 2026,
+            normFSM: normPredFSM,
+            isPrediction: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching 2026 predictions:", error);
+    }
     const statsForAvg =
       allStats.length > 1
         ? allStats.filter(
@@ -218,12 +249,62 @@ export default async function TeamPage({
               style={{
                 color: "var(--foreground)",
                 textAlign: "center",
-                marginBottom: "1.5rem",
+                marginBottom: "1rem",
                 fontSize: "1.25rem",
               }}
             >
               Historical Performance
             </h3>
+            {allStats.some((s) => s.isPrediction) && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "1.5rem",
+                  marginBottom: "1rem",
+                  fontSize: "13px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "3px",
+                      background: "#0070f3",
+                    }}
+                  />
+                  <span style={{ color: "var(--foreground)" }}>
+                    Actual Data
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "3px",
+                      background: "#f59e0b",
+                      borderTop: "2px dashed #f59e0b",
+                    }}
+                  />
+                  <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
+                    Predicted
+                  </span>
+                </div>
+              </div>
+            )}
             <InteractiveChart
               allStats={allStats}
               minPossibleFSM={minPossibleFSM}
@@ -301,13 +382,28 @@ export default async function TeamPage({
                         }}
                       >
                         {s.year}
+                        {s.isPrediction && (
+                          <span
+                            style={{
+                              marginLeft: "0.5rem",
+                              fontSize: "0.75rem",
+                              color: "#f59e0b",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            (Predicted)
+                          </span>
+                        )}
                       </td>
                       <td
                         style={{
                           padding: "1rem",
                           fontWeight: "bold",
                           fontSize: "1.125rem",
-                          color: "var(--yellow-color)",
+                          color: s.isPrediction
+                            ? "#f59e0b"
+                            : "var(--yellow-color)",
+                          fontStyle: s.isPrediction ? "italic" : "normal",
                         }}
                       >
                         {s.normFSM.toFixed(0)}

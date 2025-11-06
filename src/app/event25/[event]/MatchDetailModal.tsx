@@ -449,7 +449,6 @@ export default function MatchDetailModal({
             </div>
           </div>
 
-          {/* Score Breakdown */}
           {loading ? (
             <div
               style={{
@@ -472,7 +471,6 @@ export default function MatchDetailModal({
             </div>
           ) : (
             <>
-              {/* Score Breakdown Section */}
               {scoreBreakdown &&
                 (scoreBreakdown.red || scoreBreakdown.blue) && (
                   <div style={{ marginBottom: "2rem" }}>
