@@ -644,7 +644,6 @@ export default function ClientPage({ events }: ClientPageProps) {
           </>
         )}
 
-        {/* Main Content */}
         {selectedEvent && selectedTeam && (
           <div
             style={{
@@ -656,7 +655,6 @@ export default function ClientPage({ events }: ClientPageProps) {
               flexWrap: "wrap",
             }}
           >
-            {/* Left Side - Upcoming Matches and Livestream */}
             <div
               style={{
                 flex: "1 1 500px",
@@ -666,7 +664,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                 gap: "1rem",
               }}
             >
-              {/* Upcoming Matches */}
               {teamUpcomingMatches.length > 0 && (
                 <div
                   style={{
@@ -793,7 +790,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                             </div>
                           </div>
 
-                          {/* Alliances */}
                           <div
                             style={{
                               display: "flex",
@@ -952,7 +948,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                 </div>
               )}
 
-              {/* Livestream Box */}
               <div
                 style={{
                   background: "var(--gray-more)",
@@ -1299,7 +1294,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                             </div>
                           </div>
 
-                          {/* Alliances */}
                           <div
                             style={{
                               display: "flex",
@@ -1808,7 +1802,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                 })()}
               </div>
 
-              {/* Combined Leaderboards */}
               <div
                 style={{
                   background: "var(--gray-more)",
@@ -1831,7 +1824,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                     maxHeight: "calc(100vh - 4rem)",
                   }}
                 >
-                  {/* Official Rankings Column */}
                   <div
                     style={{
                       display: "flex",
@@ -1971,7 +1963,6 @@ export default function ClientPage({ events }: ClientPageProps) {
                     </div>
                   </div>
 
-                  {/* FSM Leaderboard Column */}
                   <div
                     style={{
                       display: "flex",
@@ -2116,7 +2107,6 @@ export default function ClientPage({ events }: ClientPageProps) {
           </div>
         )}
 
-        {/* Change Event/Team Button at Bottom */}
         {selectedEvent && selectedTeam && (
           <div
             style={{
@@ -2156,7 +2146,6 @@ export default function ClientPage({ events }: ClientPageProps) {
           </div>
         )}
 
-        {/* No Selection State */}
         {(!selectedEvent || !selectedTeam) && (
           <div
             style={{
