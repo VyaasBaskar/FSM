@@ -66,7 +66,9 @@
   grid-row-start: 2;
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 0 clamp(0.75rem, 4vw, 1rem);
 }
 
 .main ol {
@@ -162,12 +164,16 @@ a.secondary {
 
 @media (max-width: 600px) {
   .page {
-    padding: 32px;
+    padding: 32px clamp(0.75rem, 4vw, 1rem);
     padding-bottom: 80px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   .main {
     align-items: center;
+    padding: 0;
   }
 
   .main ol {

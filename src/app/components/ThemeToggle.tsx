@@ -20,6 +20,28 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
 
+  useEffect(() => {
+    const getTheme = () => {
+      const saved = localStorage.getItem("theme");
+      const system = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      return saved === "light" || saved === "dark" ? saved : system;
+    };
+
+    const updateTheme = () => {
+      setTheme(getTheme() as "light" | "dark");
+    };
+
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
@@ -535,7 +557,7 @@ export default function ThemeToggle() {
       onMouseEnter={(e) => {
         setIsHovered(true);
         e.currentTarget.style.background = "var(--menu-item-hover-bg)";
-        e.currentTarget.style.color = "var(--yellow-color)";
+        e.currentTarget.style.color = theme === "dark" ? "#fde047" : "#3b82f6";
         e.currentTarget.style.transform = isAnimating
           ? "scale(0.95)"
           : "translateX(4px)";
@@ -543,7 +565,7 @@ export default function ThemeToggle() {
       onMouseLeave={(e) => {
         setIsHovered(false);
         e.currentTarget.style.background = "transparent";
-        e.currentTarget.style.color = "var(--option-text)";
+        e.currentTarget.style.color = theme === "dark" ? "#fde047" : "#3b82f6";
         e.currentTarget.style.transform = "translateX(0)";
       }}
       style={{
@@ -553,7 +575,7 @@ export default function ThemeToggle() {
         borderRadius: 8,
         fontSize: isMobile ? 17 : 15,
         cursor: isAnimating ? "not-allowed" : "pointer",
-        color: "var(--option-text)",
+        color: theme === "dark" ? "#fde047" : "#3b82f6",
         width: "100%",
         textAlign: "center",
         fontWeight: 500,
@@ -562,7 +584,7 @@ export default function ThemeToggle() {
         opacity: isAnimating ? 0.7 : 1,
       }}
     >
-      {theme === "light" ? "⏾ Theme" : "☀︎ Theme"}
+      Toggle Theme
     </button>
   );
 }

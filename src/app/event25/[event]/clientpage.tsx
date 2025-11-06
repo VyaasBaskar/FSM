@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import styles from "../../page.module.css";
 import dynamic from "next/dynamic";
 import type * as ort from "onnxruntime-web";
 import { ClientPageProps } from "./types";
 import AlliancePredictions from "./AlliancePredictions";
 import MatchPredictions from "./MatchPredictions";
+import { computeDefenseProbabilities } from "../../lib/defenseUtils";
 
 const loadOnnxRuntime = () => import("onnxruntime-web");
 
@@ -34,6 +35,9 @@ export default function ClientPage({
     "stats"
   );
   const [sessionReady, setSessionReady] = useState(false);
+  const [defensiveScores, setDefensiveScores] = useState<{
+    [teamKey: string]: number;
+  }>({});
   const sessionRef = useRef<ort.InferenceSession | null>(null);
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function ClientPage({
     }
   }, [havePreds]);
 
-  async function runOnnxModel(inputData: Float32Array) {
+  const runOnnxModel = useCallback(async (inputData: Float32Array) => {
     if (!sessionRef.current) throw new Error("ONNX session not loaded.");
 
     const ort = await loadOnnxRuntime();
@@ -64,30 +68,78 @@ export default function ClientPage({
     const results = await sessionRef.current.run(feeds);
     const output = results[sessionRef.current.outputNames[0]].data;
     return Number(output[0]);
-  }
+  }, []);
 
-  const makeInput = (
-    alliance: {
-      fsm: number;
-      algae: number;
-      coral: number;
-      auto: number;
-      climb: number;
-    }[],
-    compLevel: number,
-    match: { match_number: number }
-  ) =>
-    new Float32Array([
-      ...alliance.flatMap((t) => [
-        Number(t.fsm),
-        Number(t.algae),
-        Number(t.coral),
-        Number(t.auto),
-        Number(t.climb),
+  const makeInput = useCallback(
+    (
+      alliance: {
+        fsm: number;
+        algae: number;
+        coral: number;
+        auto: number;
+        climb: number;
+      }[],
+      compLevel: number,
+      match: { match_number: number }
+    ) =>
+      new Float32Array([
+        ...alliance.flatMap((t) => [
+          Number(t.fsm),
+          Number(t.algae),
+          Number(t.coral),
+          Number(t.auto),
+          Number(t.climb),
+        ]),
+        compLevel,
+        Number(match.match_number),
       ]),
-      compLevel,
-      Number(match.match_number),
-    ]);
+    []
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function computeDefense() {
+      if (
+        !sessionReady ||
+        !havePreds ||
+        !matchPredictions ||
+        !teams ||
+        !Array.isArray(teams) ||
+        teams.length === 0
+      )
+        return;
+
+      setTimeout(async () => {
+        if (!isMounted) return;
+        const defenseProbs = await computeDefenseProbabilities(
+          teams,
+          matchPredictions,
+          runOnnxModel,
+          makeInput
+        );
+        if (isMounted) {
+          console.log("Defense probabilities computed for all matches:");
+          for (const [matchKey, teamProbs] of Object.entries(
+            defenseProbs.probabilities
+          )) {
+            console.log(`Match ${matchKey}:`);
+            for (const [teamKey, prob] of Object.entries(teamProbs)) {
+              console.log(`  ${teamKey}: ${(prob * 100).toFixed(1)}%`);
+            }
+          }
+          console.log("Defensive scores:", defenseProbs.defensiveScores);
+          setDefensiveScores(defenseProbs.defensiveScores);
+        }
+      }, 100);
+    }
+
+    computeDefense();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sessionReady, havePreds, runOnnxModel, makeInput]);
 
   return (
     <div
@@ -185,7 +237,10 @@ export default function ClientPage({
             >
               Team Statistics
             </h2>
-            <Event25TeamsTable teams={teams} />
+            <Event25TeamsTable
+              teams={teams}
+              defensiveScores={defensiveScores}
+            />
           </div>
         )}
 

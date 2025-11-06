@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import "@/app/globals.css";
 import MenuOption from "./MenuOption";
+import SearchBar from "./SearchBar";
 
 const navLinkStyle: React.CSSProperties = {
   display: "inline-flex",
@@ -78,14 +79,20 @@ export default function Navbar() {
         padding: "0.5rem 0",
         paddingTop: "3.5rem",
         position: "relative",
+        overflowX: "hidden",
+        overflowY: "visible",
       }}
     >
       <div
         style={{
           maxWidth: "83.5rem",
           margin: "0 auto",
-          paddingLeft: "1rem",
-          paddingRight: "1rem",
+          paddingLeft: isMobile ? "0.75rem" : "1rem",
+          paddingRight: isMobile ? "0.75rem" : "1rem",
+          overflowX: "hidden",
+          overflowY: "visible",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         <div
@@ -95,9 +102,13 @@ export default function Navbar() {
             alignItems: "center",
             height: "4rem",
             marginTop: "0.25rem",
+            gap: isMobile ? "0.5rem" : "0.75rem",
+            minWidth: 0,
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
-          <Link href="/" style={{ textDecoration: "none" }}>
+          <Link href="/" style={{ textDecoration: "none", flexShrink: 0 }}>
             <div
               onMouseEnter={() => setLogoHovered(true)}
               onMouseLeave={() => setLogoHovered(false)}
@@ -112,28 +123,31 @@ export default function Navbar() {
               <Image
                 src="/logo846.png"
                 alt="Logo"
-                width={42}
-                height={47}
+                width={isMobile ? 40 : 42}
+                height={isMobile ? 44 : 47}
                 className={
                   logoHovered ? "navbar-logo logo-hovered" : "navbar-logo"
                 }
                 style={{
                   zIndex: 1000,
-                  marginLeft: "0.5rem",
+                  marginLeft: isMobile ? "0.25rem" : "0.5rem",
                   transition: "filter 0.3s ease",
+                  flexShrink: 0,
                 }}
               />
               <p
                 style={{
-                  marginLeft: "1rem",
+                  marginLeft: isMobile ? "0.5rem" : "1rem",
                   color: "var(--yellow-color)",
                   fontWeight: "bold",
-                  fontSize: "1.5rem",
+                  fontSize: isMobile ? "1.4rem" : "1.5rem",
                   transition: "all 0.3s ease",
                   textShadow: logoHovered
                     ? "0 2px 8px var(--yellow-glow)"
                     : "0 1px 2px rgba(0, 0, 0, 0.08)",
                   letterSpacing: "-0.02em",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
                 FunkyStats
@@ -159,13 +173,23 @@ export default function Navbar() {
           <div
             style={{
               display: "flex",
-              gap: "1rem",
+              gap: isMobile ? "0.5rem" : "0.75rem",
               alignItems: "center",
+              flexWrap: "nowrap",
+              flexShrink: 0,
+              minWidth: 0,
+              position: "relative",
+              maxWidth: isMobile ? "30%" : "none",
             }}
           >
+            {!isMobile && <SearchBar isMobile={false} />}
             {!isMobile &&
               links.map((link) => (
-                <Link key={link.href} href={link.href}>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{ flexShrink: 0 }}
+                >
                   <div
                     onMouseEnter={() => setHoveredLink(link.href)}
                     onMouseLeave={() => setHoveredLink(null)}

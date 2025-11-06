@@ -4,7 +4,13 @@ import { memo, useState, useMemo } from "react";
 import { TeamDataType } from "../lib/event";
 import TeamLink from "./TeamLink";
 
-function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
+function Event25TeamsTable({
+  teams,
+  defensiveScores,
+}: {
+  teams: TeamDataType[];
+  defensiveScores?: { [teamKey: string]: number };
+}) {
   const [sortField, setSortField] = useState<string>("rank");
   const [isAscending, setIsAscending] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,9 +57,9 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
           aValue = parseFloat(a.foul);
           bValue = parseFloat(b.foul);
           break;
-        case "cyp":
-          aValue = Number(a.algae) * 1.4 + Number(a.auto) + Number(a.coral);
-          bValue = Number(b.algae) * 1.4 + Number(b.auto) + Number(b.coral);
+        case "def":
+          aValue = defensiveScores?.[a.key] || 0;
+          bValue = defensiveScores?.[b.key] || 0;
           break;
         default:
           return 0;
@@ -100,13 +106,9 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
       coral: Math.max(...teams.map((t) => parseFloat(t.coral))),
       algae: Math.max(...teams.map((t) => parseFloat(t.algae))),
       climb: Math.max(...teams.map((t) => parseFloat(t.climb))),
-      cyp: Math.max(
-        ...teams.map(
-          (t) => Number(t.algae) * 1.4 + Number(t.auto) + Number(t.coral)
-        )
-      ),
+      def: defensiveScores ? Math.max(...Object.values(defensiveScores), 0) : 0,
     };
-  }, [teams]);
+  }, [teams, defensiveScores]);
 
   return (
     <div
@@ -180,7 +182,7 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                 { key: "algae", label: "ALGAE", sortable: true },
                 { key: "climb", label: "CLIMB", sortable: true },
                 { key: "foul", label: "FOULS", sortable: true },
-                { key: "cyp", label: "CYP", sortable: true },
+                { key: "def", label: "DEF", sortable: true },
               ].map((col) => (
                 <th
                   key={col.key}
@@ -213,10 +215,7 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
           </thead>
           <tbody>
             {sortedTeams.map((team, idx) => {
-              const cyp =
-                Number(team.algae) * 1.4 +
-                Number(team.auto) +
-                Number(team.coral);
+              const defScore = defensiveScores?.[team.key] || 0;
               const foulValue = parseFloat(team.foul);
 
               return (
@@ -329,10 +328,10 @@ function Event25TeamsTable({ teams }: { teams: TeamDataType[] }) {
                     style={{
                       padding: "1rem",
                       fontWeight: "bold",
-                      color: getStatColor(cyp, maxValues.cyp),
+                      color: getStatColor(defScore, maxValues.def),
                     }}
                   >
-                    {cyp.toFixed(2)}
+                    {defScore.toFixed(2)}
                   </td>
                 </tr>
               );

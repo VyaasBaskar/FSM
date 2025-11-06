@@ -54,10 +54,12 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
-        overflowX: "visible",
+        overflowX: "hidden",
         width: "100%",
+        maxWidth: "100vw",
         marginTop: "0rem",
         paddingTop: "5rem",
+        boxSizing: "border-box",
       }}
     >
       <main className={styles.main}>
@@ -105,6 +107,8 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               justifyContent: "center",
               alignItems: "center",
               flexWrap: "wrap",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
             <button
@@ -141,12 +145,13 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             width: "100%",
             maxWidth: "700px",
             margin: "0 auto",
-            padding: "1.5rem 1rem",
+            padding: "1.5rem clamp(0.75rem, 4vw, 1rem)",
             background: "var(--gray-more)",
             borderRadius: "16px",
             border: "2px solid var(--border-color)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
             marginBottom: "1.25rem",
+            boxSizing: "border-box",
           }}
         >
           <h1
@@ -191,9 +196,11 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 borderRadius: 10,
                 border: "2px solid var(--border-color)",
                 flex: "1 1 auto",
-                minWidth: "200px",
+                minWidth: "0",
                 maxWidth: "100%",
+                width: "100%",
                 transition: "all 0.3s ease",
+                boxSizing: "border-box",
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "var(--yellow-color)";
@@ -249,12 +256,13 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             width: "100%",
             maxWidth: "700px",
             margin: "0 auto",
-            padding: "1.5rem 1rem",
+            padding: "1.5rem clamp(0.75rem, 4vw, 1rem)",
             background: "var(--gray-more)",
             borderRadius: "16px",
             border: "2px solid var(--border-color)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
             marginBottom: "1.25rem",
+            boxSizing: "border-box",
           }}
         >
           <h1
@@ -300,9 +308,11 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 borderRadius: 10,
                 border: "2px solid var(--border-color)",
                 flex: "1 1 auto",
-                minWidth: "180px",
+                minWidth: "0",
                 maxWidth: "100%",
+                width: "100%",
                 transition: "all 0.3s ease",
+                boxSizing: "border-box",
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "var(--yellow-color)";
@@ -338,6 +348,8 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 minWidth: "110px",
+                maxWidth: "100%",
+                boxSizing: "border-box",
               }}
             >
               <option key="general" value="general">
