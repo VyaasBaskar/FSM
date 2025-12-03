@@ -60,8 +60,6 @@ function computeRms(values: number[]) {
   };
 }
 
-type EventMetrics = Event26Metric;
-
 async function fetchEventTeamKeys(eventKey: string): Promise<string[]> {
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventKey}/teams/simple`,
@@ -89,7 +87,7 @@ async function fetchEventTeamKeys(eventKey: string): Promise<string[]> {
 async function fetchEventMetrics(
   event: TbaSimpleEvent,
   predictionsMap: Map<string, number>
-) {
+): Promise<Event26Metric | null> {
   try {
     const teams = await getEventTeams(event.key, true);
     const actualValues = new Map(
@@ -187,7 +185,7 @@ async function gatherEventMetrics(events: TbaSimpleEvent[]) {
   );
 
   const now = Date.now();
-  const freshMap = new Map<string, EventMetrics>();
+  const freshMap = new Map<string, Event26Metric>();
 
   // Start with cached entries (we will overwrite stale ones below)
   cachedMetrics.forEach((metric) => {
@@ -207,7 +205,7 @@ async function gatherEventMetrics(events: TbaSimpleEvent[]) {
     );
 
     const validMetrics = computedResults.filter(
-      (metric): metric is EventMetrics => Boolean(metric)
+      (metric): metric is Event26Metric => Boolean(metric)
     );
 
     if (validMetrics.length > 0) {
@@ -220,7 +218,7 @@ async function gatherEventMetrics(events: TbaSimpleEvent[]) {
 
   const orderedResults = events
     .map((event) => freshMap.get(event.key))
-    .filter((metric): metric is EventMetrics => Boolean(metric));
+    .filter((metric): metric is Event26Metric => Boolean(metric));
 
   return orderedResults;
 }

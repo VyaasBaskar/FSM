@@ -121,8 +121,6 @@ export default function ClientPage({ events }: ClientPageProps) {
     });
   }, [events, selectedDistrict, selectedRegion, selectedWeek]);
 
-  const totalFilteredEvents = filteredEvents.length;
-
   const eventsByWeek = useMemo(() => {
     const groups = new Map<string, EventMetrics[]>();
 

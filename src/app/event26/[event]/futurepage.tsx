@@ -28,7 +28,7 @@ interface ClientPageProps {
 }
 
 export default function ClientPage({ code, fsms }: ClientPageProps) {
-  const filteredFsms = [];
+  const filteredFsms: Array<{ key: string; fsm: string; rank: number }> = [];
 
   const sortedFsms = Object.entries(fsms).sort((a, b) => b[1] - a[1]);
 
