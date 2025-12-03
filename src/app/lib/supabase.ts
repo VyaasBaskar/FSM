@@ -535,3 +535,107 @@ export async function updateSingleTeamGlobalFSM(
 //     return { removed: 0 };
 //   }
 // }
+
+export type CachedTeam = {
+  code: string;
+  data: Record<string, any>;
+  event_end: string;
+};
+
+export type Event26Metric = {
+  key: string;
+  shortCode: string;
+  name: string;
+  city?: string;
+  stateProv?: string;
+  country?: string;
+  startDate?: string;
+  endDate?: string;
+  week: number | null;
+  district?: string | null;
+  top10Rms: number;
+  top25Rms: number;
+  overallRms: number;
+  teamCount: number;
+  updatedAt: string;
+};
+
+type Event26MetricsRow = {
+  code: string;
+  data: Record<string, any>;
+  updated_at: string | null;
+};
+
+export async function getCachedEvent26Metrics(): Promise<Event26Metric[]> {
+  const { data, error } = await supabase
+    .from("Event26Metrics")
+    .select("code, data, updated_at");
+
+  if (error) {
+    if (error.code === "42P01") {
+      return [];
+    }
+    if (error.code === "PGRST116") {
+      return [];
+    }
+    throw error;
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return (data as Event26MetricsRow[]).map((row) => {
+    const metricData = row.data ?? {};
+    return {
+      key: row.code,
+      shortCode: metricData.shortCode ?? row.code.replace(/^2026/, ""),
+      name: metricData.name ?? "",
+      city: metricData.city ?? "",
+      stateProv: metricData.stateProv ?? "",
+      country: metricData.country ?? "",
+      startDate: metricData.startDate ?? null,
+      endDate: metricData.endDate ?? null,
+      week:
+        typeof metricData.week === "number"
+          ? metricData.week
+          : metricData.week === null
+          ? null
+          : typeof metricData.week === "string"
+          ? Number(metricData.week)
+          : null,
+      district: metricData.district ?? null,
+      top10Rms: Number(metricData.top10Rms) || 0,
+      top25Rms: Number(metricData.top25Rms) || 0,
+      overallRms: Number(metricData.overallRms) || 0,
+      teamCount: Number(metricData.teamCount) || 0,
+      updatedAt: row.updated_at ?? new Date().toISOString(),
+    };
+  });
+}
+
+export async function upsertEvent26Metrics(
+  metrics: Event26Metric[]
+): Promise<void> {
+  if (metrics.length === 0) {
+    return;
+  }
+
+  const rows = metrics.map((metric) => {
+    const { key, updatedAt, ...rest } = metric;
+    return {
+      code: key,
+      data: rest,
+      updated_at: updatedAt ?? new Date().toISOString(),
+    };
+  });
+
+  const { error } = await supabase.from("Event26Metrics").upsert(rows);
+
+  if (error) {
+    if (error.code === "42P01") {
+      return;
+    }
+    throw error;
+  }
+}

@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import PredEventTable from "../../components/PredEventTable";
 import styles from "../../page.module.css";
 
@@ -53,7 +54,42 @@ export default function ClientPage({ code, fsms }: ClientPageProps) {
       ) * 3;
   }
 
-  console.log(RPs);
+  const { topQuarterRms, overallRms, topDecileRms } = useMemo(() => {
+    const fsmValues = filteredFsms
+      .map((team) => Number(team.fsm))
+      .filter((value) => Number.isFinite(value) && value > 0);
+
+    if (fsmValues.length === 0) {
+      return { topQuarterRms: 0, overallRms: 0, topDecileRms: 0 };
+    }
+
+    const sorted = [...fsmValues].sort((a, b) => b - a);
+
+    const computeRms = (values: number[]) => {
+      if (values.length === 0) return 0;
+      const sumSquares = values.reduce((acc, value) => acc + value * value, 0);
+      return Math.sqrt(sumSquares / values.length);
+    };
+
+    const top25Count = Math.max(1, Math.ceil(sorted.length * 0.25));
+    const top10Count = Math.max(1, Math.ceil(sorted.length * 0.1));
+
+    return {
+      topQuarterRms: computeRms(sorted.slice(0, top25Count)),
+      overallRms: computeRms(sorted),
+      topDecileRms: computeRms(sorted.slice(0, top10Count)),
+    };
+  }, [filteredFsms]);
+
+  const summaryCards = useMemo(
+    () => [
+      { label: "Top 10% RMS FSM", value: topDecileRms },
+      { label: "Top 25% RMS FSM", value: topQuarterRms },
+      { label: "RMS FSM", value: overallRms },
+    ],
+    [topQuarterRms, overallRms, topDecileRms]
+  );
+
   return (
     <div
       className={styles.page}
@@ -68,6 +104,55 @@ export default function ClientPage({ code, fsms }: ClientPageProps) {
           Complete event information is unavailable because the match schedule
           is not present on The Blue Alliance.
         </h3>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "1rem",
+            width: "100%",
+            marginBottom: "1.5rem",
+          }}
+        >
+          {summaryCards.map(({ label, value }) => (
+            <div
+              key={label}
+              style={{
+                minWidth: "200px",
+                padding: "1rem 1.5rem",
+                background: "var(--background-pred)",
+                borderRadius: 12,
+                border: "1px solid var(--border-color)",
+                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  color: "var(--gray-less)",
+                  fontWeight: 600,
+                }}
+              >
+                {label}
+              </span>
+              <span
+                style={{
+                  fontSize: "1.75rem",
+                  fontWeight: 700,
+                  color: "var(--foreground)",
+                }}
+              >
+                {value.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
         <PredEventTable teams={filteredFsms} />
       </main>
     </div>

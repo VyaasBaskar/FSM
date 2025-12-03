@@ -87,13 +87,32 @@ export default function SearchBar({
 
         if (teamsRes.ok) {
           const teamsData = await teamsRes.json();
+          teamsData.sort((a: TeamOption, b: TeamOption) => {
+            const numA = Number(a.key) || 0;
+            const numB = Number(b.key) || 0;
+            if (numA < numB) return -1;
+            if (numA > numB) return 1;
+            return a.value.localeCompare(b.value);
+          });
           setTeams(teamsData);
         }
 
         if (events2025Res.ok && events2026Res.ok) {
           const events2025 = await events2025Res.json();
           const events2026 = await events2026Res.json();
-          setEvents([...events2025, ...events2026]);
+          const allEvents = [...events2025, ...events2026];
+          const uniqueEvents = Array.from(
+            new Map(allEvents.map((event) => [event.key, event])).values()
+          );
+          uniqueEvents.sort((a, b) => {
+            const firstCharA = a.value.charAt(0);
+            const firstCharB = b.value.charAt(0);
+            if (firstCharA !== firstCharB) {
+              return firstCharA.localeCompare(firstCharB);
+            }
+            return a.value.localeCompare(b.value);
+          });
+          setEvents(uniqueEvents);
         }
       } catch (error) {
         console.error("Error fetching search data:", error);
@@ -225,30 +244,68 @@ export default function SearchBar({
   };
 
   const filteredOptions: FilteredOption[] = searchQuery
-    ? [
-        ...teams
-          .filter((team) =>
-            team.value.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .slice(0, 5)
-          .map((team) => ({
+    ? (() => {
+        const queryLower = searchQuery.toLowerCase();
+        const queryNum = Number(searchQuery);
+        const isNumericQuery = !isNaN(queryNum) && isFinite(queryNum);
+        
+        const teamMatches = teams.filter((team) =>
+          team.value.toLowerCase().includes(queryLower)
+        );
+        
+        let teamExact: typeof teams = [];
+        let teamPrefix: typeof teams = [];
+        let teamPartial: typeof teams = [];
+        
+        if (isNumericQuery) {
+          teamExact = teamMatches.filter((team) => {
+            const teamNum = Number(team.key);
+            return !isNaN(teamNum) && teamNum === queryNum;
+          });
+          teamPrefix = teamMatches.filter((team) => {
+            if (teamExact.includes(team)) return false;
+            return team.key.startsWith(searchQuery);
+          });
+          teamPartial = teamMatches.filter(
+            (team) => !teamExact.includes(team) && !teamPrefix.includes(team)
+          );
+        } else {
+          teamPrefix = teamMatches.filter((team) =>
+            team.value.toLowerCase().startsWith(queryLower)
+          );
+          teamPartial = teamMatches.filter(
+            (team) => !teamPrefix.includes(team)
+          );
+        }
+        
+        const eventMatches = events.filter((event) =>
+          event.value.toLowerCase().includes(queryLower)
+        );
+        const eventComplete = eventMatches.filter((event) =>
+          event.value.toLowerCase().startsWith(queryLower)
+        );
+        const eventPartial = eventMatches.filter(
+          (event) => !event.value.toLowerCase().startsWith(queryLower)
+        );
+        
+        const allTeams = [...teamExact, ...teamPrefix, ...teamPartial].slice(0, 5);
+        const allEvents = [...eventComplete, ...eventPartial].slice(0, 5);
+        
+        return [
+          ...allTeams.map((team) => ({
             type: "team" as const,
             key: team.key,
             value: team.value,
             display: `Team ${team.value}`,
           })),
-        ...events
-          .filter((event) =>
-            event.value.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-          .slice(0, 5)
-          .map((event) => ({
+          ...allEvents.map((event) => ({
             type: "event" as const,
             key: event.key,
             value: event.value,
             display: event.value,
           })),
-      ]
+        ];
+      })()
     : [];
 
   useEffect(() => {

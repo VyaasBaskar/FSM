@@ -31,7 +31,8 @@ const navLinkStyle: React.CSSProperties = {
 
 export default function Navbar() {
   const links = [
-    { href: "/global/2025", label: "Explore Teams" },
+    { href: "/global/2025", label: "Teams" },
+    { href: "/event26/all", label: "Events" },
     { href: "/dashboard", label: "Dashboard" },
   ];
 

@@ -325,15 +325,46 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
               }}
             />
             <datalist id="team-options">
-              {teams
-                .filter((team) =>
-                  team.value.toLowerCase().includes(teamCode.toLowerCase())
-                )
-                .sort((a, b) => Number(a.key) - Number(b.key))
-                .slice(0, 5)
-                .map((team) => (
-                  <option key={team.key} value={team.value} />
-                ))}
+              {(() => {
+                const queryLower = teamCode.toLowerCase();
+                const queryNum = Number(teamCode);
+                const isNumericQuery = !isNaN(queryNum) && isFinite(queryNum);
+                
+                const matches = teams.filter((team) =>
+                  team.value.toLowerCase().includes(queryLower)
+                );
+                
+                let exact: typeof teams = [];
+                let prefix: typeof teams = [];
+                let partial: typeof teams = [];
+                
+                if (isNumericQuery) {
+                  exact = matches.filter((team) => {
+                    const teamNum = Number(team.key);
+                    return !isNaN(teamNum) && teamNum === queryNum;
+                  });
+                  prefix = matches.filter((team) => {
+                    if (exact.includes(team)) return false;
+                    return team.key.startsWith(teamCode);
+                  });
+                  partial = matches.filter(
+                    (team) => !exact.includes(team) && !prefix.includes(team)
+                  );
+                } else {
+                  prefix = matches.filter((team) =>
+                    team.value.toLowerCase().startsWith(queryLower)
+                  );
+                  partial = matches.filter(
+                    (team) => !prefix.includes(team)
+                  );
+                }
+                
+                return [...exact, ...prefix, ...partial]
+                  .slice(0, 5)
+                  .map((team) => (
+                    <option key={team.key} value={team.value} />
+                  ));
+              })()}
             </datalist>
             <select
               value={year}

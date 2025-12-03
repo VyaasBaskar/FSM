@@ -6,7 +6,10 @@ import { getCacheManager } from "@/app/lib/cache";
 import SearchBar from "./SearchBar";
 
 const menOps0 = [{ label: "Home", value: "/" }];
-const mobileOptions = [{ label: "Explore Teams", value: "/global/2025" }];
+const mobileOptions = [
+  { label: "Teams", value: "/global/2025" },
+  { label: "Events", value: "/event26/all" },
+];
 
 interface MenuOptionProps {
   isMobile?: boolean;
@@ -261,7 +264,7 @@ const MenuOption: React.FC<MenuOptionProps> = ({ isMobile }) => {
                       e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    {option.label === "Explore Teams" ? "Teams" : option.label}
+                    {option.label}
                   </Link>
                 ))}
               </div>
