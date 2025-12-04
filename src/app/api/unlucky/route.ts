@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEventTeams, getEventQualMatches, getEventAlliances } from "../../lib/event";
+import {
+  getEventTeams,
+  getEventQualMatches,
+  getEventAlliances,
+} from "../../lib/event";
 import { calculateEventUnluckiness } from "../../lib/unlucky";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +15,12 @@ interface UnluckyData {
   eventCount: number;
 }
 
+interface TbaSimpleEvent {
+  key: string;
+  start_date?: string;
+  event_type?: number;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -19,20 +29,14 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get("year");
 
     if (!year) {
-      return NextResponse.json(
-        { error: "Year is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Year is required" }, { status: 400 });
     }
 
     const yearNum = parseInt(year);
     const years = [2022, 2023, 2024, 2025];
-    
+
     if (!years.includes(yearNum)) {
-      return NextResponse.json(
-        { error: "Invalid year" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid year" }, { status: 400 });
     }
 
     const res = await fetch(
@@ -54,35 +58,44 @@ export async function GET(request: NextRequest) {
 
     const allEvents = await res.json();
     const today = new Date();
-    
-    const events = allEvents.filter((event: { start_date?: string; event_type?: number }) => {
-      if (!event.start_date) return false;
+
+    const events = (allEvents as TbaSimpleEvent[]).filter((event) => {
+      if (!event.start_date || event.event_type === undefined) return false;
       const eventStart = new Date(event.start_date);
       return eventStart < today && [0, 1, 2, 3, 4].includes(event.event_type);
     });
 
     const batch = events.slice(batchStart, batchStart + batchSize);
-    const teamUnluckyPoints: { [teamKey: string]: { points: number; events: number } } = {};
+    const teamUnluckyPoints: {
+      [teamKey: string]: { points: number; events: number };
+    } = {};
 
     await Promise.all(
-      batch.map(async (event) => {
+      batch.map(async (event: TbaSimpleEvent) => {
         try {
           const eventCode = event.key;
-          
+
           const [teams, matches, alliances] = await Promise.all([
             getEventTeams(eventCode, false).catch(() => []),
             getEventQualMatches(eventCode, true).catch(() => []),
             getEventAlliances(eventCode).catch(() => null),
           ]);
-          
+
           if (teams.length === 0) {
             return;
           }
 
-          const eventMetrics = await calculateEventUnluckiness(teams, matches, alliances);
-          
+          const eventMetrics = await calculateEventUnluckiness(
+            teams,
+            matches,
+            alliances
+          );
+
           for (const teamKey in eventMetrics.unlucky) {
-            const unluckyPoints = Math.max(-2.0, Math.min(eventMetrics.unlucky[teamKey], 3.0));
+            const unluckyPoints = Math.max(
+              -2.0,
+              Math.min(eventMetrics.unlucky[teamKey], 3.0)
+            );
             if (!teamUnluckyPoints[teamKey]) {
               teamUnluckyPoints[teamKey] = { points: 0, events: 0 };
             }
@@ -118,8 +131,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-
-
-
-

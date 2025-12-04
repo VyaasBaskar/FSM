@@ -38,7 +38,6 @@ export default async function EventPage({
           year={year}
           sosZScoreMetrics={eventMetrics.sosZScore}
           unluckyMetrics={eventMetrics.unlucky}
-          allianceDraftUnluckyMetrics={eventMetrics.allianceDraftUnlucky}
         />
       </main>
     </div>

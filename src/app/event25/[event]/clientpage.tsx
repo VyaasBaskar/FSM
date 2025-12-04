@@ -28,11 +28,7 @@ export default function ClientPage({
   actualAlliances,
   nexusSchedule,
   unluckyMetrics,
-  rankUnluckyMetrics,
-  sosMetrics,
   sosZScoreMetrics,
-  rankUnluckyZScoreMetrics,
-  allianceDraftUnluckyMetrics,
 }: ClientPageProps) {
   console.log("actualAlliances received:", actualAlliances);
   console.log("Event code:", eventCode);

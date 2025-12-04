@@ -98,11 +98,7 @@ export default async function EventPage({
         actualAlliances={actualAlliances}
         nexusSchedule={nexusSchedule}
         unluckyMetrics={eventMetrics.unlucky}
-        rankUnluckyMetrics={eventMetrics.rankUnlucky}
-        sosMetrics={eventMetrics.sos}
         sosZScoreMetrics={eventMetrics.sosZScore}
-        rankUnluckyZScoreMetrics={eventMetrics.rankUnluckyZScore}
-        allianceDraftUnluckyMetrics={eventMetrics.allianceDraftUnlucky}
       />
     );
   } catch (error) {

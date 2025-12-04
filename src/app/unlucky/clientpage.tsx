@@ -95,15 +95,16 @@ export default function UnluckyClientPage() {
                 rmsFsm: rmsFsm,
               };
             })
-            .filter(
-              (item) =>
-                !filterMinFsm ||
-                (item.rmsFsm !== undefined && item.rmsFsm >= 1650)
-            )
             .sort((a, b) => b.unluckyPerEvent - a.unluckyPerEvent)
             .slice(0, 200);
 
-          setUnluckyData(sorted);
+          const filtered = sorted.filter(
+            (item) =>
+              !filterMinFsm ||
+              (item.rmsFsm !== undefined && item.rmsFsm >= 1650)
+          );
+
+          setUnluckyData(filtered);
 
           if (mounted && year === years[yearIndexRef.current]) {
             setCurrentYearProgress({
@@ -163,6 +164,7 @@ export default function UnluckyClientPage() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -212,8 +214,8 @@ export default function UnluckyClientPage() {
           This page calculates unluckiness for all teams from 2022 to 2025.
           Unluckiness is a combination of strength-of-schedule (75%), ranking
           lower than expected (20%), and being picked by a low-strength captain
-          that ranked abnormally high (5%). "Unlucky points" are accumulated
-          across all in-season events between 2022 and 2025.
+          that ranked abnormally high (5%). &quot;Unlucky points&quot; are
+          accumulated across all in-season events between 2022 and 2025.
         </p>
 
         {isLoading && (

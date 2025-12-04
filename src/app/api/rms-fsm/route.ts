@@ -17,17 +17,17 @@ export async function GET() {
       years.map((y) => getGlobalStats(y, true))
     );
 
-    yearResults.forEach((result, idx) => {
+    yearResults.forEach((result) => {
       if (result.status === "fulfilled") {
         const globalStats = result.value;
-        const fsms = globalStats.map((t: any) => Number(t.bestFSM));
+        const fsms = globalStats.map((t: { bestFSM: string }) => Number(t.bestFSM));
         const mean = fsms.reduce((a, b) => a + b, 0) / fsms.length;
         const variance =
           fsms.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / fsms.length;
         const stddev = Math.sqrt(variance);
 
         if (stddev > 0) {
-          globalStats.forEach((team: any) => {
+          globalStats.forEach((team: { teamKey: string; bestFSM: string }) => {
             const fsm = Number(team.bestFSM);
             if (!isNaN(fsm)) {
               const normFSM = ((fsm - mean) / stddev) * 100.0 + 1500.0;
