@@ -9,6 +9,7 @@ interface UnluckyData {
   unluckyPoints: number;
   eventCount: number;
   unluckyPerEvent?: number;
+  rmsFsm?: number;
 }
 
 const years = [2022, 2023, 2024, 2025];
@@ -17,25 +18,53 @@ export default function UnluckyClientPage() {
   const [unluckyData, setUnluckyData] = useState<UnluckyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
-  const [currentYearProgress, setCurrentYearProgress] = useState({ processed: 0, total: 0 });
+  const [currentYearProgress, setCurrentYearProgress] = useState({
+    processed: 0,
+    total: 0,
+  });
   const [isComplete, setIsComplete] = useState(false);
   const [completedYears, setCompletedYears] = useState(0);
-  
+  const [filterMinFsm, setFilterMinFsm] = useState(false);
+  const [rmsFsmMap, setRmsFsmMap] = useState<{ [key: string]: number }>({});
+
   const yearIndexRef = useRef(0);
-  const batchStartRef = useRef(0);
   const isProcessingRef = useRef(false);
   const allDataRef = useRef<{ [key: string]: UnluckyData }>({});
+
+  useEffect(() => {
+    async function fetchRmsFsm() {
+      try {
+        const response = await fetch("/api/rms-fsm", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Failed to fetch RMS FSM");
+        }
+        const fsmMap = await response.json();
+        console.log(
+          "RMS FSM map sample:",
+          Object.keys(fsmMap).slice(0, 5),
+          Object.values(fsmMap).slice(0, 5)
+        );
+        setRmsFsmMap(fsmMap);
+      } catch (error) {
+        console.error("Error fetching RMS FSM:", error);
+      }
+    }
+    fetchRmsFsm();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
     const batchSize = 100;
     const concurrentYears = 2;
 
-    async function processYear(year: number, yearBatchStart: number): Promise<void> {
+    async function processYear(
+      year: number,
+      yearBatchStart: number
+    ): Promise<void> {
       try {
         const response = await fetch(
           `/api/unlucky?year=${year}&batchStart=${yearBatchStart}&batchSize=${batchSize}`,
-          { cache: 'no-store' }
+          { cache: "no-store" }
         );
 
         if (!response.ok) {
@@ -47,7 +76,8 @@ export default function UnluckyClientPage() {
         if (mounted) {
           result.data.forEach((item: UnluckyData) => {
             if (allDataRef.current[item.teamKey]) {
-              allDataRef.current[item.teamKey].unluckyPoints += item.unluckyPoints;
+              allDataRef.current[item.teamKey].unluckyPoints +=
+                item.unluckyPoints;
               allDataRef.current[item.teamKey].eventCount += item.eventCount;
             } else {
               allDataRef.current[item.teamKey] = { ...item };
@@ -55,13 +85,24 @@ export default function UnluckyClientPage() {
           });
 
           const sorted = Object.values(allDataRef.current)
-            .map(item => ({
-              ...item,
-              unluckyPerEvent: item.unluckyPoints / Math.max(item.eventCount, 10),
-            }))
+            .map((item) => {
+              const normalizedKey = item.teamKey.replace(/^frc/, "");
+              const rmsFsm = rmsFsmMap[normalizedKey];
+              return {
+                ...item,
+                unluckyPerEvent:
+                  item.unluckyPoints / Math.max(item.eventCount, 10),
+                rmsFsm: rmsFsm,
+              };
+            })
+            .filter(
+              (item) =>
+                !filterMinFsm ||
+                (item.rmsFsm !== undefined && item.rmsFsm >= 1650)
+            )
             .sort((a, b) => b.unluckyPerEvent - a.unluckyPerEvent)
             .slice(0, 200);
-          
+
           setUnluckyData(sorted);
 
           if (mounted && year === years[yearIndexRef.current]) {
@@ -94,8 +135,11 @@ export default function UnluckyClientPage() {
       }
 
       const yearPromises: Promise<void>[] = [];
-      const yearsToProcess = years.slice(yearIndexRef.current, yearIndexRef.current + concurrentYears);
-      
+      const yearsToProcess = years.slice(
+        yearIndexRef.current,
+        yearIndexRef.current + concurrentYears
+      );
+
       if (mounted && yearsToProcess.length > 0) {
         setCurrentYear(yearsToProcess[0]);
       }
@@ -121,8 +165,32 @@ export default function UnluckyClientPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (Object.keys(allDataRef.current).length === 0) return;
+
+    const sorted = Object.values(allDataRef.current)
+      .map((item) => {
+        const normalizedKey = item.teamKey.replace(/^frc/, "");
+        const rmsFsm = rmsFsmMap[normalizedKey];
+        return {
+          ...item,
+          unluckyPerEvent: item.unluckyPoints / Math.max(item.eventCount, 10),
+          rmsFsm: rmsFsm,
+        };
+      })
+      .filter(
+        (item) =>
+          !filterMinFsm || (item.rmsFsm !== undefined && item.rmsFsm >= 1650)
+      )
+      .sort((a, b) => b.unluckyPerEvent - a.unluckyPerEvent)
+      .slice(0, 200);
+
+    setUnluckyData(sorted);
+  }, [filterMinFsm, rmsFsmMap]);
+
   const totalYears = years.length;
-  const progressPercent = totalYears > 0 ? (completedYears / totalYears) * 100 : 0;
+  const progressPercent =
+    totalYears > 0 ? (completedYears / totalYears) * 100 : 0;
 
   return (
     <div
@@ -141,10 +209,11 @@ export default function UnluckyClientPage() {
             marginRight: "auto",
           }}
         >
-          This page calculates unluckiness by comparing teams' actual rankings
-          to their expected rankings based on FSM, weighted by strength of
-          schedule. Teams that consistently rank worse than their FSM suggests
-          accumulate unlucky points across all events.
+          This page calculates unluckiness for all teams from 2022 to 2025.
+          Unluckiness is a combination of strength-of-schedule (75%), ranking
+          lower than expected (20%), and being picked by a low-strength captain
+          that ranked abnormally high (5%). "Unlucky points" are accumulated
+          across all in-season events between 2022 and 2025.
         </p>
 
         {isLoading && (
@@ -167,7 +236,8 @@ export default function UnluckyClientPage() {
             {currentYearProgress.total > 0 && (
               <div style={{ marginBottom: "1rem" }}>
                 <div style={{ marginBottom: "0.5rem", fontSize: "0.9rem" }}>
-                  Events: {currentYearProgress.processed} / {currentYearProgress.total}
+                  Events: {currentYearProgress.processed} /{" "}
+                  {currentYearProgress.total}
                 </div>
                 <div
                   style={{
@@ -180,7 +250,11 @@ export default function UnluckyClientPage() {
                 >
                   <div
                     style={{
-                      width: `${(currentYearProgress.processed / currentYearProgress.total) * 100}%`,
+                      width: `${
+                        (currentYearProgress.processed /
+                          currentYearProgress.total) *
+                        100
+                      }%`,
                       height: "100%",
                       background: "var(--yellow-color)",
                       transition: "width 0.3s ease",
@@ -233,11 +307,43 @@ export default function UnluckyClientPage() {
           </div>
         )}
 
-        {unluckyData.length > 0 && (
-          <UnluckyTable data={unluckyData} />
+        {!isLoading && isComplete && (
+          <div
+            style={{
+              margin: "1rem auto",
+              maxWidth: "1200px",
+              padding: "1rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={filterMinFsm}
+                onChange={(e) => setFilterMinFsm(e.target.checked)}
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  cursor: "pointer",
+                }}
+              />
+              <span>Filter out teams with less than 1650 RMS FSM</span>
+            </label>
+          </div>
         )}
+
+        {unluckyData.length > 0 && <UnluckyTable data={unluckyData} />}
       </main>
     </div>
   );
 }
-

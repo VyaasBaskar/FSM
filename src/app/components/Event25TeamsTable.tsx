@@ -8,20 +8,12 @@ function Event25TeamsTable({
   teams,
   defensiveScores,
   unluckyMetrics,
-  rankUnluckyMetrics,
-  sosMetrics,
   sosZScoreMetrics,
-  rankUnluckyZScoreMetrics,
-  allianceDraftUnluckyMetrics,
 }: {
   teams: TeamDataType[];
   defensiveScores?: { [teamKey: string]: number };
   unluckyMetrics?: { [teamKey: string]: number };
-  rankUnluckyMetrics?: { [teamKey: string]: number };
-  sosMetrics?: { [teamKey: string]: number };
   sosZScoreMetrics?: { [teamKey: string]: number };
-  rankUnluckyZScoreMetrics?: { [teamKey: string]: number };
-  allianceDraftUnluckyMetrics?: { [teamKey: string]: number };
 }) {
   const [sortField, setSortField] = useState<string>("rank");
   const [isAscending, setIsAscending] = useState(true);
@@ -89,7 +81,7 @@ function Event25TeamsTable({
     });
 
     return sorted;
-  }, [filteredTeams, sortField, isAscending]);
+  }, [filteredTeams, sortField, isAscending, defensiveScores, sosZScoreMetrics, unluckyMetrics]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -131,23 +123,6 @@ function Event25TeamsTable({
     return "var(--foreground)";
   };
 
-  const getSOSColor = (value: number, maxAbs: number) => {
-    if (value === 0 || maxAbs === 0) return "var(--foreground)";
-    if (value < 0) {
-      const absValue = Math.abs(value);
-      const percentage = (absValue / maxAbs) * 100;
-      if (percentage >= 75) return "#22c55e";
-      if (percentage >= 50) return "#84cc16";
-      if (percentage >= 25) return "#a3e635";
-      return "#d9f99d";
-    } else {
-      const percentage = (value / maxAbs) * 100;
-      if (percentage >= 75) return "#ef4444";
-      if (percentage >= 50) return "#f97316";
-      if (percentage >= 25) return "#eab308";
-      return "#fbbf24";
-    }
-  };
 
   const getZScoreColor = (zScore: number) => {
     if (zScore >= 2.0) return "#ef4444";

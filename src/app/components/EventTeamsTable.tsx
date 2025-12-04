@@ -9,13 +9,11 @@ export default function EventTeamsTable({
   year,
   sosZScoreMetrics,
   unluckyMetrics,
-  allianceDraftUnluckyMetrics,
 }: { 
   teams: TeamDataType[]; 
   year?: string | number;
   sosZScoreMetrics?: { [teamKey: string]: number };
   unluckyMetrics?: { [teamKey: string]: number };
-  allianceDraftUnluckyMetrics?: { [teamKey: string]: number };
 }) {
   const getZScoreColor = (zScore: number) => {
     if (zScore >= 2.0) return "#ef4444";

@@ -247,11 +247,7 @@ export default function ClientPage({
               teams={teams}
               defensiveScores={defensiveScores}
               unluckyMetrics={unluckyMetrics}
-              rankUnluckyMetrics={rankUnluckyMetrics}
-              sosMetrics={sosMetrics}
               sosZScoreMetrics={sosZScoreMetrics}
-              rankUnluckyZScoreMetrics={rankUnluckyZScoreMetrics}
-              allianceDraftUnluckyMetrics={allianceDraftUnluckyMetrics}
             />
           </div>
         )}

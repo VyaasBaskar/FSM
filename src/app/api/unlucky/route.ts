@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const allEvents = await res.json();
     const today = new Date();
     
-    const events = allEvents.filter((event: any) => {
+    const events = allEvents.filter((event: { start_date?: string; event_type?: number }) => {
       if (!event.start_date) return false;
       const eventStart = new Date(event.start_date);
       return eventStart < today && [0, 1, 2, 3, 4].includes(event.event_type);
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
           const eventMetrics = await calculateEventUnluckiness(teams, matches, alliances);
           
           for (const teamKey in eventMetrics.unlucky) {
-            const unluckyPoints = eventMetrics.unlucky[teamKey];
+            const unluckyPoints = Math.max(-2.0, Math.min(eventMetrics.unlucky[teamKey], 3.0));
             if (!teamUnluckyPoints[teamKey]) {
               teamUnluckyPoints[teamKey] = { points: 0, events: 0 };
             }

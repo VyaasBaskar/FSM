@@ -33,10 +33,22 @@ export interface EventMetrics {
   allianceDraftUnlucky: AllianceDraftUnluckyMetric;
 }
 
+interface MatchData {
+  alliances?: {
+    red?: { team_keys?: string[]; score?: number };
+    blue?: { team_keys?: string[]; score?: number };
+  };
+}
+
+interface AllianceData {
+  picks?: string[];
+  declines?: string[];
+}
+
 export async function calculateEventUnluckiness(
   teams: TeamDataType[],
-  matches: any[],
-  alliances?: any[]
+  matches: MatchData[],
+  alliances?: AllianceData[]
 ): Promise<EventMetrics> {
   const unluckyMap: UnluckyMetric = {};
   const rankUnluckyMap: RankUnluckyMetric = {};
@@ -188,21 +200,14 @@ export async function calculateEventUnluckiness(
   }
 
   const maxRankDiff = rankDiffs.length > 0 ? Math.max(...rankDiffs) : 1;
-  const maxSOS = sosValues.length > 0 ? Math.max(...sosValues) : 1;
   const minFsm = fsms.length > 0 ? Math.min(...fsms) : 0;
   const maxFsm = fsms.length > 0 ? Math.max(...fsms) : 1;
   const fsmRange = maxFsm - minFsm;
-
-  const eventAvgFsm =
-    teamsWithFsm.length > 0
-      ? teamsWithFsm.reduce((sum, t) => sum + t.fsm, 0) / teamsWithFsm.length
-      : 0;
 
   for (const team of teams) {
     const teamKey = team.key;
     const actualRank = team.rank;
     const expectedRank = expectedRankMap[teamKey];
-    const sos = avgSosMap[teamKey] || 0;
 
     if (actualRank > 0 && expectedRank > 0) {
       const rankDiff = actualRank - expectedRank;

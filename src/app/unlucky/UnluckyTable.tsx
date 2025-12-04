@@ -8,6 +8,7 @@ interface UnluckyData {
   unluckyPoints: number;
   eventCount: number;
   unluckyPerEvent?: number;
+  rmsFsm?: number;
 }
 
 interface UnluckyTableProps {
@@ -48,6 +49,22 @@ export default function UnluckyTable({ data }: UnluckyTableProps) {
         );
       },
       getValue: (item: UnluckyData) => item.unluckyPerEvent ?? (item.unluckyPoints / Math.max(item.eventCount, 10)),
+    },
+    {
+      key: "rmsFsm",
+      label: "RMS Norm FSM",
+      sortable: true,
+      render: (item: UnluckyData) => {
+        if (item.rmsFsm === undefined) {
+          return <span style={{ opacity: 0.5 }}>—</span>;
+        }
+        return (
+          <span style={{ fontWeight: 500 }}>
+            {item.rmsFsm.toFixed(0)}
+          </span>
+        );
+      },
+      getValue: (item: UnluckyData) => item.rmsFsm ?? 0,
     },
     {
       key: "eventCount",
