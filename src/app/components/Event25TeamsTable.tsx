@@ -7,9 +7,21 @@ import TeamLink from "./TeamLink";
 function Event25TeamsTable({
   teams,
   defensiveScores,
+  unluckyMetrics,
+  rankUnluckyMetrics,
+  sosMetrics,
+  sosZScoreMetrics,
+  rankUnluckyZScoreMetrics,
+  allianceDraftUnluckyMetrics,
 }: {
   teams: TeamDataType[];
   defensiveScores?: { [teamKey: string]: number };
+  unluckyMetrics?: { [teamKey: string]: number };
+  rankUnluckyMetrics?: { [teamKey: string]: number };
+  sosMetrics?: { [teamKey: string]: number };
+  sosZScoreMetrics?: { [teamKey: string]: number };
+  rankUnluckyZScoreMetrics?: { [teamKey: string]: number };
+  allianceDraftUnluckyMetrics?: { [teamKey: string]: number };
 }) {
   const [sortField, setSortField] = useState<string>("rank");
   const [isAscending, setIsAscending] = useState(true);
@@ -61,6 +73,14 @@ function Event25TeamsTable({
           aValue = defensiveScores?.[a.key] || 0;
           bValue = defensiveScores?.[b.key] || 0;
           break;
+        case "unlucky":
+          aValue = unluckyMetrics?.[a.key] || 0;
+          bValue = unluckyMetrics?.[b.key] || 0;
+          break;
+        case "sosZScore":
+          aValue = sosZScoreMetrics?.[a.key] || 0;
+          bValue = sosZScoreMetrics?.[b.key] || 0;
+          break;
         default:
           return 0;
       }
@@ -99,6 +119,48 @@ function Event25TeamsTable({
     return "var(--foreground)";
   };
 
+  const getUnluckyColor = (value: number, max: number, min: number) => {
+    if (value === 0 && max === 0 && min === 0) return "var(--foreground)";
+    const range = max - min;
+    if (range === 0) return "var(--foreground)";
+    const percentage = ((value - min) / range) * 100;
+    if (percentage >= 75) return "#ef4444";
+    if (percentage >= 50) return "#f97316";
+    if (percentage >= 25) return "#eab308";
+    if (percentage <= 25) return "#22c55e";
+    return "var(--foreground)";
+  };
+
+  const getSOSColor = (value: number, maxAbs: number) => {
+    if (value === 0 || maxAbs === 0) return "var(--foreground)";
+    if (value < 0) {
+      const absValue = Math.abs(value);
+      const percentage = (absValue / maxAbs) * 100;
+      if (percentage >= 75) return "#22c55e";
+      if (percentage >= 50) return "#84cc16";
+      if (percentage >= 25) return "#a3e635";
+      return "#d9f99d";
+    } else {
+      const percentage = (value / maxAbs) * 100;
+      if (percentage >= 75) return "#ef4444";
+      if (percentage >= 50) return "#f97316";
+      if (percentage >= 25) return "#eab308";
+      return "#fbbf24";
+    }
+  };
+
+  const getZScoreColor = (zScore: number) => {
+    if (zScore >= 2.0) return "#ef4444";
+    if (zScore >= 1.5) return "#f97316";
+    if (zScore >= 1.0) return "#eab308";
+    if (zScore >= 0.5) return "#fbbf24";
+    if (zScore <= -2.0) return "#22c55e";
+    if (zScore <= -1.5) return "#84cc16";
+    if (zScore <= -1.0) return "#a3e635";
+    if (zScore <= -0.5) return "#d9f99d";
+    return "var(--foreground)";
+  };
+
   const maxValues = useMemo(() => {
     return {
       fsm: Math.max(...teams.map((t) => parseFloat(t.fsm))),
@@ -107,8 +169,10 @@ function Event25TeamsTable({
       algae: Math.max(...teams.map((t) => parseFloat(t.algae))),
       climb: Math.max(...teams.map((t) => parseFloat(t.climb))),
       def: defensiveScores ? Math.max(...Object.values(defensiveScores), 0) : 0,
+      unlucky: unluckyMetrics ? Math.max(...Object.values(unluckyMetrics), 0) : 0,
+      unluckyMin: unluckyMetrics ? Math.min(...Object.values(unluckyMetrics), 0) : 0,
     };
-  }, [teams, defensiveScores]);
+  }, [teams, defensiveScores, unluckyMetrics]);
 
   return (
     <div
@@ -183,6 +247,8 @@ function Event25TeamsTable({
                 { key: "climb", label: "CLIMB", sortable: true },
                 { key: "foul", label: "FOULS", sortable: true },
                 { key: "def", label: "DEF", sortable: true },
+                { key: "sosZScore", label: "SOS", sortable: true },
+                { key: "unlucky", label: "UNLUCKY", sortable: true },
               ].map((col) => (
                 <th
                   key={col.key}
@@ -217,6 +283,8 @@ function Event25TeamsTable({
             {sortedTeams.map((team, idx) => {
               const defScore = defensiveScores?.[team.key] || 0;
               const foulValue = parseFloat(team.foul);
+              const sosZScoreValue = sosZScoreMetrics?.[team.key] || 0;
+              const unluckyValue = unluckyMetrics?.[team.key] || 0;
 
               return (
                 <tr
@@ -332,6 +400,24 @@ function Event25TeamsTable({
                     }}
                   >
                     {defScore.toFixed(2)}
+                  </td>
+                  <td
+                    style={{
+                      padding: "1rem",
+                      fontWeight: "600",
+                      color: getZScoreColor(sosZScoreValue),
+                    }}
+                  >
+                    {sosZScoreValue !== 0 ? sosZScoreValue.toFixed(2) : "—"}
+                  </td>
+                  <td
+                    style={{
+                      padding: "1rem",
+                      fontWeight: "600",
+                      color: getUnluckyColor(unluckyValue, maxValues.unlucky || 1, maxValues.unluckyMin || 0),
+                    }}
+                  >
+                    {unluckyValue !== 0 ? unluckyValue.toFixed(2) : "—"}
                   </td>
                 </tr>
               );

@@ -27,6 +27,12 @@ export default function ClientPage({
   playedMatches,
   actualAlliances,
   nexusSchedule,
+  unluckyMetrics,
+  rankUnluckyMetrics,
+  sosMetrics,
+  sosZScoreMetrics,
+  rankUnluckyZScoreMetrics,
+  allianceDraftUnluckyMetrics,
 }: ClientPageProps) {
   console.log("actualAlliances received:", actualAlliances);
   console.log("Event code:", eventCode);
@@ -240,6 +246,12 @@ export default function ClientPage({
             <Event25TeamsTable
               teams={teams}
               defensiveScores={defensiveScores}
+              unluckyMetrics={unluckyMetrics}
+              rankUnluckyMetrics={rankUnluckyMetrics}
+              sosMetrics={sosMetrics}
+              sosZScoreMetrics={sosZScoreMetrics}
+              rankUnluckyZScoreMetrics={rankUnluckyZScoreMetrics}
+              allianceDraftUnluckyMetrics={allianceDraftUnluckyMetrics}
             />
           </div>
         )}

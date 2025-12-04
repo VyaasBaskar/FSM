@@ -9,6 +9,7 @@ import {
   getNexusMatchSchedule,
 } from "../../lib/event";
 import { getGlobalStats } from "@/app/lib/global";
+import { calculateEventUnluckiness } from "../../lib/unlucky";
 import ClientPage from "./clientpage";
 import FuturePage from "./futurepage";
 import { getAttendingTeams } from "../../lib/event";
@@ -52,6 +53,12 @@ export default async function EventPage({
     const havePreds =
       matchPredictions && Object.keys(matchPredictions).length > 0;
 
+    const eventMetrics = await calculateEventUnluckiness(
+      teams,
+      matches,
+      actualAlliances
+    );
+
     // const dataDict = [];
     // for (const match of matches) {
     //   let compLevel = 0;
@@ -90,6 +97,12 @@ export default async function EventPage({
         playedMatches={playedMatches}
         actualAlliances={actualAlliances}
         nexusSchedule={nexusSchedule}
+        unluckyMetrics={eventMetrics.unlucky}
+        rankUnluckyMetrics={eventMetrics.rankUnlucky}
+        sosMetrics={eventMetrics.sos}
+        sosZScoreMetrics={eventMetrics.sosZScore}
+        rankUnluckyZScoreMetrics={eventMetrics.rankUnluckyZScore}
+        allianceDraftUnluckyMetrics={eventMetrics.allianceDraftUnlucky}
       />
     );
   } catch (error) {

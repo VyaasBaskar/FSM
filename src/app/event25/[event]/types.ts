@@ -31,6 +31,8 @@ export interface NexusScheduleData {
   label: string;
 }
 
+import { UnluckyMetric, RankUnluckyMetric, SOSMetric, SOSZScoreMetric, RankUnluckyZScoreMetric, AllianceDraftUnluckyMetric } from "@/app/lib/unlucky";
+
 export interface ClientPageProps {
   havePreds: boolean;
   eventCode: string;
@@ -39,6 +41,12 @@ export interface ClientPageProps {
   playedMatches: number;
   actualAlliances: AllianceData[] | null;
   nexusSchedule: { [key: string]: NexusScheduleData };
+  unluckyMetrics: UnluckyMetric;
+  rankUnluckyMetrics: RankUnluckyMetric;
+  sosMetrics: SOSMetric;
+  sosZScoreMetrics: SOSZScoreMetric;
+  rankUnluckyZScoreMetrics: RankUnluckyZScoreMetric;
+  allianceDraftUnluckyMetrics: AllianceDraftUnluckyMetric;
 }
 
 export interface AlliancePredictionsProps {
