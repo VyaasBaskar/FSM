@@ -31,7 +31,14 @@ export interface NexusScheduleData {
   label: string;
 }
 
-import { UnluckyMetric, RankUnluckyMetric, SOSMetric, SOSZScoreMetric, RankUnluckyZScoreMetric, AllianceDraftUnluckyMetric } from "@/app/lib/unlucky";
+import {
+  UnluckyMetric,
+  RankUnluckyMetric,
+  SOSMetric,
+  SOSZScoreMetric,
+  RankUnluckyZScoreMetric,
+  AllianceDraftUnluckyMetric,
+} from "@/app/lib/unlucky";
 
 export interface ClientPageProps {
   havePreds: boolean;
