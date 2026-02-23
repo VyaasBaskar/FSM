@@ -12,21 +12,16 @@ interface ClientHomeProps {
 export default function ClientHome({ events, teams }: ClientHomeProps) {
   const [eventCode, setEventCode] = useState("");
   const [teamCode, setTeamCode] = useState("");
-  const [year, setYear] = useState("2025");
+  const [year, setYear] = useState("2026");
   const router = useRouter();
 
   const handleGoEvent = (e: React.FormEvent) => {
     e.preventDefault();
 
     const trimmed = eventCode.trim();
-    if (trimmed && trimmed.length > 5) {
-      if (trimmed.startsWith("2026")) {
-        router.push(`/event26/${trimmed.slice(4)}`);
-      } else if (trimmed.startsWith("2025")) {
-        router.push(`/event25/${trimmed.slice(4)}`);
-      } else {
-        router.push(`/event/${trimmed}`);
-      }
+    if (trimmed) {
+      const fullCode = trimmed.startsWith("2026") ? trimmed : `2026${trimmed}`;
+      router.push(`/event26/${fullCode.slice(4)}`);
     }
   };
 
@@ -214,6 +209,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
             />
             <datalist id="event-options">
               {events
+                .filter((event) => event.key.startsWith("2026"))
                 .filter((event) =>
                   event.value.toLowerCase().includes(eventCode.toLowerCase())
                 )
@@ -383,26 +379,9 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
                 boxSizing: "border-box",
               }}
             >
-              <option key="general" value="general">
-                General
+              <option key="2026" value="2026">
+                2026
               </option>
-              {[
-                "2025",
-                "2024",
-                "2023",
-                "2022",
-                "2019",
-                "2018",
-                "2017",
-                "2016",
-                "2015",
-                "2014",
-                "2013",
-              ].map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
             </select>
             <button
               type="submit"

@@ -1,5 +1,5 @@
 import ClientPage from "./clientpage";
-import { getEventTeams, getAttendingTeams } from "../../lib/event";
+import { getEventTeams, getAttendingTeams } from "../../lib/event26";
 import { get26Predictions } from "../../lib/26pred";
 import {
   getCachedEvent26Metrics,

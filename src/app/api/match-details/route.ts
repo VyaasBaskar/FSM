@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const matchKey = searchParams.get("matchKey");
+    const matchKey = searchParams.get("matchKey")?.trim();
+    const year = searchParams.get("year")?.trim();
 
     if (!matchKey) {
       return NextResponse.json(
@@ -12,24 +13,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const res = await fetch(
-      `https://www.thebluealliance.com/api/v3/match/${matchKey}`,
-      {
-        headers: {
-          "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
-        },
-        next: { revalidate: 60 }, // Cache for 1 minute
-      }
-    );
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch match details" },
-        { status: res.status }
-      );
+    const candidateKeys = [matchKey];
+    if (year && !/^\d{4}/.test(matchKey)) {
+      candidateKeys.push(`${year}${matchKey}`);
     }
 
-    const data = await res.json();
+    let data: any = null;
+    let lastStatus = 404;
+    for (const candidate of candidateKeys) {
+      const res = await fetch(
+        `https://www.thebluealliance.com/api/v3/match/${candidate}`,
+        {
+          headers: {
+            "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+          },
+          cache: "no-store",
+        }
+      );
+      if (!res.ok) {
+        lastStatus = res.status;
+        continue;
+      }
+      data = await res.json();
+      break;
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: "Failed to fetch match details" },
+        { status: lastStatus }
+      );
+    }
 
     return NextResponse.json(data, {
       headers: {

@@ -4,20 +4,26 @@ import { memo, useState, useMemo } from "react";
 import { TeamDataType } from "../lib/event";
 import TeamLink from "./TeamLink";
 
+type TeamTableRow = TeamDataType & { fuel?: string };
+
 function Event25TeamsTable({
   teams,
   defensiveScores,
   unluckyMetrics,
   sosZScoreMetrics,
+  gameYear = 2025,
 }: {
-  teams: TeamDataType[];
+  teams: TeamTableRow[];
   defensiveScores?: { [teamKey: string]: number };
   unluckyMetrics?: { [teamKey: string]: number };
   sosZScoreMetrics?: { [teamKey: string]: number };
+  /** 2026 = REBUILT metrics (fuel, climb); default 2025 */
+  gameYear?: number;
 }) {
   const [sortField, setSortField] = useState<string>("rank");
   const [isAscending, setIsAscending] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const is2026 = gameYear === 2026;
 
   const filteredTeams = useMemo(() => {
     if (!searchQuery) return teams;
@@ -56,6 +62,10 @@ function Event25TeamsTable({
         case "climb":
           aValue = parseFloat(a.climb);
           bValue = parseFloat(b.climb);
+          break;
+        case "fuel":
+          aValue = parseFloat(a.fuel ?? "0");
+          bValue = parseFloat(b.fuel ?? "0");
           break;
         case "foul":
           aValue = parseFloat(a.foul);
@@ -143,6 +153,7 @@ function Event25TeamsTable({
       coral: Math.max(...teams.map((t) => parseFloat(t.coral))),
       algae: Math.max(...teams.map((t) => parseFloat(t.algae))),
       climb: Math.max(...teams.map((t) => parseFloat(t.climb))),
+      fuel: Math.max(...teams.map((t) => parseFloat(t.fuel ?? "0")), 0.01),
       def: defensiveScores ? Math.max(...Object.values(defensiveScores), 0) : 0,
       unlucky: unluckyMetrics ? Math.max(...Object.values(unluckyMetrics), 0) : 0,
       unluckyMin: unluckyMetrics ? Math.min(...Object.values(unluckyMetrics), 0) : 0,
@@ -212,19 +223,30 @@ function Event25TeamsTable({
               >
                 SORTED RANK
               </th>
-              {[
-                { key: "key", label: "TEAM", sortable: false },
-                { key: "rank", label: "RANK", sortable: true },
-                { key: "fsm", label: "FSM", sortable: true },
-                { key: "auto", label: "AUTO", sortable: true },
-                { key: "coral", label: "CORAL", sortable: true },
-                { key: "algae", label: "ALGAE", sortable: true },
-                { key: "climb", label: "CLIMB", sortable: true },
-                { key: "foul", label: "FOULS", sortable: true },
-                { key: "def", label: "DEF", sortable: true },
-                { key: "sosZScore", label: "SOS", sortable: true },
-                { key: "unlucky", label: "UNLUCKY", sortable: true },
-              ].map((col) => (
+              {(is2026
+                ? [
+                    { key: "key", label: "TEAM", sortable: false },
+                    { key: "rank", label: "RANK", sortable: true },
+                    { key: "fsm", label: "FSM", sortable: true },
+                    { key: "auto", label: "AUTO PTS", sortable: true },
+                    { key: "fuel", label: "FUEL", sortable: true },
+                    { key: "climb", label: "CLIMB PTS", sortable: true },
+                    { key: "foul", label: "PENALTY", sortable: true },
+                  ]
+                : [
+                    { key: "key", label: "TEAM", sortable: false },
+                    { key: "rank", label: "RANK", sortable: true },
+                    { key: "fsm", label: "FSM", sortable: true },
+                    { key: "auto", label: "AUTO", sortable: true },
+                    { key: "coral", label: "CORAL", sortable: true },
+                    { key: "algae", label: "ALGAE", sortable: true },
+                    { key: "climb", label: "CLIMB", sortable: true },
+                    { key: "foul", label: "FOULS", sortable: true },
+                    { key: "def", label: "DEF", sortable: true },
+                    { key: "sosZScore", label: "SOS", sortable: true },
+                    { key: "unlucky", label: "UNLUCKY", sortable: true },
+                  ]
+              ).map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -289,7 +311,7 @@ function Event25TeamsTable({
                     {idx + 1}
                   </td>
                   <td style={{ padding: "1rem", fontWeight: "600" }}>
-                    <TeamLink teamKey={team.key} year={2025} />
+                    <TeamLink teamKey={team.key} year={gameYear} />
                   </td>
                   <td
                     style={{
@@ -310,42 +332,74 @@ function Event25TeamsTable({
                   >
                     {parseFloat(team.fsm).toFixed(1)}
                   </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      color: getStatColor(
-                        parseFloat(team.auto),
-                        maxValues.auto
-                      ),
-                      fontWeight: "600",
-                    }}
-                  >
-                    {parseFloat(team.auto).toFixed(2)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      color: getStatColor(
-                        parseFloat(team.coral),
-                        maxValues.coral
-                      ),
-                      fontWeight: "600",
-                    }}
-                  >
-                    {parseFloat(team.coral).toFixed(2)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      color: getStatColor(
-                        parseFloat(team.algae),
-                        maxValues.algae
-                      ),
-                      fontWeight: "600",
-                    }}
-                  >
-                    {parseFloat(team.algae).toFixed(2)}
-                  </td>
+                  {!is2026 && (
+                    <>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          color: getStatColor(
+                            parseFloat(team.auto),
+                            maxValues.auto
+                          ),
+                          fontWeight: "600",
+                        }}
+                      >
+                        {parseFloat(team.auto).toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          color: getStatColor(
+                            parseFloat(team.coral),
+                            maxValues.coral
+                          ),
+                          fontWeight: "600",
+                        }}
+                      >
+                        {parseFloat(team.coral).toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          color: getStatColor(
+                            parseFloat(team.algae),
+                            maxValues.algae
+                          ),
+                          fontWeight: "600",
+                        }}
+                      >
+                        {parseFloat(team.algae).toFixed(2)}
+                      </td>
+                    </>
+                  )}
+                  {is2026 && (
+                    <td
+                      style={{
+                        padding: "1rem",
+                        color: getStatColor(
+                          parseFloat(team.auto),
+                          maxValues.auto
+                        ),
+                        fontWeight: "600",
+                      }}
+                    >
+                      {parseFloat(team.auto).toFixed(2)}
+                    </td>
+                  )}
+                  {is2026 && (
+                    <td
+                      style={{
+                        padding: "1rem",
+                        color: getStatColor(
+                          parseFloat(team.fuel ?? "0"),
+                          maxValues.fuel
+                        ),
+                        fontWeight: "600",
+                      }}
+                    >
+                      {parseFloat(team.fuel ?? "0").toFixed(2)}
+                    </td>
+                  )}
                   <td
                     style={{
                       padding: "1rem",
@@ -367,33 +421,37 @@ function Event25TeamsTable({
                   >
                     {foulValue.toFixed(2)}
                   </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      fontWeight: "bold",
-                      color: getStatColor(defScore, maxValues.def),
-                    }}
-                  >
-                    {defScore.toFixed(2)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      fontWeight: "600",
-                      color: getZScoreColor(sosZScoreValue),
-                    }}
-                  >
-                    {sosZScoreValue !== 0 ? sosZScoreValue.toFixed(2) : "—"}
-                  </td>
-                  <td
-                    style={{
-                      padding: "1rem",
-                      fontWeight: "600",
-                      color: getUnluckyColor(unluckyValue, maxValues.unlucky || 1, maxValues.unluckyMin || 0),
-                    }}
-                  >
-                    {unluckyValue !== 0 ? unluckyValue.toFixed(2) : "—"}
-                  </td>
+                  {!is2026 && (
+                    <>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          fontWeight: "bold",
+                          color: getStatColor(defScore, maxValues.def),
+                        }}
+                      >
+                        {defScore.toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          fontWeight: "600",
+                          color: getZScoreColor(sosZScoreValue),
+                        }}
+                      >
+                        {sosZScoreValue !== 0 ? sosZScoreValue.toFixed(2) : "—"}
+                      </td>
+                      <td
+                        style={{
+                          padding: "1rem",
+                          fontWeight: "600",
+                          color: getUnluckyColor(unluckyValue, maxValues.unlucky || 1, maxValues.unluckyMin || 0),
+                        }}
+                      >
+                        {unluckyValue !== 0 ? unluckyValue.toFixed(2) : "—"}
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}

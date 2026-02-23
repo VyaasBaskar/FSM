@@ -28,6 +28,7 @@ function YearButtons({
     ...Array.from({ length: 13 }, (_, i) => 2013 + i).filter(
       (y) => y !== 2020 && y !== 2021
     ),
+    2026,
   ];
   return (
     <div
@@ -423,7 +424,7 @@ export default async function TeamPage({
     Number(yearprov) < 2013 ||
     Number(yearprov) === 2021 ||
     Number(yearprov) === 2020 ||
-    Number(yearprov) > 2025
+    Number(yearprov) > 2026
   ) {
     yearprov = "2025";
   }

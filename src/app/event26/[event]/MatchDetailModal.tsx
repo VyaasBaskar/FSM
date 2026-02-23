@@ -5,6 +5,7 @@ import TeamLink from "@/app/components/TeamLink";
 
 interface MatchDetailModalProps {
   matchKey: string;
+  year?: string;
   match: {
     preds: string[];
     red: string[];
@@ -20,6 +21,7 @@ interface AllianceBreakdown {
 }
 
 interface MatchDetails {
+  key?: string;
   videos?: Array<{
     type: string;
     key: string;
@@ -42,6 +44,7 @@ interface MatchDetails {
 
 export default function MatchDetailModal({
   matchKey,
+  year = "2026",
   match,
   onClose,
 }: MatchDetailModalProps) {
@@ -53,7 +56,7 @@ export default function MatchDetailModal({
     async function fetchMatchDetails() {
       try {
         const res = await fetch(
-          `/api/match-details?matchKey=${encodeURIComponent(matchKey)}`
+          `/api/match-details?matchKey=${encodeURIComponent(matchKey)}&year=${encodeURIComponent(year)}`
         );
         if (!res.ok) throw new Error("Failed to fetch match details");
         const data = await res.json();
@@ -526,14 +529,21 @@ export default function MatchDetailModal({
                                 const lowerKey = key.toLowerCase();
                                 return (
                                   lowerKey === "autopoints" ||
+                                  lowerKey === "totalautopoints" ||
+                                  lowerKey === "autotowerpoints" ||
                                   lowerKey === "autocoralcount" ||
                                   lowerKey === "automobilitypoints" ||
                                   lowerKey === "teleoppoints" ||
                                   lowerKey === "teleopcoralcount" ||
+                                  lowerKey === "teleopfuelpoints" ||
+                                  lowerKey === "fuelpoints" ||
                                   lowerKey === "algaepoints" ||
                                   lowerKey === "netalgaecount" ||
                                   lowerKey === "wallalgaecount" ||
                                   lowerKey === "endgamebargepoints" ||
+                                  lowerKey === "endgametowerpoints" ||
+                                  lowerKey === "endgameclimbpoints" ||
+                                  lowerKey === "climbpoints" ||
                                   lowerKey === "adjustpoints" ||
                                   lowerKey === "totalpointsnoscore" ||
                                   lowerKey === "totalpoints" ||
@@ -543,14 +553,21 @@ export default function MatchDetailModal({
                               .sort(([a], [b]) => {
                                 const order = [
                                   "autopoints",
+                                  "totalautopoints",
+                                  "autotowerpoints",
                                   "autocoralcount",
                                   "automobilitypoints",
                                   "teleoppoints",
                                   "teleopcoralcount",
+                                  "teleopfuelpoints",
+                                  "fuelpoints",
                                   "algaepoints",
                                   "netalgaecount",
                                   "wallalgaecount",
                                   "endgamebargepoints",
+                                  "endgametowerpoints",
+                                  "endgameclimbpoints",
+                                  "climbpoints",
                                   "adjustpoints",
                                   "totalpointsnoscore",
                                   "totalpoints",
@@ -643,14 +660,21 @@ export default function MatchDetailModal({
                                 const lowerKey = key.toLowerCase();
                                 return (
                                   lowerKey === "autopoints" ||
+                                  lowerKey === "totalautopoints" ||
+                                  lowerKey === "autotowerpoints" ||
                                   lowerKey === "autocoralcount" ||
                                   lowerKey === "automobilitypoints" ||
                                   lowerKey === "teleoppoints" ||
                                   lowerKey === "teleopcoralcount" ||
+                                  lowerKey === "teleopfuelpoints" ||
+                                  lowerKey === "fuelpoints" ||
                                   lowerKey === "algaepoints" ||
                                   lowerKey === "netalgaecount" ||
                                   lowerKey === "wallalgaecount" ||
                                   lowerKey === "endgamebargepoints" ||
+                                  lowerKey === "endgametowerpoints" ||
+                                  lowerKey === "endgameclimbpoints" ||
+                                  lowerKey === "climbpoints" ||
                                   lowerKey === "adjustpoints" ||
                                   lowerKey === "totalpointsnoscore" ||
                                   lowerKey === "totalpoints" ||
@@ -660,14 +684,21 @@ export default function MatchDetailModal({
                               .sort(([a], [b]) => {
                                 const order = [
                                   "autopoints",
+                                  "totalautopoints",
+                                  "autotowerpoints",
                                   "autocoralcount",
                                   "automobilitypoints",
                                   "teleoppoints",
                                   "teleopcoralcount",
+                                  "teleopfuelpoints",
+                                  "fuelpoints",
                                   "algaepoints",
                                   "netalgaecount",
                                   "wallalgaecount",
                                   "endgamebargepoints",
+                                  "endgametowerpoints",
+                                  "endgameclimbpoints",
+                                  "climbpoints",
                                   "adjustpoints",
                                   "totalpointsnoscore",
                                   "totalpoints",
@@ -850,7 +881,22 @@ export default function MatchDetailModal({
                     color: "var(--gray-less)",
                   }}
                 >
-                  No videos available for this match yet
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    No videos available for this match yet
+                  </div>
+                  <a
+                    href={`https://www.thebluealliance.com/match/${matchDetails?.key ?? matchKey}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "var(--yellow-color)",
+                      textDecoration: "none",
+                      fontSize: "0.95rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Open match on The Blue Alliance →
+                  </a>
                 </div>
               )}
             </>

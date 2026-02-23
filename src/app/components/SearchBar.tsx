@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -79,9 +78,8 @@ export default function SearchBar({
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [teamsRes, events2025Res, events2026Res] = await Promise.all([
-          fetch("/api/teams?year=2025"),
-          fetch("/api/events?year=2025"),
+        const [teamsRes, eventsRes] = await Promise.all([
+          fetch("/api/teams?year=2026"),
           fetch("/api/events?year=2026"),
         ]);
 
@@ -97,12 +95,10 @@ export default function SearchBar({
           setTeams(teamsData);
         }
 
-        if (events2025Res.ok && events2026Res.ok) {
-          const events2025 = await events2025Res.json();
-          const events2026 = await events2026Res.json();
-          const allEvents = [...events2025, ...events2026];
+        if (eventsRes.ok) {
+          const events2026 = await eventsRes.json();
           const uniqueEvents = Array.from(
-            new Map(allEvents.map((event) => [event.key, event])).values()
+            new Map(events2026.map((event) => [event.key, event])).values()
           );
           uniqueEvents.sort((a, b) => {
             const firstCharA = a.value.charAt(0);
@@ -131,7 +127,7 @@ export default function SearchBar({
     let teamNumber = trimmed.toLowerCase().replace(/^frc/, "").trim();
     const teamMatch = teamNumber.match(/^\d+$/);
     if (teamMatch) {
-      router.push(`/team/frc${teamNumber}-2025`);
+      router.push(`/team/frc${teamNumber}-2026`);
       setSearchQuery("");
       setFocused(false);
       return;
@@ -139,7 +135,7 @@ export default function SearchBar({
 
     const teamPrefixMatch = trimmed.match(/^team\s+(\d+)$/i);
     if (teamPrefixMatch) {
-      router.push(`/team/frc${teamPrefixMatch[1]}-2025`);
+      router.push(`/team/frc${teamPrefixMatch[1]}-2026`);
       setSearchQuery("");
       setFocused(false);
       return;
@@ -151,7 +147,7 @@ export default function SearchBar({
         team.value.toLowerCase() === trimmed.toLowerCase()
     );
     if (matchedTeam) {
-      router.push(`/team/frc${matchedTeam.key}-2025`);
+      router.push(`/team/frc${matchedTeam.key}-2026`);
       setSearchQuery("");
       setFocused(false);
       return;
@@ -162,13 +158,7 @@ export default function SearchBar({
     );
     if (matchedEvent) {
       const eventCode = matchedEvent.key;
-      if (eventCode.startsWith("2026")) {
-        router.push(`/event26/${eventCode.slice(4)}`);
-      } else if (eventCode.startsWith("2025")) {
-        router.push(`/event25/${eventCode.slice(4)}`);
-      } else {
-        router.push(`/event/${eventCode}`);
-      }
+      router.push(`/event26/${eventCode.slice(4)}`);
       setSearchQuery("");
       setFocused(false);
       return;
@@ -179,13 +169,7 @@ export default function SearchBar({
     );
     if (partialEventMatch) {
       const eventCode = partialEventMatch.key;
-      if (eventCode.startsWith("2026")) {
-        router.push(`/event26/${eventCode.slice(4)}`);
-      } else if (eventCode.startsWith("2025")) {
-        router.push(`/event25/${eventCode.slice(4)}`);
-      } else {
-        router.push(`/event/${eventCode}`);
-      }
+      router.push(`/event26/${eventCode.slice(4)}`);
       setSearchQuery("");
       setFocused(false);
     }
@@ -205,16 +189,10 @@ export default function SearchBar({
   const handleOptionSelect = (option: FilteredOption) => {
     if (option.type === "team") {
       const teamNumber = option.key;
-      router.push(`/team/frc${teamNumber}-2025`);
+      router.push(`/team/frc${teamNumber}-2026`);
     } else {
       const eventCode = option.key;
-      if (eventCode.startsWith("2026")) {
-        router.push(`/event26/${eventCode.slice(4)}`);
-      } else if (eventCode.startsWith("2025")) {
-        router.push(`/event25/${eventCode.slice(4)}`);
-      } else {
-        router.push(`/event/${eventCode}`);
-      }
+      router.push(`/event26/${eventCode.slice(4)}`);
     }
     setSearchQuery("");
     setFocused(false);

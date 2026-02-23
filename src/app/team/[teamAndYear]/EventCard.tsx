@@ -15,6 +15,8 @@ export default function EventCard({
       href={
         Number(yearprov) === 2025
           ? `/event25/${event.event.slice(4)}`
+          : Number(yearprov) === 2026
+          ? `/event26/${event.event.slice(4)}`
           : `/event/${event.event}`
       }
       style={{
@@ -52,11 +54,43 @@ export default function EventCard({
             fontSize: "1.25rem",
             fontWeight: "bold",
             color: "var(--yellow-color)",
-            marginBottom: "1rem",
+            marginBottom: "0.75rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.5rem",
           }}
         >
-          {event.event}
+          <span>{event.event}</span>
+          {event.pending && (
+            <span
+              style={{
+                fontSize: "0.7rem",
+                color: "#f59e0b",
+                background: "rgba(245, 158, 11, 0.15)",
+                border: "1px solid rgba(245, 158, 11, 0.35)",
+                borderRadius: 999,
+                padding: "0.15rem 0.5rem",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Pending
+            </span>
+          )}
         </div>
+        {event.pending && (
+          <div
+            style={{
+              fontSize: "0.78rem",
+              color: "var(--gray-less)",
+              marginBottom: "0.75rem",
+            }}
+          >
+            Event not played yet
+          </div>
+        )}
         <div
           style={{
             display: "flex",

@@ -1,24 +1,12 @@
 "use client";
 /* eslint-disable */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import styles from "../../page.module.css";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import TeamLink from "@/app/components/TeamLink";
-import LoadingSpinner from "@/app/components/LoadingSpinner";
 import MatchDetailModal from "./MatchDetailModal";
-import type * as ort from "onnxruntime-web";
-
-const loadOnnxRuntime = () => import("onnxruntime-web");
-
-const Event25TeamsTable = dynamic(
-  () => import("../../components/Event25TeamsTable"),
-  {
-    loading: () => <LoadingSpinner message="Loading team stats..." />,
-    ssr: false,
-  }
-);
+import Event26TeamsTable from "../../components/Event26TeamsTable";
 
 type MatchPredictions = {
   [key: string]: {
@@ -48,9 +36,9 @@ export default function ClientPage({
   playedMatches,
   predictedFsms,
 }: ClientPageProps) {
-  const [activeTab, setActiveTab] = useState<"stats" | "preds">("stats");
-  const [sessionReady, setSessionReady] = useState(false);
-  const sessionRef = useRef<ort.InferenceSession | null>(null);
+  const [activeTab, setActiveTab] = useState<"stats" | "preds" | "rankings">(
+    "stats"
+  );
   const [selectedMatch, setSelectedMatch] = useState<{
     matchKey: string;
     match: MatchPredictions[string];
@@ -107,37 +95,6 @@ export default function ClientPage({
   );
 
   useEffect(() => {
-    async function loadModel() {
-      try {
-        const ort = await loadOnnxRuntime();
-        const session = await ort.InferenceSession.create("/matchpred.onnx");
-        sessionRef.current = session;
-        setSessionReady(true);
-      } catch (err) {
-        console.error("Failed to load ONNX model:", err);
-      }
-    }
-    if (havePreds) {
-      loadModel();
-    }
-  }, [havePreds]);
-
-  async function runOnnxModel(inputData: Float32Array) {
-    if (!sessionRef.current) throw new Error("ONNX session not loaded.");
-
-    const ort = await loadOnnxRuntime();
-    const inputTensor = new ort.Tensor("float32", inputData, [1, 17]);
-    const feeds: Record<string, typeof inputTensor> = {
-      [sessionRef.current.inputNames[0]]: inputTensor,
-    };
-
-    const results = await sessionRef.current.run(feeds);
-    const output = results[sessionRef.current.outputNames[0]].data;
-    return Number(output[0]);
-  }
-
-  useEffect(() => {
-    // Detect if desktop view (768px+)
     const checkDesktop = () => {
       setIsDesktop(window.innerWidth >= 768);
     };
@@ -147,58 +104,6 @@ export default function ClientPage({
 
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
-
-  useEffect(() => {
-    async function runPredictions() {
-      if (!sessionReady || playedMatches <= 15) return;
-
-      for (const match of matches) {
-        let compLevel = 0;
-        if (match.comp_level === "qm") compLevel = 1;
-        else if (match.comp_level === "ef") compLevel = 2;
-        else if (match.comp_level === "f") compLevel = 3;
-
-        const blue = match.alliances.blue.team_keys.map((key: string) =>
-          teams.find((t) => t.key === key)
-        );
-        const red = match.alliances.red.team_keys.map((key: string) =>
-          teams.find((t) => t.key === key)
-        );
-
-        if ([...blue, ...red].some((t) => !t)) continue;
-
-        // Skip if this match doesn't have predictions
-        if (!matchPredictions[match.key]) continue;
-
-        const makeInput = (alliance: any[]) =>
-          new Float32Array([
-            ...alliance.flatMap((t) => [
-              Number(t.fsm),
-              Number(t.algae),
-              Number(t.coral),
-              Number(t.auto),
-              Number(t.climb),
-            ]),
-            compLevel,
-            Number(match.match_number),
-          ]);
-
-        const redOutput = await runOnnxModel(makeInput(red));
-        const blueOutput = await runOnnxModel(makeInput(blue));
-
-        let avgRedOutput = Number(matchPredictions[match.key].preds[0]);
-        let avgBlueOutput = Number(matchPredictions[match.key].preds[1]);
-
-        avgRedOutput = (avgRedOutput + redOutput) / 2;
-        avgBlueOutput = (avgBlueOutput + blueOutput) / 2;
-
-        matchPredictions[match.key].preds[0] = avgRedOutput.toFixed(0);
-        matchPredictions[match.key].preds[1] = avgBlueOutput.toFixed(0);
-      }
-    }
-
-    runPredictions();
-  }, [sessionReady, playedMatches, matches, matchPredictions, teams]);
 
   const entries = Object.entries(matchPredictions).sort(([a], [b]) => {
     const getTypeOrder = (key: string) => {
@@ -241,6 +146,24 @@ export default function ClientPage({
       ? (100 * correctPredictions.length) / resultsWithGroundTruth.length
       : 0;
 
+  const predictionSummary = useMemo(() => {
+    if (entries.length === 0) {
+      return { avgTotal: 0, avgMargin: 0 };
+    }
+    let total = 0;
+    let margin = 0;
+    for (const [, match] of entries) {
+      const red = Number(match.preds?.[0]) || 0;
+      const blue = Number(match.preds?.[1]) || 0;
+      total += red + blue;
+      margin += Math.abs(red - blue);
+    }
+    return {
+      avgTotal: total / entries.length,
+      avgMargin: margin / entries.length,
+    };
+  }, [entries]);
+
   const filteredEntries = entries.filter(([key, match]) => {
     const keyWithoutYear = key.replace(/^\d{4}/, "");
     const matchNameMatch = keyWithoutYear
@@ -260,7 +183,6 @@ export default function ClientPage({
   });
 
   const qualsEntries = entries.filter(([key, match]) => {
-    // Remove year prefix (first 4 digits) when matching
     const keyWithoutYear = key.replace(/^\d{4}/, "");
     const matchNameMatch = keyWithoutYear
       .toLowerCase()
@@ -274,7 +196,6 @@ export default function ClientPage({
   });
 
   const elimsEntries = entries.filter(([key, match]) => {
-    // Remove year prefix (first 4 digits) when matching
     const keyWithoutYear = key.replace(/^\d{4}/, "");
     const matchNameMatch = keyWithoutYear
       .toLowerCase()
@@ -286,6 +207,202 @@ export default function ClientPage({
       );
     return !key.includes("_qm") && matchNameMatch && teamMatch;
   });
+
+  const matchCounts = useMemo(
+    () => ({
+      total: entries.length,
+      quals: qualsEntries.length,
+      elims: elimsEntries.length,
+    }),
+    [entries.length, qualsEntries.length, elimsEntries.length]
+  );
+
+  const getConfidence = (red: number, blue: number) => {
+    const margin = Math.abs(red - blue);
+    if (margin >= 35) {
+      return { label: "High", color: "#22c55e", bg: "rgba(34,197,94,0.12)" };
+    }
+    if (margin >= 18) {
+      return { label: "Medium", color: "#eab308", bg: "rgba(234,179,8,0.12)" };
+    }
+    return { label: "Low", color: "#f97316", bg: "rgba(249,115,22,0.12)" };
+  };
+
+  const projectedRankings = useMemo(() => {
+    const teamMetricMap = new Map<
+      string,
+      { fuel: number; climb: number }
+    >(
+      teams.map((team) => [
+        team.key,
+        {
+          fuel: Number(team.fuel ?? team.fsm ?? 0),
+          climb: Number(team.climb ?? 0),
+        },
+      ])
+    );
+
+    const standings = new Map<
+      string,
+      {
+        teamKey: string;
+        currentRp: number;
+        forecastRp: number;
+        wins: number;
+        losses: number;
+        ties: number;
+        played: number;
+      }
+    >();
+
+    const ensure = (teamKey: string) => {
+      if (!standings.has(teamKey)) {
+        standings.set(teamKey, {
+          teamKey,
+          currentRp: 0,
+          forecastRp: 0,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          played: 0,
+        });
+      }
+      return standings.get(teamKey)!;
+    };
+
+    const allianceFuel = (teamKeys: string[]) =>
+      teamKeys.reduce((sum, key) => sum + (teamMetricMap.get(key)?.fuel ?? 0), 0);
+    const allianceClimb = (teamKeys: string[]) =>
+      teamKeys.reduce((sum, key) => sum + (teamMetricMap.get(key)?.climb ?? 0), 0);
+
+    const bonusRpFromRules = (
+      allianceScore: number,
+      allianceFuelValue: number,
+      allianceClimbValue: number
+    ) => {
+      let bonus = 0;
+      if (allianceFuelValue >= 100) bonus += 1;
+      if (allianceScore >= 360) bonus += 1;
+      if (allianceClimbValue >= 50) bonus += 1;
+      return bonus;
+    };
+
+    for (const team of teams) {
+      ensure(team.key);
+    }
+
+    const qualMatches = matches.filter((m) => m.comp_level === "qm");
+    const noQualSchedule = qualMatches.length === 0;
+
+    if (noQualSchedule) {
+      const fsmValues = teams
+        .map((t) => Number(t.fsm))
+        .filter((v) => Number.isFinite(v));
+      const mean =
+        fsmValues.length > 0
+          ? fsmValues.reduce((a, b) => a + b, 0) / fsmValues.length
+          : 45;
+      const variance =
+        fsmValues.length > 0
+          ? fsmValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) /
+            fsmValues.length
+          : 625;
+      const stdDev = Math.sqrt(variance) || 25;
+
+      for (const team of teams) {
+        const row = ensure(team.key);
+        const fsm = Number(team.fsm) || 45;
+        const fuel = Number(team.fuel ?? team.fsm ?? 0);
+        const climb = Number(team.climb ?? 0);
+        const z = (fsm - mean) / stdDev;
+        const winRate = 1 / (1 + Math.exp(-z));
+        row.currentRp = 0;
+        row.forecastRp =
+          winRate * 3 +
+          (fuel >= 100 ? 1 : 0) +
+          (fsm >= 360 ? 1 : 0) +
+          (climb >= 50 ? 1 : 0);
+        row.wins = Math.round(winRate * 10);
+        row.losses = Math.max(0, 10 - row.wins);
+        row.ties = 0;
+        row.played = 10;
+      }
+    }
+
+    const addAllianceResult = (
+      teamKeys: string[],
+      rpValue: number,
+      isCurrent: boolean,
+      result: "win" | "loss" | "tie"
+    ) => {
+      for (const teamKey of teamKeys) {
+        const row = ensure(teamKey);
+        if (isCurrent) row.currentRp += rpValue;
+        row.forecastRp += rpValue;
+        row.played += 1;
+        if (result === "win") row.wins += 1;
+        else if (result === "loss") row.losses += 1;
+        else row.ties += 1;
+      }
+    };
+
+    for (const match of matches) {
+      if (match.comp_level !== "qm") continue;
+      const redTeams: string[] = match.alliances?.red?.team_keys ?? [];
+      const blueTeams: string[] = match.alliances?.blue?.team_keys ?? [];
+
+      const redSb = match.score_breakdown?.red;
+      const blueSb = match.score_breakdown?.blue;
+
+      if (redSb && blueSb && redSb.rp != null && blueSb.rp != null) {
+        const redScore = Number(match.alliances?.red?.score) || 0;
+        const blueScore = Number(match.alliances?.blue?.score) || 0;
+        const redResult =
+          redScore > blueScore ? "win" : redScore < blueScore ? "loss" : "tie";
+        const blueResult =
+          blueScore > redScore ? "win" : blueScore < redScore ? "loss" : "tie";
+        addAllianceResult(redTeams, Number(redSb.rp) || 0, true, redResult);
+        addAllianceResult(blueTeams, Number(blueSb.rp) || 0, true, blueResult);
+        continue;
+      }
+
+      const pred = matchPredictions[match.key];
+      if (!pred) continue;
+
+      const redPred = Number(pred.preds?.[0]) || 0;
+      const bluePred = Number(pred.preds?.[1]) || 0;
+
+      let redRp = redPred > bluePred ? 3 : redPred < bluePred ? 0 : 1;
+      let blueRp = bluePred > redPred ? 3 : bluePred < redPred ? 0 : 1;
+
+      const redFuelEstimate = allianceFuel(redTeams);
+      const blueFuelEstimate = allianceFuel(blueTeams);
+      const redClimbEstimate = allianceClimb(redTeams);
+      const blueClimbEstimate = allianceClimb(blueTeams);
+
+      redRp += bonusRpFromRules(redPred, redFuelEstimate, redClimbEstimate);
+      blueRp += bonusRpFromRules(bluePred, blueFuelEstimate, blueClimbEstimate);
+
+      const redResult =
+        redPred > bluePred ? "win" : redPred < bluePred ? "loss" : "tie";
+      const blueResult =
+        bluePred > redPred ? "win" : bluePred < redPred ? "loss" : "tie";
+      addAllianceResult(redTeams, redRp, false, redResult);
+      addAllianceResult(blueTeams, blueRp, false, blueResult);
+    }
+
+    return Array.from(standings.values())
+      .sort((a, b) => {
+        if (b.forecastRp !== a.forecastRp) return b.forecastRp - a.forecastRp;
+        if (b.currentRp !== a.currentRp) return b.currentRp - a.currentRp;
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return a.teamKey.localeCompare(b.teamKey);
+      })
+      .map((row, idx) => ({
+        ...row,
+        rank: idx + 1,
+      }));
+  }, [matches, matchPredictions, teams]);
 
   return (
     <div
@@ -299,7 +416,7 @@ export default function ClientPage({
     >
       <main className={styles.main}>
         <h1 className={styles.title}>Event FSM</h1>
-        <h2 className={styles.table}>2025{eventCode}</h2>
+        <h2 className={styles.table}>2026{eventCode}</h2>
 
         <div
           style={{
@@ -341,6 +458,20 @@ export default function ClientPage({
             }}
           >
             Matches
+          </button>
+          <button
+            onClick={() => setActiveTab("rankings")}
+            style={{
+              padding: "0.5rem 1rem",
+              fontWeight: "bold",
+              borderRadius: 6,
+              background: activeTab === "rankings" ? "#333" : "#222",
+              color: activeTab === "rankings" ? "#fff" : "#ccc",
+              border: "1px solid #555",
+              cursor: "pointer",
+            }}
+          >
+            Rankings
           </button>
         </div>
 
@@ -409,7 +540,7 @@ export default function ClientPage({
             <div
               style={{ maxWidth: "100%", overflowX: "scroll", width: "100%" }}
             >
-              <Event25TeamsTable teams={teams} />
+              <Event26TeamsTable teams={teams} />
             </div>
           </div>
         )}
@@ -436,6 +567,53 @@ export default function ClientPage({
               Prediction Accuracy: {correctPredictions.length} /{" "}
               {resultsWithGroundTruth.length} ({accuracy.toFixed(1)}%)
             </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                marginTop: "0.5rem",
+              }}
+            >
+              <div
+                style={{
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: 8,
+                  background: "var(--background-pred)",
+                  border: "1px solid var(--border-color)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                Avg Pred Total:{" "}
+                <strong>{predictionSummary.avgTotal.toFixed(1)}</strong>
+              </div>
+              <div
+                style={{
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: 8,
+                  background: "var(--background-pred)",
+                  border: "1px solid var(--border-color)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                Avg Pred Margin:{" "}
+                <strong>{predictionSummary.avgMargin.toFixed(1)}</strong>
+              </div>
+              <div
+                style={{
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: 8,
+                  background: "var(--background-pred)",
+                  border: "1px solid var(--border-color)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                Matches: <strong>{matchCounts.total}</strong> (Q{" "}
+                <strong>{matchCounts.quals}</strong> / E{" "}
+                <strong>{matchCounts.elims}</strong>)
+              </div>
+            </div>
 
             <br />
             <div
@@ -543,8 +721,39 @@ export default function ClientPage({
                       background: "var(--background-pred)",
                     }}
                   >
-                    <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
-                      {matchKey}
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        marginBottom: "0.5rem",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span>{matchKey}</span>
+                      <span
+                        style={{
+                          padding: "0.12rem 0.45rem",
+                          borderRadius: 999,
+                          fontSize: "0.65rem",
+                          fontWeight: 700,
+                          background: getConfidence(
+                            Number(predRed),
+                            Number(predBlue)
+                          ).bg,
+                          color: getConfidence(Number(predRed), Number(predBlue))
+                            .color,
+                          border: `1px solid ${
+                            getConfidence(Number(predRed), Number(predBlue))
+                              .color
+                          }33`,
+                        }}
+                      >
+                        {getConfidence(Number(predRed), Number(predBlue)).label}{" "}
+                        Confidence
+                      </span>
                     </div>
                     <div
                       style={{ marginBottom: "0.25rem", fontSize: "0.75rem" }}
@@ -569,7 +778,7 @@ export default function ClientPage({
                                 borderRadius: isHighlighted ? "4px" : "0",
                               }}
                             >
-                              <TeamLink teamKey={t} year={2025} />
+                              <TeamLink teamKey={t} year={2026} />
                             </span>
                           </span>
                         );
@@ -595,7 +804,7 @@ export default function ClientPage({
                                 borderRadius: isHighlighted ? "4px" : "0",
                               }}
                             >
-                              <TeamLink teamKey={t} year={2025} />
+                              <TeamLink teamKey={t} year={2026} />
                             </span>
                           </span>
                         );
@@ -623,6 +832,15 @@ export default function ClientPage({
                         --{" "}
                         <span style={{ color: "#4d8cff" }}>
                           {Math.round(Number(predBlue))}
+                        </span>
+                        <span
+                          style={{
+                            marginLeft: 8,
+                            color: "var(--gray-less)",
+                            fontSize: "0.72rem",
+                          }}
+                        >
+                          (Δ {Math.abs(Number(predRed) - Number(predBlue)).toFixed(0)})
                         </span>
                       </div>
                       {hasResult && (
@@ -711,7 +929,7 @@ export default function ClientPage({
                       marginBottom: "1rem",
                     }}
                   >
-                    Qualification Matches
+                    Qualification Matches ({qualsEntries.length})
                   </h3>
                   <ul style={{ listStyle: "none", padding: 0 }}>
                     {qualsEntries.map(([matchKey, match]) => {
@@ -763,9 +981,32 @@ export default function ClientPage({
                               fontWeight: "bold",
                               marginBottom: "0.25rem",
                               fontSize: "0.8rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.45rem",
                             }}
                           >
-                            {matchKey}
+                            <span>{matchKey}</span>
+                            <span
+                              style={{
+                                padding: "0.1rem 0.4rem",
+                                borderRadius: 999,
+                                fontSize: "0.58rem",
+                                fontWeight: 700,
+                                background: getConfidence(
+                                  Number(predRed),
+                                  Number(predBlue)
+                                ).bg,
+                                color: getConfidence(
+                                  Number(predRed),
+                                  Number(predBlue)
+                                ).color,
+                              }}
+                            >
+                              {getConfidence(Number(predRed), Number(predBlue))
+                                .label}
+                            </span>
                           </div>
                           <div
                             style={{
@@ -925,6 +1166,15 @@ export default function ClientPage({
                               --{" "}
                               <span style={{ color: "#4d8cff" }}>
                                 {Math.round(Number(predBlue))}
+                              </span>
+                              <span
+                                style={{
+                                  marginLeft: 8,
+                                  color: "var(--gray-less)",
+                                  fontSize: "0.62rem",
+                                }}
+                              >
+                                (Δ {Math.abs(Number(predRed) - Number(predBlue)).toFixed(0)})
                               </span>
                             </div>
                             {hasResult && (
@@ -1017,7 +1267,7 @@ export default function ClientPage({
                       marginBottom: "1rem",
                     }}
                   >
-                    Elimination Matches
+                    Elimination Matches ({elimsEntries.length})
                   </h3>
                   <ul style={{ listStyle: "none", padding: 0 }}>
                     {elimsEntries.map(([matchKey, match]) => {
@@ -1069,9 +1319,32 @@ export default function ClientPage({
                               fontWeight: "bold",
                               marginBottom: "0.25rem",
                               fontSize: "0.8rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.45rem",
                             }}
                           >
-                            {matchKey}
+                            <span>{matchKey}</span>
+                            <span
+                              style={{
+                                padding: "0.1rem 0.4rem",
+                                borderRadius: 999,
+                                fontSize: "0.58rem",
+                                fontWeight: 700,
+                                background: getConfidence(
+                                  Number(predRed),
+                                  Number(predBlue)
+                                ).bg,
+                                color: getConfidence(
+                                  Number(predRed),
+                                  Number(predBlue)
+                                ).color,
+                              }}
+                            >
+                              {getConfidence(Number(predRed), Number(predBlue))
+                                .label}
+                            </span>
                           </div>
                           <div
                             style={{
@@ -1231,6 +1504,15 @@ export default function ClientPage({
                               --{" "}
                               <span style={{ color: "#4d8cff" }}>
                                 {Math.round(Number(predBlue))}
+                              </span>
+                              <span
+                                style={{
+                                  marginLeft: 8,
+                                  color: "var(--gray-less)",
+                                  fontSize: "0.62rem",
+                                }}
+                              >
+                                (Δ {Math.abs(Number(predRed) - Number(predBlue)).toFixed(0)})
                               </span>
                             </div>
                             {hasResult && (
@@ -1336,9 +1618,126 @@ export default function ClientPage({
           </div>
         )}
 
+        {activeTab === "rankings" && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              color: "var(--foreground)",
+              borderRadius: 12,
+              width: "100%",
+              marginTop: "1rem",
+            }}
+          >
+            <h2 style={{ color: "var(--foreground)" }}>
+              Predicted Qualification Rankings
+            </h2>
+            <p
+              style={{
+                color: "var(--gray-less)",
+                marginBottom: "1rem",
+                textAlign: "center",
+              }}
+            >
+              RP rules: 3 for win, +1 for 100 fuel, +1 for 360 score, +1 for
+              50 climb alliance.
+            </p>
+            <div
+              style={{
+                width: "100%",
+                overflowX: "auto",
+                borderRadius: 12,
+                border: "2px solid var(--border-color)",
+                boxShadow:
+                  "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  minWidth: "760px",
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      background: "var(--gray-more)",
+                      borderBottom: "2px solid var(--border-color)",
+                    }}
+                  >
+                    {[
+                      "Rank",
+                      "Team",
+                      "Current RP",
+                      "Forecast RP",
+                      "W",
+                      "L",
+                      "T",
+                      "Played",
+                    ].map(
+                      (header) => (
+                        <th
+                          key={header}
+                          style={{
+                            padding: "0.9rem",
+                            textAlign: "left",
+                            fontWeight: "700",
+                            fontSize: "0.875rem",
+                            letterSpacing: "0.05em",
+                            color: "var(--yellow-color)",
+                          }}
+                        >
+                          {header}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectedRankings.map((row) => (
+                    <tr
+                      key={row.teamKey}
+                      style={{
+                        borderBottom: "1px solid var(--border-color)",
+                        background: "var(--background-pred)",
+                      }}
+                    >
+                      <td style={{ padding: "0.85rem", fontWeight: "700" }}>
+                        {row.rank}
+                      </td>
+                      <td style={{ padding: "0.85rem", fontWeight: "600" }}>
+                        <TeamLink teamKey={row.teamKey} year={2026} />
+                      </td>
+                      <td style={{ padding: "0.85rem", fontWeight: "700" }}>
+                        {row.currentRp.toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.85rem",
+                          fontWeight: "700",
+                          color: "var(--yellow-color)",
+                        }}
+                      >
+                        {row.forecastRp.toFixed(2)}
+                      </td>
+                      <td style={{ padding: "0.85rem" }}>{row.wins}</td>
+                      <td style={{ padding: "0.85rem" }}>{row.losses}</td>
+                      <td style={{ padding: "0.85rem" }}>{row.ties}</td>
+                      <td style={{ padding: "0.85rem" }}>{row.played}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {selectedMatch && isDesktop && (
           <MatchDetailModal
             matchKey={selectedMatch.matchKey}
+            year="2026"
             match={selectedMatch.match}
             onClose={() => setSelectedMatch(null)}
           />

@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { getEventTeams, TeamDataType } from "../lib/event";
+import { getEventTeams as getEventTeams26, TeamDataType26 } from "../lib/event26";
 import { getTeamRevalidationTime } from "../lib/eventUtils";
 
 async function getTeamEvents(teamKey: string, year: number = 2025) {
@@ -33,6 +34,7 @@ export type EventDataType = {
   event: string;
   teamfsm: string;
   teamrank: number;
+  pending?: boolean;
 };
 
 export async function getTeamStats(teamKey: string, year: number = 2025) {
@@ -41,20 +43,26 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
     throw new Error(`No events found for team: ${teamKey}`);
   }
 
+  const fetchEventTeams = (eventKey: string) =>
+    year === 2026 ? getEventTeams26(eventKey) : getEventTeams(eventKey);
+
   const eventResults = await Promise.allSettled(
-    events.map((event: { key: string }) => getEventTeams(event.key))
+    events.map((event: { key: string }) => fetchEventTeams(event.key))
   );
 
   const teamData: EventDataType[] = [];
   eventResults.forEach((result, idx) => {
     if (result.status === "fulfilled") {
       const teams = result.value;
-      const team = teams.find((t: TeamDataType) => t.key === teamKey);
+      const team = teams.find((t: TeamDataType | TeamDataType26) => t.key === teamKey);
       if (team) {
+        const teamRank = Number(team.rank) || 0;
+        const teamFsm = String(team.fsm ?? "0");
         teamData.push({
           event: events[idx].key,
-          teamfsm: team.fsm,
-          teamrank: team.rank,
+          teamfsm: teamFsm,
+          teamrank: teamRank,
+          pending: teamRank === 0 || Number(teamFsm) <= 0,
         });
       }
     }

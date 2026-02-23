@@ -619,29 +619,19 @@ export async function getEventTeams(
   const autoDict = fsmdata.autoDict;
   const climbDict = fsmdata.climbDict;
   const foulDict = fsmdata.foulDict;
+
   elimAdjustFSM(elimMatches, fsms);
 
   for (let i = 0; i < rankings.length; i++) {
     const teamset = rankings[i];
     const team = teamset.team_key;
-    if (!fsms[team]) {
-      fsms[team] = 0.0;
-    }
-    if (!algaeDict[team]) {
-      algaeDict[team] = 0.0;
-    }
-    if (!coralDict[team]) {
-      coralDict[team] = 0.0;
-    }
-    if (!autoDict[team]) {
-      autoDict[team] = 0.0;
-    }
-    if (!climbDict[team]) {
-      climbDict[team] = 0.0;
-    }
-    if (!foulDict[team]) {
-      foulDict[team] = 0.0;
-    }
+    if (!fsms[team]) fsms[team] = 0.0;
+    if (!foulDict[team]) foulDict[team] = 0.0;
+    if (!climbDict[team]) climbDict[team] = 0.0;
+    if (!algaeDict[team]) algaeDict[team] = 0.0;
+    if (!coralDict[team]) coralDict[team] = 0.0;
+    if (!autoDict[team]) autoDict[team] = 0.0;
+
     TEAMDATA[team] = {
       key: team,
       rank: teamset.rank,
