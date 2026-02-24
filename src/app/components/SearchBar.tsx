@@ -82,7 +82,7 @@ export default function SearchBar({
         ]);
 
         if (teamsRes.ok) {
-          const teamsData = await teamsRes.json();
+          const teamsData: TeamOption[] = await teamsRes.json();
           teamsData.sort((a: TeamOption, b: TeamOption) => {
             const numA = Number(a.key) || 0;
             const numB = Number(b.key) || 0;
@@ -94,7 +94,7 @@ export default function SearchBar({
         }
 
         if (eventsRes.ok) {
-          const events2026 = await eventsRes.json();
+          const events2026: EventOption[] = await eventsRes.json();
           const uniqueEvents = Array.from(
             new Map(events2026.map((event) => [event.key, event])).values()
           );
