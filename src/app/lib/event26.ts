@@ -21,7 +21,44 @@ function elimModRoot(x: number) {
   return Math.pow(x, 1.0 / 3);
 }
 
-type Match = any;
+type AttendingTeam = {
+  key: string;
+};
+
+type RankingEntry = {
+  team_key: string;
+  rank: number;
+};
+
+type ScoreBreakdown = {
+  [key: string]: unknown;
+  hubScore?: {
+    totalCount?: number;
+    teleopCount?: number;
+    totalPoints?: number;
+    teleopPoints?: number;
+    autoPoints?: number;
+    autoCount?: number;
+  };
+  totalTowerPoints?: number;
+  endGameTowerPoints?: number;
+  autoTowerPoints?: number;
+  foulPoints?: number;
+  totalAutoPoints?: number;
+};
+
+type Match = {
+  key: string;
+  comp_level: string;
+  alliances: {
+    red: { team_keys: string[]; score: number };
+    blue: { team_keys: string[]; score: number };
+  };
+  score_breakdown?: {
+    red?: ScoreBreakdown;
+    blue?: ScoreBreakdown;
+  } | null;
+};
 
 export type TeamDataType26 = {
   key: string;
@@ -47,7 +84,7 @@ export async function getAttendingTeams(eventCode: string) {
   if (!res.ok) {
     throw new Error(`Failed to fetch attending teams for event: ${eventCode}`);
   }
-  return res.json();
+  return (await res.json()) as AttendingTeam[];
 }
 
 export async function getEventQualMatches(
@@ -65,10 +102,8 @@ export async function getEventQualMatches(
   if (!res.ok) {
     throw new Error(`Failed to fetch matches for event: ${eventCode}`);
   }
-  const matches = await res.json();
-  return matches.filter(
-    (match: { comp_level: string }) => match.comp_level === "qm" || anyFine
-  );
+  const matches = (await res.json()) as Match[];
+  return matches.filter((match) => match.comp_level === "qm" || anyFine);
 }
 
 export async function getNumberPlayedMatches(eventCode: string) {
@@ -82,10 +117,12 @@ export async function getNumberPlayedMatches(eventCode: string) {
 
 async function getEventElimMatches(eventCode: string) {
   const matches = await getEventQualMatches(eventCode, true);
-  return matches.filter((match: { comp_level: string }) => match.comp_level !== "qm");
+  return matches.filter((match) => match.comp_level !== "qm");
 }
 
-async function getEventRankings(eventCode: string) {
+async function getEventRankings(eventCode: string): Promise<{
+  rankings: RankingEntry[];
+}> {
   const revalidateTime = await getEventRevalidationTime(eventCode);
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}/rankings`,
@@ -97,7 +134,7 @@ async function getEventRankings(eventCode: string) {
   if (!res.ok) {
     throw new Error(`Failed to fetch rankings for event: ${eventCode}`);
   }
-  return res.json();
+  return (await res.json()) as { rankings: RankingEntry[] };
 }
 
 function getScore(match: Match, alliance: "red" | "blue", attribute: string): number {
@@ -141,7 +178,7 @@ function getScore(match: Match, alliance: "red" | "blue", attribute: string): nu
   return 0;
 }
 
-function parseTowerLevelPoints(level: string | null | undefined): number {
+function parseTowerLevelPoints(level: unknown): number {
   const normalized = String(level ?? "").trim().toLowerCase();
   if (!normalized || normalized === "none") return 0;
   if (normalized.includes("travers")) return 15;
@@ -376,7 +413,7 @@ export async function getEventTeams(
     }
     const sortedData = Object.values(TEAMDATA);
     eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
-    await addEventToDB(eventCode, TEAMDATA as any);
+    await addEventToDB(eventCode, TEAMDATA);
     return sortedData;
   }
 
@@ -446,7 +483,7 @@ export async function getEventTeams(
     (a, b) => a.rank - b.rank || b.fsm.localeCompare(a.fsm)
   );
   eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
-  await addEventToDB(eventCode, TEAMDATA as any);
+  await addEventToDB(eventCode, TEAMDATA);
   return sortedData;
 }
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+type MatchDetailsResponse = Record<string, unknown>;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
       candidateKeys.push(`${year}${matchKey}`);
     }
 
-    let data: any = null;
+    let data: MatchDetailsResponse | null = null;
     let lastStatus = 404;
     for (const candidate of candidateKeys) {
       const res = await fetch(

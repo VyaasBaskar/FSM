@@ -14,6 +14,23 @@ import { upsertEvent26Metrics, Event26Metric } from "@/app/lib/supabase";
 const DEFAULT_FSM_MEAN_2026 = 45;
 const DEFAULT_FSM_STDDEV_2026 = 35;
 
+type EventDetail = {
+  key: string;
+  name?: string;
+  city?: string;
+  state_prov?: string;
+  country?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  week?: number | null;
+  district?: { display_name?: string } | null;
+};
+
+type EventMetricTeam = {
+  key: string;
+  fsm: string;
+};
+
 async function fetchEventDetail(eventCode: string) {
   const res = await fetch(
     `https://www.thebluealliance.com/api/v3/event/${eventCode}`,
@@ -70,8 +87,8 @@ function normalizePredictedFSM(
 }
 
 function buildEventMetric(
-  eventDetail: any,
-  teams: any[],
+  eventDetail: EventDetail,
+  teams: EventMetricTeam[],
   fsmMap: Record<string, number>
 ): Event26Metric | null {
   const actualValues = new Map(
@@ -134,7 +151,7 @@ export default async function EventPage({
 
   try {
     const fullEventCode = "2026" + eventCode;
-    let eventDetail: any;
+    let eventDetail: EventDetail;
     try {
       eventDetail = await fetchEventDetail(fullEventCode);
     } catch {
@@ -197,7 +214,7 @@ export default async function EventPage({
     }
     const teams = Array.from(teamsByKey.values());
 
-    let FSMs: { [key: string]: number } = {};
+    const FSMs: { [key: string]: number } = {};
     for (const team of teams) {
       const actualFSM = Number(team.fsm);
       if (Number.isFinite(actualFSM) && actualFSM > 0) {
@@ -263,10 +280,10 @@ export default async function EventPage({
         />
       </div>
     );
-  } catch (error) {
-    let FSMs: { [key: string]: number } = {};
+  } catch {
+    const FSMs: { [key: string]: number } = {};
 
-    let attendingKeys = [];
+    const attendingKeys: string[] = [];
     for (const team of await getAttendingTeams("2026" + eventCode)) {
       attendingKeys.push(team.key);
     }

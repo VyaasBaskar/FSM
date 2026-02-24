@@ -32,7 +32,6 @@ export default function SearchBar({
   const [searchQuery, setSearchQuery] = useState("");
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [focused, setFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -76,7 +75,6 @@ export default function SearchBar({
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
         const [teamsRes, eventsRes] = await Promise.all([
           fetch("/api/teams?year=2026"),
@@ -112,8 +110,6 @@ export default function SearchBar({
         }
       } catch (error) {
         console.error("Error fetching search data:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -124,7 +120,7 @@ export default function SearchBar({
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    let teamNumber = trimmed.toLowerCase().replace(/^frc/, "").trim();
+    const teamNumber = trimmed.toLowerCase().replace(/^frc/, "").trim();
     const teamMatch = teamNumber.match(/^\d+$/);
     if (teamMatch) {
       router.push(`/team/frc${teamNumber}-2026`);
