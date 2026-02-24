@@ -12,7 +12,7 @@ import { get26Predictions } from "@/app/lib/26pred";
 import { upsertEvent26Metrics, Event26Metric } from "@/app/lib/supabase";
 
 const DEFAULT_FSM_MEAN_2026 = 45;
-const DEFAULT_FSM_STDDEV_2026 = 25;
+const DEFAULT_FSM_STDDEV_2026 = 35;
 
 async function fetchEventDetail(eventCode: string) {
   const res = await fetch(

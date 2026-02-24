@@ -354,6 +354,8 @@ export default function SearchBar({
   const inputId = `search-input-${isMobile ? "mobile" : "desktop"}`;
   const placeholderColor =
     theme === "light" ? "rgba(107, 114, 128, 0.6)" : "rgba(253, 224, 71, 0.7)";
+  const desktopWidth = focused ? 280 : 248;
+  const desktopMinWidth = focused ? 220 : 200;
 
   return (
     <>
@@ -454,19 +456,24 @@ export default function SearchBar({
             style={{
               padding: isMobile ? "12px 14px 12px 42px" : "10px 14px 10px 38px",
               fontSize: isMobile ? 15 : 14,
-              borderRadius: "10px",
+              borderRadius: "12px",
               border: getBorderColor(),
-              background: "var(--background)",
+              background:
+                theme === "dark"
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9))",
               color: "var(--foreground)",
-              width: isMobile ? "100%" : "220px",
-              minWidth: isMobile ? "100%" : "180px",
-              maxWidth: isMobile ? "100%" : "220px",
+              width: isMobile ? "100%" : `${desktopWidth}px`,
+              minWidth: isMobile ? "100%" : `${desktopMinWidth}px`,
+              maxWidth: isMobile ? "100%" : "290px",
               boxSizing: "border-box",
-              transition: "all 0.3s ease",
+              transition: "all 0.22s ease",
               outline: "none",
               boxShadow: getBoxShadow(),
               lineHeight: "1.5",
               verticalAlign: "middle",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
             }}
           />
         </form>
@@ -494,16 +501,20 @@ export default function SearchBar({
                   : "#ffffff"
                 : "var(--option-bg)",
               opacity: 1,
-              borderRadius: "10px",
+              borderRadius: "12px",
               border: `2px solid ${
                 theme === "dark"
-                  ? "rgba(253, 224, 71, 0.3)"
-                  : "rgba(107, 114, 128, 0.3)"
+                  ? "rgba(253, 224, 71, 0.25)"
+                  : "rgba(107, 114, 128, 0.24)"
               }`,
+              backgroundImage:
+                theme === "dark"
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.93))",
               boxShadow:
                 theme === "dark"
-                  ? "0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(253, 224, 71, 0.1)"
-                  : "0 4px 16px rgba(0,0,0,0.1), 0 0 0 1px rgba(107, 114, 128, 0.1)",
+                  ? "0 12px 26px rgba(0,0,0,0.28), 0 0 0 1px rgba(253, 224, 71, 0.08)"
+                  : "0 10px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(107, 114, 128, 0.1)",
               zIndex: 100000,
               maxHeight: "300px",
               overflowY: "auto",
@@ -517,12 +528,12 @@ export default function SearchBar({
                 onClick={() => handleOptionSelect(option)}
                 onMouseEnter={() => setSelectedIndex(idx)}
                 style={{
-                  padding: "12px 16px",
+                  padding: "11px 14px",
                   cursor: "pointer",
                   background:
                     selectedIndex === idx
                       ? theme === "dark"
-                        ? "rgba(253, 224, 71, 0.15)"
+                        ? "rgba(253, 224, 71, 0.17)"
                         : "rgba(107, 114, 128, 0.1)"
                       : isMobile
                       ? theme === "dark"
@@ -539,7 +550,7 @@ export default function SearchBar({
                             : "rgba(107, 114, 128, 0.1)"
                         }`
                       : "none",
-                  transition: "background 0.2s ease",
+                  transition: "background 0.18s ease",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",

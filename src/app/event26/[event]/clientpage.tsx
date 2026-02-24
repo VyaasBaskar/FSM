@@ -229,18 +229,78 @@ export default function ClientPage({
   };
 
   const projectedRankings = useMemo(() => {
+    const EPS = 1e-6;
+    const erf = (x: number) => {
+      const sign = x >= 0 ? 1 : -1;
+      const ax = Math.abs(x);
+      const a1 = 0.254829592;
+      const a2 = -0.284496736;
+      const a3 = 1.421413741;
+      const a4 = -1.453152027;
+      const a5 = 1.061405429;
+      const p = 0.3275911;
+      const t = 1 / (1 + p * ax);
+      const y =
+        1 -
+        (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) *
+          t *
+          Math.exp(-ax * ax));
+      return sign * y;
+    };
+    const normalCdf = (z: number) => 0.5 * (1 + erf(z / Math.sqrt(2)));
+    const probAtLeast = (mean: number, stdDev: number, threshold: number) => {
+      const s = stdDev > EPS ? stdDev : 1;
+      return 1 - normalCdf((threshold - mean) / s);
+    };
+
     const teamMetricMap = new Map<
       string,
-      { fuel: number; climb: number }
+      { fuel: number; climb: number; fsm: number }
     >(
       teams.map((team) => [
         team.key,
         {
           fuel: Number(team.fuel ?? team.fsm ?? 0),
           climb: Number(team.climb ?? 0),
+          fsm: Number(team.fsm ?? 0),
         },
       ])
     );
+
+    const allFuel = teams.map((t) => Number(t.fuel ?? t.fsm ?? 0)).filter(Number.isFinite);
+    const allClimb = teams.map((t) => Number(t.climb ?? 0)).filter(Number.isFinite);
+    const allFsm = teams.map((t) => Number(t.fsm ?? 0)).filter(Number.isFinite);
+    const meanOf = (vals: number[], fallback: number) =>
+      vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : fallback;
+    const varOf = (vals: number[], fallback: number) => {
+      if (vals.length === 0) return fallback;
+      const m = meanOf(vals, 0);
+      return vals.reduce((a, b) => a + Math.pow(b - m, 2), 0) / vals.length;
+    };
+
+    const fuelMean = meanOf(allFuel, 45);
+    const climbMean = meanOf(allClimb, 8);
+    const fsmMean = meanOf(allFsm, 45);
+    const fuelVar = Math.max(varOf(allFuel, 25 * 25), 25);
+    const climbVar = Math.max(varOf(allClimb, 12 * 12), 16);
+    const fsmVar = Math.max(varOf(allFsm, 25 * 25), 25);
+
+    const allianceMetricStats = (
+      teamKeys: string[],
+      metric: "fuel" | "climb" | "fsm"
+    ) => {
+      let mean = 0;
+      let variance = 0;
+      for (const key of teamKeys) {
+        const m = teamMetricMap.get(key);
+        const value =
+          m?.[metric] ??
+          (metric === "fuel" ? fuelMean : metric === "climb" ? climbMean : fsmMean);
+        mean += Number.isFinite(value) ? value : 0;
+        variance += metric === "fuel" ? fuelVar : metric === "climb" ? climbVar : fsmVar;
+      }
+      return { mean, stdDev: Math.sqrt(Math.max(variance, EPS)) };
+    };
 
     const standings = new Map<
       string,
@@ -270,74 +330,16 @@ export default function ClientPage({
       return standings.get(teamKey)!;
     };
 
-    const allianceFuel = (teamKeys: string[]) =>
-      teamKeys.reduce((sum, key) => sum + (teamMetricMap.get(key)?.fuel ?? 0), 0);
-    const allianceClimb = (teamKeys: string[]) =>
-      teamKeys.reduce((sum, key) => sum + (teamMetricMap.get(key)?.climb ?? 0), 0);
+    for (const team of teams) ensure(team.key);
 
-    const bonusRpFromRules = (
-      allianceScore: number,
-      allianceFuelValue: number,
-      allianceClimbValue: number
-    ) => {
-      let bonus = 0;
-      if (allianceFuelValue >= 100) bonus += 1;
-      if (allianceScore >= 360) bonus += 1;
-      if (allianceClimbValue >= 50) bonus += 1;
-      return bonus;
-    };
-
-    for (const team of teams) {
-      ensure(team.key);
-    }
-
-    const qualMatches = matches.filter((m) => m.comp_level === "qm");
-    const noQualSchedule = qualMatches.length === 0;
-
-    if (noQualSchedule) {
-      const fsmValues = teams
-        .map((t) => Number(t.fsm))
-        .filter((v) => Number.isFinite(v));
-      const mean =
-        fsmValues.length > 0
-          ? fsmValues.reduce((a, b) => a + b, 0) / fsmValues.length
-          : 45;
-      const variance =
-        fsmValues.length > 0
-          ? fsmValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) /
-            fsmValues.length
-          : 625;
-      const stdDev = Math.sqrt(variance) || 25;
-
-      for (const team of teams) {
-        const row = ensure(team.key);
-        const fsm = Number(team.fsm) || 45;
-        const fuel = Number(team.fuel ?? team.fsm ?? 0);
-        const climb = Number(team.climb ?? 0);
-        const z = (fsm - mean) / stdDev;
-        const winRate = 1 / (1 + Math.exp(-z));
-        row.currentRp = 0;
-        row.forecastRp =
-          winRate * 3 +
-          (fuel >= 100 ? 1 : 0) +
-          (fsm >= 360 ? 1 : 0) +
-          (climb >= 50 ? 1 : 0);
-        row.wins = Math.round(winRate * 10);
-        row.losses = Math.max(0, 10 - row.wins);
-        row.ties = 0;
-        row.played = 10;
-      }
-    }
-
-    const addAllianceResult = (
+    const addActualAlliance = (
       teamKeys: string[],
       rpValue: number,
-      isCurrent: boolean,
       result: "win" | "loss" | "tie"
     ) => {
       for (const teamKey of teamKeys) {
         const row = ensure(teamKey);
-        if (isCurrent) row.currentRp += rpValue;
+        row.currentRp += rpValue;
         row.forecastRp += rpValue;
         row.played += 1;
         if (result === "win") row.wins += 1;
@@ -346,63 +348,159 @@ export default function ClientPage({
       }
     };
 
-    for (const match of matches) {
-      if (match.comp_level !== "qm") continue;
-      const redTeams: string[] = match.alliances?.red?.team_keys ?? [];
-      const blueTeams: string[] = match.alliances?.blue?.team_keys ?? [];
-
-      const redSb = match.score_breakdown?.red;
-      const blueSb = match.score_breakdown?.blue;
-
-      if (redSb && blueSb && redSb.rp != null && blueSb.rp != null) {
-        const redScore = Number(match.alliances?.red?.score) || 0;
-        const blueScore = Number(match.alliances?.blue?.score) || 0;
-        const redResult =
-          redScore > blueScore ? "win" : redScore < blueScore ? "loss" : "tie";
-        const blueResult =
-          blueScore > redScore ? "win" : blueScore < redScore ? "loss" : "tie";
-        addAllianceResult(redTeams, Number(redSb.rp) || 0, true, redResult);
-        addAllianceResult(blueTeams, Number(blueSb.rp) || 0, true, blueResult);
-        continue;
+    const addExpectedAlliance = (
+      teamKeys: string[],
+      pWin: number,
+      pFuel: number,
+      pScore: number,
+      pClimb: number
+    ) => {
+      const expectedRp = 3 * pWin + pFuel + pScore + pClimb;
+      for (const teamKey of teamKeys) {
+        const row = ensure(teamKey);
+        row.forecastRp += expectedRp;
+        row.wins += pWin;
+        row.losses += 1 - pWin;
+        row.played += 1;
       }
+    };
 
-      const pred = matchPredictions[match.key];
-      if (!pred) continue;
+    const pairThresholdProbability = (
+      teamKey: string,
+      metric: "fuel" | "climb" | "fsm",
+      threshold: number
+    ) => {
+      const teamValue = Number(
+        teamMetricMap.get(teamKey)?.[metric] ??
+          (metric === "fuel" ? fuelMean : metric === "climb" ? climbMean : fsmMean)
+      );
+      if (!Number.isFinite(teamValue)) return 0;
+      if (teamValue >= threshold) return 1;
+      const deficit = threshold - teamValue;
+      const partnerValues = teams
+        .filter((t) => t.key !== teamKey)
+        .map((t) => {
+          const value =
+            teamMetricMap.get(t.key)?.[metric] ??
+            (metric === "fuel" ? fuelMean : metric === "climb" ? climbMean : fsmMean);
+          return Number(value);
+        })
+        .filter(Number.isFinite);
+      if (partnerValues.length < 2) {
+        const varValue = metric === "fuel" ? fuelVar : metric === "climb" ? climbVar : fsmVar;
+        return probAtLeast(teamValue + 2 * meanOf(partnerValues, 0), Math.sqrt(2 * varValue), threshold);
+      }
+      let success = 0;
+      let total = 0;
+      for (let i = 0; i < partnerValues.length - 1; i += 1) {
+        for (let j = i + 1; j < partnerValues.length; j += 1) {
+          total += 1;
+          if (partnerValues[i] + partnerValues[j] >= deficit) {
+            success += 1;
+          }
+        }
+      }
+      return total > 0 ? success / total : 0;
+    };
 
-      const redPred = Number(pred.preds?.[0]) || 0;
-      const bluePred = Number(pred.preds?.[1]) || 0;
+    const qualMatches = matches.filter((m) => m.comp_level === "qm");
+    if (qualMatches.length === 0) {
+      const expectedMatches = 10;
+      const meanOppFsm = 3 * fsmMean;
+      const stdOppFsm = Math.sqrt(3 * fsmVar);
 
-      let redRp = redPred > bluePred ? 3 : redPred < bluePred ? 0 : 1;
-      let blueRp = bluePred > redPred ? 3 : bluePred < redPred ? 0 : 1;
+      for (const team of teams) {
+        const row = ensure(team.key);
+        const teamFuel = Number(team.fuel ?? team.fsm ?? fuelMean);
+        const teamClimb = Number(team.climb ?? 0);
+        const teamFsm = Number(team.fsm ?? fsmMean);
 
-      const redFuelEstimate = allianceFuel(redTeams);
-      const blueFuelEstimate = allianceFuel(blueTeams);
-      const redClimbEstimate = allianceClimb(redTeams);
-      const blueClimbEstimate = allianceClimb(blueTeams);
+        const allianceFuelMean = teamFuel + 2 * fuelMean;
+        const allianceClimbMean = teamClimb + 2 * climbMean;
+        const allianceFsmMean = teamFsm + 2 * fsmMean;
 
-      redRp += bonusRpFromRules(redPred, redFuelEstimate, redClimbEstimate);
-      blueRp += bonusRpFromRules(bluePred, blueFuelEstimate, blueClimbEstimate);
+        const allianceFuelStd = Math.sqrt(3 * fuelVar);
+        const allianceClimbStd = Math.sqrt(3 * climbVar);
+        const allianceFsmStd = Math.sqrt(3 * fsmVar);
 
-      const redResult =
-        redPred > bluePred ? "win" : redPred < bluePred ? "loss" : "tie";
-      const blueResult =
-        bluePred > redPred ? "win" : bluePred < redPred ? "loss" : "tie";
-      addAllianceResult(redTeams, redRp, false, redResult);
-      addAllianceResult(blueTeams, blueRp, false, blueResult);
+        const pWin = probAtLeast(
+          allianceFsmMean - meanOppFsm,
+          Math.sqrt(allianceFsmStd ** 2 + stdOppFsm ** 2),
+          0
+        );
+        const pFuel = pairThresholdProbability(team.key, "fuel", 100);
+        const pScore = pairThresholdProbability(team.key, "fsm", 360);
+        const pClimb = pairThresholdProbability(team.key, "climb", 50);
+
+        row.currentRp = 0;
+        row.forecastRp += (3 * pWin + pFuel + pScore + pClimb) * expectedMatches;
+        row.wins += pWin * expectedMatches;
+        row.losses += (1 - pWin) * expectedMatches;
+        row.played += expectedMatches;
+      }
+    } else {
+      for (const match of qualMatches) {
+        const redTeams: string[] = match.alliances?.red?.team_keys ?? [];
+        const blueTeams: string[] = match.alliances?.blue?.team_keys ?? [];
+        const redSb = match.score_breakdown?.red;
+        const blueSb = match.score_breakdown?.blue;
+
+        if (redSb && blueSb && redSb.rp != null && blueSb.rp != null) {
+          const redScore = Number(match.alliances?.red?.score) || 0;
+          const blueScore = Number(match.alliances?.blue?.score) || 0;
+          const redResult =
+            redScore > blueScore ? "win" : redScore < blueScore ? "loss" : "tie";
+          const blueResult =
+            blueScore > redScore ? "win" : blueScore < redScore ? "loss" : "tie";
+          addActualAlliance(redTeams, Number(redSb.rp) || 0, redResult);
+          addActualAlliance(blueTeams, Number(blueSb.rp) || 0, blueResult);
+          continue;
+        }
+
+        const redFsm = allianceMetricStats(redTeams, "fsm");
+        const blueFsm = allianceMetricStats(blueTeams, "fsm");
+        const redFuel = allianceMetricStats(redTeams, "fuel");
+        const blueFuel = allianceMetricStats(blueTeams, "fuel");
+        const redClimb = allianceMetricStats(redTeams, "climb");
+        const blueClimb = allianceMetricStats(blueTeams, "climb");
+
+        const pRedWin = probAtLeast(
+          redFsm.mean - blueFsm.mean,
+          Math.sqrt(redFsm.stdDev ** 2 + blueFsm.stdDev ** 2),
+          0
+        );
+        const pBlueWin = 1 - pRedWin;
+
+        const pRedFuel = probAtLeast(redFuel.mean, redFuel.stdDev, 100);
+        const pBlueFuel = probAtLeast(blueFuel.mean, blueFuel.stdDev, 100);
+        const pRedScore = probAtLeast(redFsm.mean, redFsm.stdDev, 360);
+        const pBlueScore = probAtLeast(blueFsm.mean, blueFsm.stdDev, 360);
+        const pRedClimb = probAtLeast(redClimb.mean, redClimb.stdDev, 50);
+        const pBlueClimb = probAtLeast(blueClimb.mean, blueClimb.stdDev, 50);
+
+        addExpectedAlliance(redTeams, pRedWin, pRedFuel, pRedScore, pRedClimb);
+        addExpectedAlliance(blueTeams, pBlueWin, pBlueFuel, pBlueScore, pBlueClimb);
+      }
     }
+
+    const getForecastAvg = (row: { forecastRp: number; played: number }) =>
+      row.played > 0 ? row.forecastRp / row.played : 0;
 
     return Array.from(standings.values())
       .sort((a, b) => {
-        if (b.forecastRp !== a.forecastRp) return b.forecastRp - a.forecastRp;
+        const bAvg = getForecastAvg(b);
+        const aAvg = getForecastAvg(a);
+        if (bAvg !== aAvg) return bAvg - aAvg;
         if (b.currentRp !== a.currentRp) return b.currentRp - a.currentRp;
         if (b.wins !== a.wins) return b.wins - a.wins;
         return a.teamKey.localeCompare(b.teamKey);
       })
       .map((row, idx) => ({
         ...row,
+        forecastRp: getForecastAvg(row),
         rank: idx + 1,
       }));
-  }, [matches, matchPredictions, teams]);
+  }, [matches, teams]);
 
   return (
     <div
@@ -1633,16 +1731,6 @@ export default function ClientPage({
             <h2 style={{ color: "var(--foreground)" }}>
               Predicted Qualification Rankings
             </h2>
-            <p
-              style={{
-                color: "var(--gray-less)",
-                marginBottom: "1rem",
-                textAlign: "center",
-              }}
-            >
-              RP rules: 3 for win, +1 for 100 fuel, +1 for 360 score, +1 for
-              50 climb alliance.
-            </p>
             <div
               style={{
                 width: "100%",
@@ -1722,8 +1810,12 @@ export default function ClientPage({
                       >
                         {row.forecastRp.toFixed(2)}
                       </td>
-                      <td style={{ padding: "0.85rem" }}>{row.wins}</td>
-                      <td style={{ padding: "0.85rem" }}>{row.losses}</td>
+                      <td style={{ padding: "0.85rem" }}>
+                        {Number(row.wins).toFixed(1)}
+                      </td>
+                      <td style={{ padding: "0.85rem" }}>
+                        {Number(row.losses).toFixed(1)}
+                      </td>
                       <td style={{ padding: "0.85rem" }}>{row.ties}</td>
                       <td style={{ padding: "0.85rem" }}>{row.played}</td>
                     </tr>
