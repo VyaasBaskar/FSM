@@ -125,8 +125,8 @@ function buildEventMetric(
     city: eventDetail.city,
     stateProv: eventDetail.state_prov,
     country: eventDetail.country,
-    startDate: eventDetail.start_date,
-    endDate: eventDetail.end_date,
+    startDate: eventDetail.start_date ?? undefined,
+    endDate: eventDetail.end_date ?? undefined,
     week:
       typeof eventDetail.week === "number"
         ? eventDetail.week + 1
