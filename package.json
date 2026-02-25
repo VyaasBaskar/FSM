@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
-    "next": "15.3.5",
+    "next": "latest",
     "nprogress": "^0.2.0",
     "onnxruntime-node": "^1.22.0-rev",
     "onnxruntime-web": "^1.22.0",
