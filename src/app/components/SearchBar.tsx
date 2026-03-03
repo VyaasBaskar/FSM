@@ -350,8 +350,8 @@ export default function SearchBar({
   const inputId = `search-input-${isMobile ? "mobile" : "desktop"}`;
   const placeholderColor =
     theme === "light" ? "rgba(107, 114, 128, 0.6)" : "rgba(253, 224, 71, 0.7)";
-  const desktopWidth = focused ? 280 : 248;
-  const desktopMinWidth = focused ? 220 : 200;
+  const desktopWidth = focused ? 260 : 220;
+  const desktopMinWidth = focused ? 180 : 150;
 
   return (
     <>
@@ -381,10 +381,11 @@ export default function SearchBar({
           justifyContent: isMobile ? "center" : "flex-start",
           alignItems: isMobile ? "flex-start" : "flex-start",
           width: isMobile ? "100%" : "auto",
-          flexShrink: 0,
+          flexShrink: 1,
           isolation: "isolate",
           margin: 0,
           padding: 0,
+          minWidth: 0,
         }}
       >
         <form
@@ -396,7 +397,8 @@ export default function SearchBar({
             margin: 0,
             boxSizing: "border-box",
             display: "block",
-            flexShrink: 0,
+            flexShrink: 1,
+            minWidth: 0,
           }}
         >
           <svg

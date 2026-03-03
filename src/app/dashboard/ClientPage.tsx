@@ -14,11 +14,12 @@ interface Team {
   key: string;
   rank: number;
   fsm: string;
+  fuel: string;
+  climb: string;
+  foul: string;
   algae: string;
   coral: string;
   auto: string;
-  climb: string;
-  foul: string;
 }
 
 interface Ranking {
@@ -383,17 +384,17 @@ export default function ClientPage({ events }: ClientPageProps) {
     });
   }, [teams]);
 
-  const event2025Options = events.filter((e) => e.key.startsWith("2025"));
+  const event2026Options = events.filter((e) => e.key.startsWith("2026"));
 
   const filteredEvents = useMemo(() => {
-    if (!eventSearchQuery.trim()) return event2025Options;
+    if (!eventSearchQuery.trim()) return event2026Options;
     const query = eventSearchQuery.toLowerCase();
-    return event2025Options.filter(
+    return event2026Options.filter(
       (event) =>
         event.key.toLowerCase().includes(query) ||
         event.value.toLowerCase().includes(query)
     );
-  }, [eventSearchQuery, event2025Options]);
+  }, [eventSearchQuery, event2026Options]);
 
   const selectedEventName = useMemo(() => {
     const event = events.find((e) => e.key === selectedEvent);
@@ -879,7 +880,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                               : `1px solid ${alliance.border}`,
                                           }}
                                         >
-                                          <TeamLink teamKey={t} year={2025} />
+                                          <TeamLink teamKey={t} year={2026} />
                                         </span>
                                       );
                                     })}
@@ -1387,7 +1388,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                               : `1px solid ${alliance.border}`,
                                           }}
                                         >
-                                          <TeamLink teamKey={t} year={2025} />
+                                          <TeamLink teamKey={t} year={2026} />
                                         </span>
                                       );
                                     })}
@@ -1703,7 +1704,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                 marginBottom: "0.1rem",
                               }}
                             >
-                              Algae
+                              Fuel
                             </div>
                             <div
                               style={{
@@ -1712,27 +1713,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                 fontSize: "0.7rem",
                               }}
                             >
-                              {teamData.algae}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: "center" }}>
-                            <div
-                              style={{
-                                color: "var(--gray-less)",
-                                fontSize: "0.55rem",
-                                marginBottom: "0.1rem",
-                              }}
-                            >
-                              Coral
-                            </div>
-                            <div
-                              style={{
-                                fontWeight: "bold",
-                                color: "var(--foreground)",
-                                fontSize: "0.7rem",
-                              }}
-                            >
-                              {teamData.coral}
+                              {teamData.fuel}
                             </div>
                           </div>
                           <div style={{ textAlign: "center" }}>
@@ -1783,7 +1764,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                 marginBottom: "0.1rem",
                               }}
                             >
-                              Foul
+                              Penalty
                             </div>
                             <div
                               style={{
@@ -1923,7 +1904,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                               >
                                 <TeamLink
                                   teamKey={ranking.team_key}
-                                  year={2025}
+                                  year={2026}
                                 />
                               </span>
                             </div>
@@ -2059,7 +2040,7 @@ export default function ClientPage({ events }: ClientPageProps) {
                                     : "var(--foreground)",
                                 }}
                               >
-                                <TeamLink teamKey={team.key} year={2025} />
+                                <TeamLink teamKey={team.key} year={2026} />
                               </span>
                             </div>
                             <div

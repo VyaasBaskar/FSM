@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const fullEventCode = event.startsWith("2025") ? event : `2025${event}`;
+    const fullEventCode = /^\d{4}/.test(event) ? event : `2026${event}`;
 
     const nexusSchedule = await getNexusMatchSchedule(fullEventCode);
 

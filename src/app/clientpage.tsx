@@ -35,7 +35,7 @@ export default function ClientHome({ events, teams }: ClientHomeProps) {
 
   const handleGoGlobal = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/global/2025`);
+    router.push(`/global/2026`);
   };
 
   return (

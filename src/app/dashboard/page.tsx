@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 export default async function DashboardPage() {
   try {
-    const events = await getEvents(2025);
+    const events = await getEvents(2026);
 
     return <ClientPage events={events} />;
   } catch (error) {

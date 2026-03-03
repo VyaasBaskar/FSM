@@ -31,7 +31,7 @@ const navLinkStyle: React.CSSProperties = {
 
 export default function Navbar() {
   const links = [
-    { href: "/global/2025", label: "Teams" },
+    { href: "/global/2026", label: "Teams" },
     { href: "/event26/all", label: "Events" },
     { href: "/dashboard", label: "Dashboard" },
   ];
@@ -156,16 +156,18 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {isDashboardWithSelections && (
+          {isDashboardWithSelections && !isMobile && (
             <div
               style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
                 color: "var(--foreground)",
                 fontWeight: "600",
                 fontSize: "1.2rem",
                 letterSpacing: "-0.01em",
+                flexShrink: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               Dashboard
@@ -177,7 +179,7 @@ export default function Navbar() {
               gap: isMobile ? "0.5rem" : "0.75rem",
               alignItems: "center",
               flexWrap: "nowrap",
-              flexShrink: 0,
+              flexShrink: 1,
               minWidth: 0,
               position: "relative",
               maxWidth: isMobile ? "30%" : "none",

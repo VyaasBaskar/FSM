@@ -25,9 +25,9 @@ export default async function GlobalPage({
     Number(year) < 2013 ||
     Number(year) === 2021 ||
     Number(year) === 2020 ||
-    Number(year) > 2025
+    Number(year) > 2026
   ) {
-    year = "2025";
+    year = "2026";
   }
 
   const yearNum = Number(year);
