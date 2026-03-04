@@ -373,25 +373,31 @@ export async function getEventTeams(
   const orig_data = await getEventDataIfOneDayAfterEnd(eventCode);
 
   if (orig_data && !forceRecalc) {
-    for (const teamKey in orig_data) {
-      const team = orig_data[teamKey];
-      TEAMDATA[teamKey] = {
-        key: team.key,
-        rank: team.rank,
-        fsm: team.fsm,
-        fuel: team.fuel ?? "0",
-        climb: team.climb ?? "0",
-        foul: team.foul ?? "0",
-        algae: team.algae ?? "0",
-        coral: team.coral ?? "0",
-        auto: team.auto ?? "0",
-      };
+    const sampleTeam = Object.values(orig_data)[0] as any;
+    const hasCorrectFormat = sampleTeam && sampleTeam.fuel !== undefined;
+
+    if (hasCorrectFormat) {
+      for (const teamKey in orig_data) {
+        const team = orig_data[teamKey];
+        TEAMDATA[teamKey] = {
+          key: team.key,
+          rank: team.rank,
+          fsm: team.fsm,
+          fuel: team.fuel ?? "0",
+          climb: team.climb ?? "0",
+          foul: team.foul ?? "0",
+          algae: team.algae ?? "0",
+          coral: team.coral ?? "0",
+          auto: team.auto ?? "0",
+        };
+      }
+      const sortedData = Object.values(TEAMDATA).sort(
+        (a, b) => a.rank - b.rank || b.fsm.localeCompare(a.fsm)
+      );
+      eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
+      return sortedData;
     }
-    const sortedData = Object.values(TEAMDATA).sort(
-      (a, b) => a.rank - b.rank || b.fsm.localeCompare(a.fsm)
-    );
-    eventTeamsCache.set(eventCode, { data: sortedData, timestamp: Date.now() });
-    return sortedData;
+    console.log(`Recomputing ${eventCode}: cached data missing fuel field`);
   }
 
   const matches = await getEventQualMatches(eventCode);

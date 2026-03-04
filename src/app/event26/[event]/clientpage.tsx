@@ -513,7 +513,7 @@ export default function ClientPage({
       }}
     >
       <main className={styles.main}>
-        <h1 className={styles.title}>Event FSM</h1>
+        <h1 className={styles.pageTitle}>Event FSM</h1>
         <h2 className={styles.table}>2026{eventCode}</h2>
 
         <div
@@ -831,6 +831,26 @@ export default function ClientPage({
                       }}
                     >
                       <span>{matchKey}</span>
+                      {hasResult && (
+                        <a
+                          href={`https://www.thebluealliance.com/match/${matchKey}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            fontSize: "0.65rem",
+                            padding: "0.15rem 0.45rem",
+                            borderRadius: 999,
+                            background: "rgba(255,255,255,0.08)",
+                            color: "var(--gray-less)",
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            border: "1px solid var(--border-color)",
+                          }}
+                        >
+                          ▶ TBA
+                        </a>
+                      )}
                       <span
                         style={{
                           padding: "0.12rem 0.45rem",
@@ -1086,6 +1106,26 @@ export default function ClientPage({
                             }}
                           >
                             <span>{matchKey}</span>
+                            {hasResult && (
+                              <a
+                                href={`https://www.thebluealliance.com/match/${matchKey}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  fontSize: "0.65rem",
+                                  padding: "0.15rem 0.45rem",
+                                  borderRadius: 999,
+                                  background: "rgba(255,255,255,0.08)",
+                                  color: "var(--gray-less)",
+                                  textDecoration: "none",
+                                  fontWeight: 600,
+                                  border: "1px solid var(--border-color)",
+                                }}
+                              >
+                                ▶ TBA
+                              </a>
+                            )}
                             <span
                               style={{
                                 padding: "0.1rem 0.4rem",
@@ -1424,6 +1464,26 @@ export default function ClientPage({
                             }}
                           >
                             <span>{matchKey}</span>
+                            {hasResult && (
+                              <a
+                                href={`https://www.thebluealliance.com/match/${matchKey}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  fontSize: "0.65rem",
+                                  padding: "0.15rem 0.45rem",
+                                  borderRadius: 999,
+                                  background: "rgba(255,255,255,0.08)",
+                                  color: "var(--gray-less)",
+                                  textDecoration: "none",
+                                  fontWeight: 600,
+                                  border: "1px solid var(--border-color)",
+                                }}
+                              >
+                                ▶ TBA
+                              </a>
+                            )}
                             <span
                               style={{
                                 padding: "0.1rem 0.4rem",

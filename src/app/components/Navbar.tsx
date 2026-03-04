@@ -33,6 +33,7 @@ export default function Navbar() {
   const links = [
     { href: "/global/2026", label: "Teams" },
     { href: "/event26/all", label: "Events" },
+    { href: "/compare", label: "Compare" },
     { href: "/dashboard", label: "Dashboard" },
   ];
 

@@ -41,6 +41,11 @@
   --clear-cache-text: #dc2626;
 
   --predicted-win-highlight: #ffd700;
+
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.12);
+  --card-radius: 12px;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="dark"] {
@@ -74,6 +79,11 @@
   --clear-cache-text: #ff6b6b;
 
   --predicted-win-highlight: #ffd700;
+
+  --card-bg: #222;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-radius: 12px;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 html,

@@ -5,6 +5,7 @@ import {
   EventDataType,
   getTeamInfo,
   getTeamMedia,
+  getTeamAwards,
 } from "../../lib/team";
 import { getGlobalStats } from "@/app/lib/global";
 import { updateSingleTeamGlobalFSM } from "@/app/lib/supabase";
@@ -15,6 +16,7 @@ import InteractiveChart from "../../components/Graph";
 import StatCard from "./StatCard";
 import EventCard from "./EventCard";
 import TeamImageGallery from "./TeamImageGallery";
+import SpiderChart from "@/app/components/SpiderChart";
 
 function YearButtons({
   teamKey,
@@ -198,7 +200,7 @@ export default async function TeamPage({
         style={{ position: "relative", minHeight: "100vh", width: "100%" }}
       >
         <main className={styles.main}>
-          <h1 className={styles.title}>10-Year Team Analysis</h1>
+          <h1 className={styles.pageTitle}>10-Year Team Analysis</h1>
           <h2
             style={{
               color: "var(--yellow-color)",
@@ -430,16 +432,18 @@ export default async function TeamPage({
   }
 
   let teamStats;
-  let teamInfo;
+  let teamInfo: any;
   let gstats;
   let teamMedia;
+  let teamAwards: any[] = [];
 
   try {
-    [teamStats, teamInfo, gstats, teamMedia] = await Promise.all([
+    [teamStats, teamInfo, gstats, teamMedia, teamAwards] = await Promise.all([
       getTeamStats(teamKey, Number(yearprov)),
       getTeamInfo(teamKey),
       getGlobalStats(Number(yearprov)),
       getTeamMedia(teamKey, Number(yearprov)),
+      getTeamAwards(teamKey, Number(yearprov)),
     ]);
   } catch {
     return (
@@ -448,7 +452,7 @@ export default async function TeamPage({
         style={{ position: "relative", minHeight: "100vh", width: "100%" }}
       >
         <main className={styles.main}>
-          <h1 className={styles.title}>Team Not Found</h1>
+          <h1 className={styles.pageTitle}>Team Not Found</h1>
           <YearButtons teamKey={teamKey} currentYear={yearprov} />
           <div
             style={{
@@ -533,13 +537,30 @@ export default async function TeamPage({
     0
   );
 
+  const teamCountry = teamInfo?.country || "";
+  const teamStateProv = teamInfo?.state_prov || "";
+
+  const countryTeams = sortedStats.filter((t: any) => t.country === teamCountry);
+  const countryRank = countryTeams.findIndex((t: any) => t.teamKey === teamKey) + 1;
+  const countryTotal = countryTeams.length;
+
+  const stateTeams = teamCountry === "USA" && teamStateProv
+    ? sortedStats.filter((t: any) => t.country === "USA" && t.state_prov === teamStateProv)
+    : [];
+  const stateRank = stateTeams.length > 0
+    ? stateTeams.findIndex((t: any) => t.teamKey === teamKey) + 1
+    : 0;
+  const stateTotal = stateTeams.length;
+
+  const { bestComponents } = teamStats;
+
   return (
     <div
       className={styles.page}
       style={{ position: "relative", minHeight: "100vh", width: "100%" }}
     >
       <main className={styles.main}>
-        <h1 className={styles.title}>{yearprov} Team FSM</h1>
+        <h1 className={styles.pageTitle}>{yearprov} Team FSM</h1>
         <div
           style={{
             textAlign: "center",
@@ -568,6 +589,29 @@ export default async function TeamPage({
           <p style={{ color: "var(--gray-less)", fontSize: "1rem" }}>
             {teamInfo.city}, {teamInfo.state_prov}, {teamInfo.country}
           </p>
+          {/* Team Metadata */}
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginTop: "0.5rem" }}>
+            {teamInfo.rookie_year && (
+              <span style={{ fontSize: "0.85rem", color: "var(--gray-less)", padding: "0.25rem 0.65rem", background: "var(--gray-more)", borderRadius: 999, fontWeight: 600 }}>
+                Rookie {teamInfo.rookie_year}
+              </span>
+            )}
+            {teamInfo.website && (
+              <a
+                href={teamInfo.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: "0.85rem", color: "var(--yellow-color)", padding: "0.25rem 0.65rem", background: "var(--gray-more)", borderRadius: 999, fontWeight: 600, textDecoration: "none" }}
+              >
+                Website
+              </a>
+            )}
+            {teamAwards.length > 0 && (
+              <span style={{ fontSize: "0.85rem", color: "#eab308", padding: "0.25rem 0.65rem", background: "var(--gray-more)", borderRadius: 999, fontWeight: 600 }}>
+                {teamAwards.length} Award{teamAwards.length !== 1 ? "s" : ""} in {yearprov}
+              </span>
+            )}
+          </div>
         </div>
 
         <YearButtons teamKey={teamKey} currentYear={yearprov} />
@@ -589,7 +633,7 @@ export default async function TeamPage({
                 flexWrap: "wrap",
                 gap: "1rem",
                 justifyContent: "center",
-                marginBottom: "2rem",
+                marginBottom: "1.25rem",
               }}
             >
               <StatCard label="FSM" value={teamFSM.toFixed(1)} />
@@ -609,6 +653,87 @@ export default async function TeamPage({
                 color="#84cc16"
               />
             </div>
+
+            {/* Regional Ranks */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
+                justifyContent: "center",
+                marginBottom: "1.25rem",
+              }}
+            >
+              {countryRank > 0 && (
+                <StatCard
+                  label={`${teamCountry} RANK`}
+                  value={`#${countryRank}`}
+                  subtitle={`of ${countryTotal}`}
+                  color="#8b5cf6"
+                />
+              )}
+              {stateRank > 0 && (
+                <StatCard
+                  label={`${teamStateProv} RANK`}
+                  value={`#${stateRank}`}
+                  subtitle={`of ${stateTotal}`}
+                  color="#6366f1"
+                />
+              )}
+            </div>
+
+            {/* Component Breakdown Radar Chart */}
+            {(() => {
+              const is2026 = Number(yearprov) >= 2026;
+              const metrics = is2026
+                ? [
+                    { label: "Auto", value: bestComponents.auto },
+                    { label: "Fuel", value: bestComponents.fuel },
+                    { label: "Climb", value: bestComponents.climb },
+                  ]
+                : [
+                    { label: "Auto", value: bestComponents.auto },
+                    { label: "Coral", value: bestComponents.coral },
+                    { label: "Algae", value: bestComponents.algae },
+                    { label: "Climb", value: bestComponents.climb },
+                  ];
+              return (
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <SpiderChart
+                    metrics={metrics}
+                    size={300}
+                    showLabels
+                    title="Component Breakdown (Best Event)"
+                  />
+                </div>
+              );
+            })()}
+
+            {/* Awards Section */}
+            {teamAwards.length > 0 && (
+              <div className={styles.panel} style={{ padding: "1.25rem", marginBottom: "1.5rem" }}>
+                <h3 className={styles.sectionTitle} style={{ textAlign: "center" }}>
+                  {yearprov} Awards
+                </h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" }}>
+                  {teamAwards.map((award: any, i: number) => (
+                    <span
+                      key={i}
+                      style={{
+                        padding: "0.35rem 0.75rem",
+                        borderRadius: 8,
+                        background: "var(--gray-more)",
+                        color: "#eab308",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {award.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <h3

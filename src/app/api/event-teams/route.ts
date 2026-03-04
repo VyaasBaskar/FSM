@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventTeams } from "@/app/lib/event";
+import { getEventTeams as getEventTeams26 } from "@/app/lib/event26";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const teams = await getEventTeams(event);
+    const teams = event.startsWith("2026")
+      ? await getEventTeams26(event)
+      : await getEventTeams(event);
 
     return NextResponse.json(teams, {
       headers: {

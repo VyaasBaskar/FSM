@@ -93,6 +93,15 @@ function formatMatchTime(scheduledTime: string | null) {
     : timeStr;
 }
 
+function getWinProbability(redPred: number, bluePred: number) {
+  const total = redPred + bluePred;
+  if (total === 0) return { redProb: 50, blueProb: 50 };
+  return {
+    redProb: (redPred / total) * 100,
+    blueProb: (bluePred / total) * 100,
+  };
+}
+
 export default function ClientPage({ events }: ClientPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -421,7 +430,7 @@ export default function ClientPage({ events }: ClientPageProps) {
       <main className={styles.main} style={{ padding: "1rem" }}>
         {(!selectedEvent || !selectedTeam) && (
           <>
-            <h1 className={styles.title}>Dashboard</h1>
+            <h1 className={styles.pageTitle}>Dashboard</h1>
 
             <div
               style={{
@@ -919,6 +928,64 @@ export default function ClientPage({ events }: ClientPageProps) {
                               </div>
                             ))}
                           </div>
+
+                          {(() => {
+                            const { redProb, blueProb } = getWinProbability(
+                              Number(predRed),
+                              Number(predBlue)
+                            );
+                            return (
+                              <div style={{ marginTop: "0.4rem" }}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    marginBottom: "0.15rem",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: "0.65rem",
+                                      fontWeight: 600,
+                                      color: "#ff4d4d",
+                                    }}
+                                  >
+                                    Red {redProb.toFixed(0)}%
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "0.65rem",
+                                      fontWeight: 600,
+                                      color: "#4d8cff",
+                                    }}
+                                  >
+                                    {blueProb.toFixed(0)}% Blue
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    height: 6,
+                                    borderRadius: 3,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: `${redProb}%`,
+                                      background: "#ff4d4d",
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      width: `${blueProb}%`,
+                                      background: "#4d8cff",
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}
@@ -1425,6 +1492,64 @@ export default function ClientPage({ events }: ClientPageProps) {
                               </div>
                             ))}
                           </div>
+
+                          {(() => {
+                            const { redProb, blueProb } = getWinProbability(
+                              Number(predRed),
+                              Number(predBlue)
+                            );
+                            return (
+                              <div style={{ marginTop: "0.3rem" }}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    marginBottom: "0.15rem",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: "0.65rem",
+                                      fontWeight: 600,
+                                      color: "#ff4d4d",
+                                    }}
+                                  >
+                                    Red {redProb.toFixed(0)}%
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "0.65rem",
+                                      fontWeight: 600,
+                                      color: "#4d8cff",
+                                    }}
+                                  >
+                                    {blueProb.toFixed(0)}% Blue
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    height: 6,
+                                    borderRadius: 3,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: `${redProb}%`,
+                                      background: "#ff4d4d",
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      width: `${blueProb}%`,
+                                      background: "#4d8cff",
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}

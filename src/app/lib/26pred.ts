@@ -2,10 +2,19 @@
 
 import { getGlobalStats } from "./global";
 
+let predictionsCache: { data: { teamKey: string; bestFSM: number | undefined }[]; timestamp: number } | null = null;
+const PREDICTIONS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
 export async function get26Predictions() {
-  const astats25 = await getGlobalStats(2025, true);
-  const astats24 = await getGlobalStats(2024, true);
-  const astats23 = await getGlobalStats(2023, true);
+  if (predictionsCache && Date.now() - predictionsCache.timestamp < PREDICTIONS_CACHE_TTL) {
+    return predictionsCache.data;
+  }
+
+  const [astats25, astats24, astats23] = await Promise.all([
+    getGlobalStats(2025, true),
+    getGlobalStats(2024, true),
+    getGlobalStats(2023, true),
+  ]);
 
   function normalizeStats(
     stats: { teamKey: string; bestFSM: string }[],
@@ -85,5 +94,6 @@ export async function get26Predictions() {
     });
   }
 
+  predictionsCache = { data: predictions, timestamp: Date.now() };
   return predictions;
 }

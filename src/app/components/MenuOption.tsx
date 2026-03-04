@@ -9,6 +9,7 @@ const menOps0 = [{ label: "Home", value: "/" }];
 const mobileOptions = [
   { label: "Teams", value: "/global/2026" },
   { label: "Events", value: "/event26/all" },
+  { label: "Compare", value: "/compare" },
 ];
 
 interface MenuOptionProps {

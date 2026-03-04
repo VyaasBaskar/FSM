@@ -6,12 +6,17 @@ import PaginatedGlobalTable from "./PaginatedGlobalTable";
 interface GlobalStat {
   teamKey: string;
   bestFSM: string;
+  auto: string;
+  fuel: string;
+  climb: string;
+  coral: string;
+  algae: string;
   country: string;
   state_prov: string;
 }
 
 interface ProgressiveGlobalTableProps {
-  initialStats: Array<{ teamKey: string; bestFSM: string }>;
+  initialStats: Array<{ teamKey: string; bestFSM: string; auto: string; fuel: string; climb: string; coral: string; algae: string }>;
   year: string;
   rankingId: number;
 }
@@ -43,7 +48,15 @@ export default function ProgressiveGlobalTable({
           const { data: cachedData } = await cachedResponse.json();
           if (cachedData && cachedData.length > 0 && mounted) {
             console.log("Using cached location data from Supabase");
-            setStats(cachedData);
+            const merged = initialStats.map((stat) => {
+              const cached = cachedData.find((c: any) => c.teamKey === stat.teamKey);
+              return {
+                ...stat,
+                country: cached?.country || "",
+                state_prov: cached?.state_prov || "",
+              };
+            });
+            setStats(merged);
             setIsLoadingLocations(false);
             return;
           }
@@ -124,7 +137,7 @@ export default function ProgressiveGlobalTable({
             color: "var(--foreground)",
           }}
         >
-          ⏳ Loading team locations...
+          Loading team locations...
         </div>
       )}
       <PaginatedGlobalTable stats={stats} year={year} />

@@ -52,10 +52,10 @@ export default async function GlobalPage({
       style={{ position: "relative", minHeight: "100vh" }}
     >
       <main className={styles.main}>
-        <h1 className={styles.title}>{year} Global FSM Rankings</h1>
+        <h1 className={styles.pageTitle}>{year} Global FSM Rankings</h1>
         <div
           style={{
-            margin: "1rem 0",
+            margin: "1.5rem 0",
             display: "flex",
             flexDirection: "column",
             gap: "1rem",

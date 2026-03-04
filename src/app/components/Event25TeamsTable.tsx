@@ -1,8 +1,11 @@
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useRef, useCallback } from "react";
 import { TeamDataType } from "../lib/event";
 import TeamLink from "./TeamLink";
+import SpiderChart from "./SpiderChart";
+import type { SpiderChartMetric } from "./SpiderChart";
+import styles from "../page.module.css";
 
 type TeamTableRow = TeamDataType & { fuel?: string };
 
@@ -23,7 +26,32 @@ function Event25TeamsTable({
   const [sortField, setSortField] = useState<string>("rank");
   const [isAscending, setIsAscending] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [hoveredTeamKey, setHoveredTeamKey] = useState<string | null>(null);
+  const hoverShowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const is2026 = gameYear === 2026;
+
+  const HOVER_DELAY_MS = 350;
+  const LEAVE_DELAY_MS = 200;
+
+  const handleRowMouseEnter = useCallback(
+    (teamKey: string) => {
+      if (hoverHideRef.current) {
+        clearTimeout(hoverHideRef.current);
+        hoverHideRef.current = null;
+      }
+      hoverShowRef.current = setTimeout(() => setHoveredTeamKey(teamKey), HOVER_DELAY_MS);
+    },
+    []
+  );
+
+  const handleRowMouseLeave = useCallback(() => {
+    if (hoverShowRef.current) {
+      clearTimeout(hoverShowRef.current);
+      hoverShowRef.current = null;
+    }
+    hoverHideRef.current = setTimeout(() => setHoveredTeamKey(null), LEAVE_DELAY_MS);
+  }, []);
 
   const filteredTeams = useMemo(() => {
     if (!searchQuery) return teams;
@@ -160,6 +188,29 @@ function Event25TeamsTable({
     };
   }, [teams, defensiveScores, unluckyMetrics]);
 
+  const handleExportCSV = () => {
+    const headers = is2026
+      ? ["Rank", "Team", "FSM", "Auto", "Fuel", "Climb", "Penalty"]
+      : ["Rank", "Team", "FSM", "Auto", "Coral", "Algae", "Climb", "Fouls"];
+    const rows = sortedTeams.map((t, i) => {
+      const base = [i + 1, t.key, parseFloat(t.fsm).toFixed(2), parseFloat(t.auto).toFixed(2)];
+      if (is2026) {
+        base.push(parseFloat(t.fuel ?? "0").toFixed(2), parseFloat(t.climb).toFixed(2), parseFloat(t.foul).toFixed(2));
+      } else {
+        base.push(parseFloat(t.coral).toFixed(2), parseFloat(t.algae).toFixed(2), parseFloat(t.climb).toFixed(2), parseFloat(t.foul).toFixed(2));
+      }
+      return base.join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `event_teams_${gameYear}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       style={{
@@ -170,32 +221,34 @@ function Event25TeamsTable({
         padding: "0 1rem",
       }}
     >
-      <input
-        type="text"
-        placeholder="🔍 Search teams..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{
-          padding: "0.75rem",
-          borderRadius: 8,
-          border: "1px solid var(--border-color)",
-          background: "var(--input-bg)",
-          color: "var(--input-text)",
-          fontSize: "1rem",
-          maxWidth: "400px",
-          alignSelf: "center",
-        }}
-      />
+      <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          type="text"
+          placeholder="Search teams..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={styles.input}
+          style={{ maxWidth: "400px" }}
+        />
+        <button
+          onClick={handleExportCSV}
+          style={{
+            padding: "0.55rem 1rem",
+            borderRadius: 8,
+            border: "2px solid var(--border-color)",
+            background: "var(--background-pred)",
+            color: "var(--foreground)",
+            fontWeight: "600",
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          Export CSV
+        </button>
+      </div>
 
-      <div
-        style={{
-          overflowX: "auto",
-          borderRadius: 12,
-          border: "2px solid var(--border-color)",
-          boxShadow:
-            "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
-        }}
-      >
+      <div className={styles.tableWrapper}>
         <table
           style={{
             width: "100%",
@@ -294,10 +347,12 @@ function Event25TeamsTable({
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "var(--gray-more)";
                     e.currentTarget.style.transform = "scale(1.01)";
+                    handleRowMouseEnter(team.key);
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = "var(--background-pred)";
                     e.currentTarget.style.transform = "scale(1)";
+                    handleRowMouseLeave();
                   }}
                 >
                   <td
@@ -566,6 +621,72 @@ function Event25TeamsTable({
           </span>
         </div>
       </div>
+
+      {hoveredTeamKey && (() => {
+        const hoveredTeam = sortedTeams.find((t) => t.key === hoveredTeamKey);
+        if (!hoveredTeam) return null;
+        const metrics: SpiderChartMetric[] = is2026
+          ? [
+              { label: "Auto", value: parseFloat(hoveredTeam.auto) || 0 },
+              { label: "Fuel", value: parseFloat(hoveredTeam.fuel ?? "0") || 0 },
+              { label: "Climb", value: parseFloat(hoveredTeam.climb) || 0 },
+            ]
+          : [
+              { label: "Auto", value: parseFloat(hoveredTeam.auto) || 0 },
+              { label: "Coral", value: parseFloat(hoveredTeam.coral) || 0 },
+              { label: "Algae", value: parseFloat(hoveredTeam.algae) || 0 },
+              { label: "Climb", value: parseFloat(hoveredTeam.climb) || 0 },
+            ];
+        const hasData = metrics.some((m) => m.value > 0);
+        return (
+          <div
+            role="tooltip"
+            onMouseEnter={() => {
+              if (hoverHideRef.current) {
+                clearTimeout(hoverHideRef.current);
+                hoverHideRef.current = null;
+              }
+            }}
+            onMouseLeave={handleRowMouseLeave}
+            style={{
+              position: "fixed",
+              right: 16,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 1000,
+              maxWidth: 220,
+            }}
+          >
+            <div
+              style={{
+                background: "var(--background-pred)",
+                border: "2px solid var(--border-color)",
+                borderRadius: 12,
+                padding: "0.75rem 1rem",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: "700",
+                  fontSize: "1rem",
+                  marginBottom: "0.5rem",
+                  color: "var(--yellow-color)",
+                }}
+              >
+                Team {hoveredTeam.key.replace("frc", "")}
+              </div>
+              {hasData ? (
+                <SpiderChart metrics={metrics} size={160} showLabels={false} />
+              ) : (
+                <div style={{ fontSize: "0.85rem", color: "var(--foreground)" }}>
+                  No component data
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

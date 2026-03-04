@@ -89,7 +89,7 @@ async function fetchEventMetrics(
   predictionsMap: Map<string, number>
 ): Promise<Event26Metric | null> {
   try {
-    const teams = await getEventTeams(event.key, true);
+    const teams = await getEventTeams(event.key);
     const actualValues = new Map(
       teams.flatMap((team) => {
         const numericKey = team.key.replace(/^frc/, "");
@@ -200,9 +200,15 @@ async function gatherEventMetrics(events: TbaSimpleEvent[]) {
   });
 
   if (eventsToCompute.length > 0) {
-    const computedResults = await Promise.all(
-      eventsToCompute.map((event) => fetchEventMetrics(event, predictionsMap))
-    );
+    const batchSize = 5;
+    const computedResults: (Event26Metric | null)[] = [];
+    for (let i = 0; i < eventsToCompute.length; i += batchSize) {
+      const batch = eventsToCompute.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map((event) => fetchEventMetrics(event, predictionsMap))
+      );
+      computedResults.push(...batchResults);
+    }
 
     const validMetrics = computedResults.filter(
       (metric): metric is Event26Metric => Boolean(metric)

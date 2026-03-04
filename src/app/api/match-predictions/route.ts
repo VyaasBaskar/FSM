@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMatchPredictions, getEventTeams } from "@/app/lib/event";
+import { getEventTeams as getEventTeams26, getMatchPredictions as getMatchPredictions26 } from "@/app/lib/event26";
 import { getGlobalStats } from "@/app/lib/global";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,12 @@ export async function GET(request: NextRequest) {
     }
 
     const fullEventCode = /^\d{4}/.test(event) ? event : `2026${event}`;
+    const is2026 = fullEventCode.startsWith("2026");
 
     // Get teams and build FSM map
-    const teams = await getEventTeams(fullEventCode, true);
+    const teams = is2026
+      ? await getEventTeams26(fullEventCode, true)
+      : await getEventTeams(fullEventCode, true);
     const FSMs: { [key: string]: number } = {};
     teams.forEach((team) => {
       FSMs[team.key] = Number(team.fsm);
@@ -34,7 +38,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const matchPredictions = await getMatchPredictions(fullEventCode, FSMs);
+    const matchPredictions = is2026
+      ? await getMatchPredictions26(fullEventCode, FSMs)
+      : await getMatchPredictions(fullEventCode, FSMs);
 
     return NextResponse.json(matchPredictions, {
       headers: {

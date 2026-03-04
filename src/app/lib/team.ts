@@ -51,6 +51,9 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
   );
 
   const teamData: EventDataType[] = [];
+  let bestComponents = { auto: 0, fuel: 0, climb: 0, coral: 0, algae: 0, foul: 0 };
+  let bestEventFsm = 0;
+
   eventResults.forEach((result, idx) => {
     if (result.status === "fulfilled") {
       const teams = result.value;
@@ -58,12 +61,24 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
       if (team) {
         const teamRank = Number(team.rank) || 0;
         const teamFsm = String(team.fsm ?? "0");
+        const fsmNum = Number(teamFsm) || 0;
         teamData.push({
           event: events[idx].key,
           teamfsm: teamFsm,
           teamrank: teamRank,
-          pending: teamRank === 0 || Number(teamFsm) <= 0,
+          pending: teamRank === 0 || fsmNum <= 0,
         });
+        if (fsmNum > bestEventFsm) {
+          bestEventFsm = fsmNum;
+          bestComponents = {
+            auto: Number(team.auto ?? 0),
+            fuel: Number((team as any).fuel ?? 0),
+            climb: Number(team.climb ?? 0),
+            coral: Number(team.coral ?? 0),
+            algae: Number(team.algae ?? 0),
+            foul: Number(team.foul ?? 0),
+          };
+        }
       }
     }
   });
@@ -79,7 +94,7 @@ export async function getTeamStats(teamKey: string, year: number = 2025) {
     bestFSM = rms;
   }
 
-  return { teamData, bestFSM };
+  return { teamData, bestFSM, bestComponents };
 }
 
 export async function getTeamInfo(teamKey: string) {
@@ -99,6 +114,24 @@ export async function getTeamInfo(teamKey: string) {
 
   const teamInfo = await res.json();
   return teamInfo;
+}
+
+export async function getTeamAwards(teamKey: string, year: number) {
+  try {
+    const res = await fetch(
+      `https://www.thebluealliance.com/api/v3/team/${teamKey}/awards/${year}`,
+      {
+        headers: {
+          "X-TBA-Auth-Key": process.env.TBA_API_KEY!,
+        },
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export type TeamMediaType = {

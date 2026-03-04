@@ -53,6 +53,27 @@ function formatLocation(event: EventMetrics) {
   return event.country || "Location TBD";
 }
 
+function getEventStatus(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) {
+    return { label: "Upcoming", color: "#eab308", bg: "rgba(234, 179, 8, 0.12)" };
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const endWithBuffer = new Date(end);
+  endWithBuffer.setDate(endWithBuffer.getDate() + 1);
+
+  if (today >= start && today <= endWithBuffer) {
+    return { label: "LIVE", color: "#22c55e", bg: "rgba(34, 197, 94, 0.15)" };
+  }
+  if (today < start) {
+    return { label: "Upcoming", color: "#eab308", bg: "rgba(234, 179, 8, 0.12)" };
+  }
+  return { label: "Completed", color: "var(--gray-less)", bg: "rgba(128, 128, 128, 0.12)" };
+}
+
 function getWeekGroupLabel(week: number | null) {
   if (week === null || week < 0) return "Other";
   return `Week ${week}`;
@@ -447,20 +468,55 @@ export default function ClientPage({ events }: ClientPageProps) {
                             {formatDateRange(event.startDate, event.endDate)}
                           </p>
                         </div>
-                        {event.district && (
-                          <span
-                            style={{
-                              fontSize: "0.75rem",
-                              padding: "0.25rem 0.5rem",
-                              borderRadius: 999,
-                              background: "var(--gray-more)",
-                              color: "var(--foreground)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {event.district}
-                          </span>
-                        )}
+                        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexShrink: 0 }}>
+                          {event.district && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                padding: "0.25rem 0.5rem",
+                                borderRadius: 999,
+                                background: "var(--gray-more)",
+                                color: "var(--foreground)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {event.district}
+                            </span>
+                          )}
+                          {(() => {
+                            const status = getEventStatus(event.startDate, event.endDate);
+                            return (
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  padding: "0.2rem 0.5rem",
+                                  borderRadius: 999,
+                                  background: status.bg,
+                                  color: status.color,
+                                  fontWeight: 700,
+                                  border: `1px solid ${status.color}33`,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.3rem",
+                                }}
+                              >
+                                {status.label === "LIVE" && (
+                                  <span
+                                    className="pulse-dot"
+                                    style={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: "50%",
+                                      background: status.color,
+                                      display: "inline-block",
+                                    }}
+                                  />
+                                )}
+                                {status.label}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </div>
 
                       <div
@@ -514,6 +570,21 @@ export default function ClientPage({ events }: ClientPageProps) {
       </main>
 
       <style jsx>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.4;
+            transform: scale(0.75);
+          }
+        }
+
+        .pulse-dot {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+
         .events-layout-container {
           display: flex;
           min-height: 100vh;

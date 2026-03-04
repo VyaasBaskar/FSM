@@ -62,7 +62,7 @@
 .main {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1.5rem;
   grid-row-start: 2;
   width: 100%;
   max-width: 100%;
@@ -91,6 +91,43 @@
   padding: 2px 4px;
   border-radius: 4px;
   font-weight: 600;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+}
+
+.panel {
+  background: var(--background-pred);
+  border: 2px solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 0.75rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: var(--card-radius);
+  border: 2px solid var(--border-color);
+  box-shadow: var(--card-shadow);
 }
 
 .ctas {
@@ -276,7 +313,10 @@ a.secondary {
 .input {
   background: var(--input-bg);
   color: var(--input-text);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
 }
 
 .button {

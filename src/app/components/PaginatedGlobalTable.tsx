@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import TeamLink from "./TeamLink";
+import styles from "../page.module.css";
 
 const stateAbbreviations: { [key: string]: string } = {
   AL: "Alabama",
@@ -79,6 +80,11 @@ function normalizeStateProv(stateProv: string): string {
 interface GlobalStat {
   teamKey: string;
   bestFSM: string;
+  auto: string;
+  fuel: string;
+  climb: string;
+  coral: string;
+  algae: string;
   country: string;
   state_prov: string;
 }
@@ -88,7 +94,242 @@ interface PaginatedGlobalTableProps {
   year: string;
 }
 
-type SortField = "rank" | "teamKey" | "bestFSM";
+type SortField = "rank" | "teamKey" | "bestFSM" | "auto" | "fuel" | "climb" | "coral" | "algae";
+type MetricKey = "bestFSM" | "auto" | "fuel" | "climb" | "coral" | "algae";
+
+function safeMax(arr: number[], fallback = 0): number {
+  if (arr.length === 0) return fallback;
+  let max = arr[0];
+  for (let i = 1; i < arr.length; i++) { if (arr[i] > max) max = arr[i]; }
+  return max;
+}
+
+function safeMin(arr: number[], fallback = 0): number {
+  if (arr.length === 0) return fallback;
+  let min = arr[0];
+  for (let i = 1; i < arr.length; i++) { if (arr[i] < min) min = arr[i]; }
+  return min;
+}
+
+function getMetricOptions(year: string): { key: MetricKey; label: string }[] {
+  const yearNum = parseInt(year);
+  if (yearNum >= 2026) {
+    return [
+      { key: "bestFSM", label: "FSM Score" },
+      { key: "auto", label: "Auto" },
+      { key: "fuel", label: "Fuel" },
+      { key: "climb", label: "Climb" },
+    ];
+  }
+  return [
+    { key: "bestFSM", label: "FSM Score" },
+    { key: "auto", label: "Auto" },
+    { key: "coral", label: "Coral" },
+    { key: "algae", label: "Algae" },
+    { key: "climb", label: "Climb" },
+  ];
+}
+
+function ScatterChart({
+  stats,
+  xAxis,
+  yAxis,
+  onXChange,
+  onYChange,
+  metricOptions,
+}: {
+  stats: GlobalStat[];
+  xAxis: MetricKey;
+  yAxis: MetricKey;
+  onXChange: (k: MetricKey) => void;
+  onYChange: (k: MetricKey) => void;
+  metricOptions: { key: MetricKey; label: string }[];
+}) {
+  const { points, xMin, xMax, yMin, yMax } = useMemo(() => {
+    const pts = stats
+      .map((s) => ({
+        teamKey: s.teamKey,
+        x: parseFloat(s[xAxis]) || 0,
+        y: parseFloat(s[yAxis]) || 0,
+        fsm: parseFloat(s.bestFSM) || 0,
+      }))
+      .filter((p) => p.x > 0 || p.y > 0);
+
+    if (pts.length === 0) return { points: [], xMin: 0, xMax: 1, yMin: 0, yMax: 1 };
+
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    return {
+      points: pts,
+      xMin: safeMin(xs),
+      xMax: safeMax(xs, 1),
+      yMin: safeMin(ys),
+      yMax: safeMax(ys, 1),
+    };
+  }, [stats, xAxis, yAxis]);
+
+  const maxFsm = useMemo(() => safeMax(stats.map((s) => parseFloat(s.bestFSM) || 0), 1), [stats]);
+
+  const [hoveredTeam, setHoveredTeam] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  const W = 700;
+  const H = 380;
+  const PAD = { top: 20, right: 30, bottom: 45, left: 55 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const xRange = xMax - xMin || 1;
+  const yRange = yMax - yMin || 1;
+  const toSvgX = (v: number) => PAD.left + ((v - xMin) / xRange) * plotW;
+  const toSvgY = (v: number) => PAD.top + plotH - ((v - yMin) / yRange) * plotH;
+
+  const xLabel = metricOptions.find((o) => o.key === xAxis)?.label ?? xAxis;
+  const yLabel = metricOptions.find((o) => o.key === yAxis)?.label ?? yAxis;
+
+  const xTicks = useMemo(() => {
+    const count = 6;
+    return Array.from({ length: count }, (_, i) => xMin + (xRange * i) / (count - 1));
+  }, [xMin, xRange]);
+
+  const yTicks = useMemo(() => {
+    const count = 5;
+    return Array.from({ length: count }, (_, i) => yMin + (yRange * i) / (count - 1));
+  }, [yMin, yRange]);
+
+  return (
+    <div
+      style={{
+        background: "var(--background-pred)",
+        border: "2px solid var(--border-color)",
+        borderRadius: 12,
+        padding: "1.25rem",
+        marginBottom: "1.5rem",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "1rem",
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: "1rem",
+        }}
+      >
+        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--foreground)" }}>X:</label>
+          <select
+            value={xAxis}
+            onChange={(e) => onXChange(e.target.value as MetricKey)}
+            style={{
+              padding: "0.35rem 0.6rem",
+              borderRadius: 6,
+              border: "2px solid var(--border-color)",
+              background: "var(--input-bg)",
+              color: "var(--input-text)",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+            }}
+          >
+            {metricOptions.map((o) => (
+              <option key={o.key} value={o.key}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+          <label style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--foreground)" }}>Y:</label>
+          <select
+            value={yAxis}
+            onChange={(e) => onYChange(e.target.value as MetricKey)}
+            style={{
+              padding: "0.35rem 0.6rem",
+              borderRadius: 6,
+              border: "2px solid var(--border-color)",
+              background: "var(--input-bg)",
+              color: "var(--input-text)",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+            }}
+          >
+            {metricOptions.map((o) => (
+              <option key={o.key} value={o.key}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+        <span style={{ fontSize: "0.75rem", color: "var(--gray-less)" }}>
+          Color = FSM percentile &middot; {points.length} teams
+        </span>
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          style={{ width: "100%", maxWidth: W, display: "block", margin: "0 auto" }}
+        >
+          {/* grid lines */}
+          {yTicks.map((t) => (
+            <line key={`yg${t}`} x1={PAD.left} x2={W - PAD.right} y1={toSvgY(t)} y2={toSvgY(t)} stroke="var(--border-color)" strokeWidth={0.5} />
+          ))}
+          {xTicks.map((t) => (
+            <line key={`xg${t}`} y1={PAD.top} y2={H - PAD.bottom} x1={toSvgX(t)} x2={toSvgX(t)} stroke="var(--border-color)" strokeWidth={0.5} />
+          ))}
+          {/* axes */}
+          <line x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="var(--foreground)" strokeWidth={1} opacity={0.3} />
+          <line x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={H - PAD.bottom} stroke="var(--foreground)" strokeWidth={1} opacity={0.3} />
+          {/* tick labels */}
+          {xTicks.map((t) => (
+            <text key={`xl${t}`} x={toSvgX(t)} y={H - PAD.bottom + 16} textAnchor="middle" fontSize={10} fill="var(--gray-less)">{t.toFixed(0)}</text>
+          ))}
+          {yTicks.map((t) => (
+            <text key={`yl${t}`} x={PAD.left - 8} y={toSvgY(t) + 4} textAnchor="end" fontSize={10} fill="var(--gray-less)">{t.toFixed(0)}</text>
+          ))}
+          {/* axis labels */}
+          <text x={PAD.left + plotW / 2} y={H - 4} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--foreground)">{xLabel}</text>
+          <text x={14} y={PAD.top + plotH / 2} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--foreground)" transform={`rotate(-90, 14, ${PAD.top + plotH / 2})`}>{yLabel}</text>
+          {/* dots */}
+          {points.map((p) => {
+            const pctile = (p.fsm / maxFsm) * 100;
+            const color = getPercentileColor(pctile);
+            const isHovered = hoveredTeam === p.teamKey;
+            return (
+              <circle
+                key={p.teamKey}
+                cx={toSvgX(p.x)}
+                cy={toSvgY(p.y)}
+                r={isHovered ? 5 : 3}
+                fill={color}
+                opacity={isHovered ? 1 : 0.6}
+                stroke={isHovered ? "var(--foreground)" : "none"}
+                strokeWidth={1.5}
+                style={{ cursor: "pointer", transition: "r 0.15s" }}
+                onMouseEnter={(e) => {
+                  setHoveredTeam(p.teamKey);
+                  const rect = (e.target as SVGCircleElement).ownerSVGElement?.getBoundingClientRect();
+                  if (rect) {
+                    setTooltip({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top - 10,
+                      text: `${p.teamKey.replace("frc", "")} | ${xLabel}: ${p.x.toFixed(1)} | ${yLabel}: ${p.y.toFixed(1)} | FSM: ${p.fsm.toFixed(1)}`,
+                    });
+                  }
+                }}
+                onMouseLeave={() => { setHoveredTeam(null); setTooltip(null); }}
+              />
+            );
+          })}
+          {/* tooltip */}
+          {tooltip && (
+            <g>
+              <rect x={tooltip.x - 120} y={tooltip.y - 22} width={240} height={20} rx={4} fill="var(--gray-more)" stroke="var(--border-color)" strokeWidth={1} opacity={0.95} />
+              <text x={tooltip.x} y={tooltip.y - 8} textAnchor="middle" fontSize={10} fontWeight={600} fill="var(--foreground)">{tooltip.text}</text>
+            </g>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+}
 
 function getPercentileColor(percentile: number): string {
   if (percentile >= 99) return "#10b981";
@@ -113,8 +354,8 @@ function DistributionChart({ stats }: { stats: GlobalStat[] }) {
     const fsmValues = stats.map((s) => parseFloat(s.bestFSM)).filter(Number.isFinite);
     if (fsmValues.length === 0) return { buckets: [], maxCount: 0, bucketLabels: [] };
 
-    const min = Math.floor(Math.min(...fsmValues));
-    const max = Math.ceil(Math.max(...fsmValues));
+    const min = Math.floor(safeMin(fsmValues));
+    const max = Math.ceil(safeMax(fsmValues));
     const range = max - min;
     const numBuckets = Math.min(20, Math.max(8, Math.ceil(range / 5)));
     const bucketSize = range / numBuckets;
@@ -133,7 +374,7 @@ function DistributionChart({ stats }: { stats: GlobalStat[] }) {
       bkts[idx]++;
     }
 
-    return { buckets: bkts, maxCount: Math.max(...bkts), bucketLabels: labels };
+    return { buckets: bkts, maxCount: safeMax(bkts), bucketLabels: labels };
   }, [stats]);
 
   if (buckets.length === 0) return null;
@@ -244,6 +485,12 @@ export default function PaginatedGlobalTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [jumpToPage, setJumpToPage] = useState("");
   const [showDistribution, setShowDistribution] = useState(true);
+  const [activeTab, setActiveTab] = useState<"table" | "chart" | "insights">("table");
+  const yearNum = parseInt(year);
+  const is2026 = yearNum >= 2026;
+  const metricOptions = useMemo(() => getMetricOptions(year), [year]);
+  const [scatterX, setScatterX] = useState<MetricKey>("auto");
+  const [scatterY, setScatterY] = useState<MetricKey>("bestFSM");
 
   const summaryStats = useMemo(() => {
     const fsmValues = stats
@@ -351,8 +598,8 @@ export default function PaginatedGlobalTable({
     }
 
     sorted.sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
+      let aValue: number;
+      let bValue: number;
 
       switch (sortField) {
         case "teamKey":
@@ -363,14 +610,31 @@ export default function PaginatedGlobalTable({
           aValue = parseFloat(a.bestFSM);
           bValue = parseFloat(b.bestFSM);
           break;
+        case "auto":
+          aValue = parseFloat(a.auto);
+          bValue = parseFloat(b.auto);
+          break;
+        case "fuel":
+          aValue = parseFloat(a.fuel);
+          bValue = parseFloat(b.fuel);
+          break;
+        case "climb":
+          aValue = parseFloat(a.climb);
+          bValue = parseFloat(b.climb);
+          break;
+        case "coral":
+          aValue = parseFloat(a.coral);
+          bValue = parseFloat(b.coral);
+          break;
+        case "algae":
+          aValue = parseFloat(a.algae);
+          bValue = parseFloat(b.algae);
+          break;
         default:
           return 0;
       }
 
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-      }
-      return 0;
+      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
     });
 
     return sorted;
@@ -454,6 +718,16 @@ export default function PaginatedGlobalTable({
         return "Team Number";
       case "bestFSM":
         return "FSM Score";
+      case "auto":
+        return "Auto";
+      case "fuel":
+        return "Fuel";
+      case "climb":
+        return "Climb";
+      case "coral":
+        return "Coral";
+      case "algae":
+        return "Algae";
       default:
         return sortField;
     }
@@ -461,6 +735,58 @@ export default function PaginatedGlobalTable({
 
   const hasActiveFilters =
     countryFilter !== "all" || stateFilter !== "all" || searchQuery.trim() !== "";
+
+  const handleExport = useCallback((format: "csv" | "json") => {
+    const gameMetrics = is2026
+      ? { fuel: true as const }
+      : { coral: true as const, algae: true as const };
+
+    const data = sortedStats.map((s) => {
+      const base: Record<string, string | number> = {
+        rank: stats.findIndex((st) => st.teamKey === s.teamKey) + 1,
+        team: s.teamKey.replace("frc", ""),
+        fsm: s.bestFSM,
+        auto: s.auto,
+      };
+      if ("fuel" in gameMetrics) {
+        base.fuel = s.fuel;
+      } else {
+        base.coral = s.coral;
+        base.algae = s.algae;
+      }
+      base.climb = s.climb;
+      base.percentile = (percentileMap.get(s.teamKey) ?? 0).toFixed(1);
+      base.country = s.country;
+      base.state = s.state_prov;
+      return base;
+    });
+
+    if (format === "json") {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fsm_global_rankings_${year}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const headers = is2026
+        ? ["Rank", "Team", "FSM", "Auto", "Fuel", "Climb", "Percentile", "Country", "State"]
+        : ["Rank", "Team", "FSM", "Auto", "Coral", "Algae", "Climb", "Percentile", "Country", "State"];
+      const keys = is2026
+        ? ["rank", "team", "fsm", "auto", "fuel", "climb", "percentile", "country", "state"]
+        : ["rank", "team", "fsm", "auto", "coral", "algae", "climb", "percentile", "country", "state"];
+      const rows = data.map((d) => keys.map((k) => d[k] ?? "").join(","));
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fsm_global_rankings_${year}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }, [sortedStats, stats, year, percentileMap]);
 
   const statCards = [
     { label: "Total Teams", value: summaryStats.total.toLocaleString(), color: "var(--foreground)" },
@@ -521,26 +847,116 @@ export default function PaginatedGlobalTable({
         ))}
       </div>
 
-      {/* Distribution Chart Toggle + Chart */}
-      <div style={{ marginBottom: "0.75rem", textAlign: "center" }}>
+      {/* Export Buttons */}
+      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginBottom: "1rem" }}>
         <button
-          onClick={() => setShowDistribution(!showDistribution)}
+          onClick={() => handleExport("csv")}
           style={{
             padding: "0.4rem 1rem",
             borderRadius: 8,
             border: "2px solid var(--border-color)",
-            background: showDistribution ? "var(--yellow-color)" : "var(--background-pred)",
-            color: showDistribution ? "#000" : "var(--foreground)",
+            background: "var(--background-pred)",
+            color: "var(--foreground)",
             fontWeight: "600",
             fontSize: "0.85rem",
             cursor: "pointer",
             transition: "all 0.2s",
           }}
         >
-          {showDistribution ? "Hide Distribution" : "Show Distribution"}
+          Export CSV
+        </button>
+        <button
+          onClick={() => handleExport("json")}
+          style={{
+            padding: "0.4rem 1rem",
+            borderRadius: 8,
+            border: "2px solid var(--border-color)",
+            background: "var(--background-pred)",
+            color: "var(--foreground)",
+            fontWeight: "600",
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          Export JSON
         </button>
       </div>
-      {showDistribution && <DistributionChart stats={filteredStats} />}
+
+      {/* Tab Navigation */}
+      <div
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          marginBottom: "1.25rem",
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        {(
+          [
+            { key: "insights", label: "Insights" },
+            { key: "chart", label: "Scatter Chart" },
+            { key: "table", label: "Table" },
+          ] as const
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            style={{
+              padding: "0.5rem 1.25rem",
+              borderRadius: 8,
+              border: activeTab === key ? "2px solid var(--yellow-color)" : "2px solid var(--border-color)",
+              background: activeTab === key ? "var(--yellow-color)" : "var(--background-pred)",
+              color: activeTab === key ? "#000" : "var(--foreground)",
+              fontWeight: "700",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              boxShadow: activeTab === key ? "0 4px 12px rgba(253, 224, 71, 0.3)" : "none",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Insights Tab */}
+      {activeTab === "insights" && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "0.75rem", textAlign: "center" }}>
+            <button
+              onClick={() => setShowDistribution(!showDistribution)}
+              style={{
+                padding: "0.4rem 1rem",
+                borderRadius: 8,
+                border: "2px solid var(--border-color)",
+                background: showDistribution ? "var(--yellow-color)" : "var(--background-pred)",
+                color: showDistribution ? "#000" : "var(--foreground)",
+                fontWeight: "600",
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {showDistribution ? "Hide Distribution" : "Show Distribution"}
+            </button>
+          </div>
+          {showDistribution && <DistributionChart stats={filteredStats} />}
+        </div>
+      )}
+
+      {/* Scatter Chart Tab */}
+      {activeTab === "chart" && (
+        <ScatterChart
+          stats={filteredStats}
+          xAxis={scatterX}
+          yAxis={scatterY}
+          onXChange={setScatterX}
+          onYChange={setScatterY}
+          metricOptions={metricOptions}
+        />
+      )}
 
       {/* Search + Filters */}
       <div
@@ -867,19 +1283,12 @@ export default function PaginatedGlobalTable({
       </div>
 
       {/* Table */}
-      <div
-        style={{
-          overflowX: "auto",
-          borderRadius: 12,
-          border: "2px solid var(--border-color)",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
-        }}
-      >
+      <div className={styles.tableWrapper}>
         <table
           style={{
             width: "100%",
             borderCollapse: "collapse",
-            minWidth: "700px",
+            minWidth: "900px",
           }}
         >
           <thead>
@@ -926,6 +1335,23 @@ export default function PaginatedGlobalTable({
               >
                 FSM{getSortIcon("bestFSM")}
               </th>
+              {metricOptions.filter(o => o.key !== "bestFSM").map(o => (
+              <th
+                key={o.key}
+                onClick={() => handleSort(o.key)}
+                style={{
+                  textAlign: "right",
+                  borderBottom: "2px solid var(--border-color)",
+                  padding: "12px 8px",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  color: "var(--yellow-color)",
+                  userSelect: "none",
+                }}
+              >
+                {o.label}{getSortIcon(o.key)}
+              </th>
+              ))}
               <th
                 style={{
                   textAlign: "center",
@@ -1030,6 +1456,11 @@ export default function PaginatedGlobalTable({
                       </div>
                     </div>
                   </td>
+                  {metricOptions.filter(o => o.key !== "bestFSM").map(o => (
+                  <td key={o.key} style={{ padding: "12px 8px", textAlign: "right", fontWeight: "600", color: "var(--foreground)" }}>
+                    {parseFloat(stat[o.key]) > 0 ? stat[o.key] : "-"}
+                  </td>
+                  ))}
                   <td style={{ padding: "12px 8px", textAlign: "center" }}>
                     <span
                       style={{

@@ -154,7 +154,7 @@ export default function ClientPage({
       }}
     >
       <main className={styles.main}>
-        <h1 className={styles.title}>Event FSM</h1>
+        <h1 className={styles.pageTitle}>Event FSM</h1>
         <h2 className={styles.table}>2025{eventCode}</h2>
 
         <div
