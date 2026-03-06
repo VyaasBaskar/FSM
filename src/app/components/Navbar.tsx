@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import "@/app/globals.css";
 import MenuOption from "./MenuOption";
 import SearchBar from "./SearchBar";
+import styles from "./Navbar.module.css";
 
 const navLinkStyle: React.CSSProperties = {
   display: "inline-flex",
@@ -37,6 +38,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "Dashboard" },
   ];
 
+  const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = React.useState(false);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const [logoHovered, setLogoHovered] = useState(false);
@@ -49,14 +51,22 @@ export default function Navbar() {
     searchParams.get("event") &&
     searchParams.get("team");
 
+  // Use isMobile only after mount so server and initial client render match (both desktop layout)
+  const effectiveIsMobile = mounted ? isMobile : false;
+
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const saved = localStorage.getItem("theme");
     const system = window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
     const initial = saved === "light" || saved === "dark" ? saved : system;
     document.documentElement.setAttribute("data-theme", initial);
-  }, []);
+  }, [mounted]);
 
   React.useEffect(() => {
     function handleResize() {
@@ -69,80 +79,40 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav
-      style={{
-        background: "var(--navbar-background)",
-        color: "white",
-        boxShadow:
-          "0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)",
-        borderBottom: "1px solid var(--navbar-border)",
-        width: "100%",
-        zIndex: 10,
-        padding: "0.5rem 0",
-        paddingTop: "3.5rem",
-        position: "relative",
-        overflowX: "hidden",
-        overflowY: "visible",
-      }}
-    >
+    <nav className={styles.navRoot}>
       <div
-        style={{
-          maxWidth: "83.5rem",
-          margin: "0 auto",
-          paddingLeft: isMobile ? "0.75rem" : "1rem",
-          paddingRight: isMobile ? "0.75rem" : "1rem",
-          overflowX: "hidden",
-          overflowY: "visible",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
+        className={`${styles.navInner} ${effectiveIsMobile ? styles.navInnerMobile : ""}`}
       >
         <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            height: "4rem",
-            marginTop: "0.25rem",
-            gap: isMobile ? "0.5rem" : "0.75rem",
-            minWidth: 0,
-            width: "100%",
-            boxSizing: "border-box",
-          }}
+          className={`${styles.navRow} ${effectiveIsMobile ? styles.navRowMobile : ""}`}
         >
-          <Link href="/" style={{ textDecoration: "none", flexShrink: 0 }}>
+          <Link href="/" className={styles.linkWrap} style={{ textDecoration: "none" }}>
             <div
               onMouseEnter={() => setLogoHovered(true)}
               onMouseLeave={() => setLogoHovered(false)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "transform 0.3s ease",
-                transform: logoHovered ? "scale(1.05)" : "scale(1)",
-              }}
+              className={`${styles.logoWrap} ${logoHovered ? styles.logoWrapHovered : ""}`}
             >
               <Image
                 src="/logo846.png"
                 alt="Logo"
-                width={isMobile ? 40 : 42}
-                height={isMobile ? 44 : 47}
+                width={effectiveIsMobile ? 40 : 42}
+                height={effectiveIsMobile ? 44 : 47}
                 className={
                   logoHovered ? "navbar-logo logo-hovered" : "navbar-logo"
                 }
                 style={{
                   zIndex: 1000,
-                  marginLeft: isMobile ? "0.25rem" : "0.5rem",
+                  marginLeft: effectiveIsMobile ? "0.25rem" : "0.5rem",
                   transition: "filter 0.3s ease",
                   flexShrink: 0,
                 }}
               />
               <p
                 style={{
-                  marginLeft: isMobile ? "0.5rem" : "1rem",
+                  marginLeft: effectiveIsMobile ? "0.5rem" : "1rem",
                   color: "var(--yellow-color)",
                   fontWeight: "bold",
-                  fontSize: isMobile ? "1.4rem" : "1.5rem",
+                  fontSize: effectiveIsMobile ? "1.4rem" : "1.5rem",
                   transition: "all 0.3s ease",
                   textShadow: logoHovered
                     ? "0 2px 8px var(--yellow-glow)"
@@ -157,42 +127,19 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {isDashboardWithSelections && !isMobile && (
-            <div
-              style={{
-                color: "var(--foreground)",
-                fontWeight: "600",
-                fontSize: "1.2rem",
-                letterSpacing: "-0.01em",
-                flexShrink: 1,
-                minWidth: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Dashboard
-            </div>
+          {mounted && isDashboardWithSelections && !effectiveIsMobile && (
+            <div className={styles.dashboardLabel}>Dashboard</div>
           )}
           <div
-            style={{
-              display: "flex",
-              gap: isMobile ? "0.5rem" : "0.75rem",
-              alignItems: "center",
-              flexWrap: "nowrap",
-              flexShrink: 1,
-              minWidth: 0,
-              position: "relative",
-              maxWidth: isMobile ? "30%" : "none",
-            }}
+            className={`${styles.navLinksWrap} ${effectiveIsMobile ? styles.navLinksWrapMobile : ""}`}
           >
-            {!isMobile && <SearchBar isMobile={false} />}
-            {!isMobile &&
+            {!effectiveIsMobile && <SearchBar isMobile={false} />}
+            {!effectiveIsMobile &&
               links.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  style={{ flexShrink: 0 }}
+                  className={styles.linkWrap}
                 >
                   <div
                     onMouseEnter={() => setHoveredLink(link.href)}
@@ -217,7 +164,7 @@ export default function Navbar() {
                   </div>
                 </Link>
               ))}
-            <MenuOption isMobile={isMobile} />
+            <MenuOption isMobile={effectiveIsMobile} />
           </div>
         </div>
       </div>

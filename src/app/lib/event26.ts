@@ -1,6 +1,10 @@
 import { addEventToDB, getEventDataIfOneDayAfterEnd } from "./supabase";
 import { getEventRevalidationTime } from "./eventUtils";
 
+// In-flight deduplication: concurrent callers for same event get the same promise
+const matchesFetchCache = new Map<string, Promise<Match[]>>();
+const attendingFetchCache = new Map<string, Promise<AttendingTeam[]>>();
+
 const MAX_ITERS = 50;
 const DECAY_FAC = 1.005;
 const FSM_UP_FAC = 0.4;
@@ -73,37 +77,50 @@ export type TeamDataType26 = {
 };
 
 export async function getAttendingTeams(eventCode: string) {
-  const revalidateTime = await getEventRevalidationTime(eventCode);
-  const res = await fetch(
-    `https://www.thebluealliance.com/api/v3/event/${eventCode}/teams`,
-    {
-      headers: { "X-TBA-Auth-Key": process.env.TBA_API_KEY! },
-      next: { revalidate: revalidateTime },
+  const cached = attendingFetchCache.get(eventCode);
+  if (cached) return cached;
+  const promise = (async () => {
+    const revalidateTime = await getEventRevalidationTime(eventCode);
+    const res = await fetch(
+      `https://www.thebluealliance.com/api/v3/event/${eventCode}/teams`,
+      {
+        headers: { "X-TBA-Auth-Key": process.env.TBA_API_KEY! },
+        next: { revalidate: revalidateTime },
+      }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to fetch attending teams for event: ${eventCode}`);
     }
-  );
-  if (!res.ok) {
-    throw new Error(`Failed to fetch attending teams for event: ${eventCode}`);
-  }
-  return (await res.json()) as AttendingTeam[];
+    return (await res.json()) as AttendingTeam[];
+  })().finally(() => attendingFetchCache.delete(eventCode));
+  attendingFetchCache.set(eventCode, promise);
+  return promise;
 }
 
 export async function getEventQualMatches(
   eventCode: string,
   anyFine: boolean = false
 ) {
-  const revalidateTime = await getEventRevalidationTime(eventCode);
-  const res = await fetch(
-    `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
-    {
-      headers: { "X-TBA-Auth-Key": process.env.TBA_API_KEY! },
-      next: { revalidate: revalidateTime },
+  const cacheKey = `${eventCode}:${anyFine}`;
+  const cached = matchesFetchCache.get(cacheKey);
+  if (cached) return cached;
+  const promise = (async () => {
+    const revalidateTime = await getEventRevalidationTime(eventCode);
+    const res = await fetch(
+      `https://www.thebluealliance.com/api/v3/event/${eventCode}/matches`,
+      {
+        headers: { "X-TBA-Auth-Key": process.env.TBA_API_KEY! },
+        next: { revalidate: revalidateTime },
+      }
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to fetch matches for event: ${eventCode}`);
     }
-  );
-  if (!res.ok) {
-    throw new Error(`Failed to fetch matches for event: ${eventCode}`);
-  }
-  const matches = (await res.json()) as Match[];
-  return matches.filter((match) => match.comp_level === "qm" || anyFine);
+    const matches = (await res.json()) as Match[];
+    return matches.filter((match) => match.comp_level === "qm" || anyFine);
+  })().finally(() => matchesFetchCache.delete(cacheKey));
+  matchesFetchCache.set(cacheKey, promise);
+  return promise;
 }
 
 export async function getNumberPlayedMatches(eventCode: string) {
@@ -495,9 +512,11 @@ export async function getEventTeams(
 
 export async function getMatchPredictions(
   eventCode: string,
-  FSMs: { [key: string]: number }
+  FSMs: { [key: string]: number },
+  preFetchedMatches?: Match[]
 ) {
-  const matches = await getEventQualMatches(eventCode, true);
+  const matches =
+    preFetchedMatches ?? (await getEventQualMatches(eventCode, true));
   if (matches.length === 0) {
     throw new Error(`No qualification matches found for event: ${eventCode}`);
   }

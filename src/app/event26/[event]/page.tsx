@@ -2,7 +2,6 @@ import {
   getEventQualMatches,
   getEventTeams,
   getMatchPredictions,
-  getNumberPlayedMatches,
 } from "../../lib/event26";
 import { getGlobalStats } from "@/app/lib/global";
 import ClientPage from "./clientpage";
@@ -151,31 +150,30 @@ export default async function EventPage({
 
   try {
     const fullEventCode = "2026" + eventCode;
-    let eventDetail: EventDetail;
-    try {
-      eventDetail = await fetchEventDetail(fullEventCode);
-    } catch {
-      eventDetail = {
-        key: fullEventCode,
-        name: fullEventCode,
-        city: "",
-        state_prov: "",
-        country: "",
-        start_date: null,
-        end_date: null,
-        week: null,
-        district: null,
-      };
-    }
+    const eventDetailPromise = fetchEventDetail(fullEventCode).catch(() => null);
 
-    const [teamsFromEvent, playedMatches, matches, attendingTeams, predictions2026] =
+    const [eventDetailResult, teamsFromEvent, matches, attendingTeams, predictions2026] =
       await Promise.all([
+      eventDetailPromise,
       getEventTeams(fullEventCode, true),
-      getNumberPlayedMatches(fullEventCode),
       getEventQualMatches(fullEventCode, true),
       getAttendingTeams(fullEventCode),
       get26Predictions(),
     ]);
+
+    const eventDetail: EventDetail = eventDetailResult ?? {
+      key: fullEventCode,
+      name: fullEventCode,
+      city: "",
+      state_prov: "",
+      country: "",
+      start_date: null,
+      end_date: null,
+      week: null,
+      district: null,
+    };
+
+    const playedMatches = matches.filter((m) => m.score_breakdown).length;
 
     const predValues = predictions2026
       .map((p) => Number(p.bestFSM))
@@ -255,7 +253,11 @@ export default async function EventPage({
       { preds: string[]; red: string[]; blue: string[]; result: number[] }
     > = {};
     if (matches.length > 0) {
-      matchPredictions = await getMatchPredictions(fullEventCode, FSMs);
+      matchPredictions = await getMatchPredictions(
+        fullEventCode,
+        FSMs,
+        matches
+      );
     }
 
     const havePreds =

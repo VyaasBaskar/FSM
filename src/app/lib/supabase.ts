@@ -347,9 +347,16 @@ export async function getGlobalDataWithLocation(id: number): Promise<
         state_prov: "",
       });
     } else if (typeof value === "object" && value !== null) {
+      const fsm = value.fsm;
+      const bestFSM =
+        fsm != null && typeof fsm === "number"
+          ? fsm.toFixed(2)
+          : fsm != null && typeof fsm === "string"
+            ? fsm
+            : "0.00";
       stats.push({
         teamKey,
-        bestFSM: value.fsm.toFixed(2),
+        bestFSM,
         country: value.country || "",
         state_prov: normalizeStateProv(value.state_prov || ""),
       });
